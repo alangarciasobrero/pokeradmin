@@ -1,3 +1,13 @@
+node_modules
+
+dist/
+
+.env
+.env.prod
+.env.prod.Local
+
+.vscode/
+
 # Logs
 logs
 *.log
