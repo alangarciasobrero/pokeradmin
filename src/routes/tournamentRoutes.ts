@@ -3,11 +3,40 @@ import { Router, Request, Response } from 'express';
 
 // Repositorio de torneos
 import { TournamentRepository } from '../repositories/TournamentRepository';
+import { Tournament } from '../models/Tournament';
+import { Op } from 'sequelize';
 
 /**
  * Router para las rutas de torneos
  */
 const router = Router();
+
+/**
+ * GET /api/tournaments/search?name=...
+ * Busca torneos por nombre (parcial, insensible a mayúsculas)
+ * @query name - Nombre o parte del nombre del torneo
+ */
+router.get('/search', async (req: Request, res: Response) => {
+  const name = req.query.name as string;
+  if (!name || typeof name !== 'string' || name.trim() === '') {
+    return res.status(400).json({ error: 'Debes proporcionar un nombre para buscar' });
+  }
+  try {
+    const results = await Tournament.findAll({
+      where: {
+        tournament_name: {
+          [Op.like]: `%${name}%`
+        }
+      }
+    });
+    if (!results || results.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron torneos con ese nombre' });
+    }
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al buscar torneos', details: error });
+  }
+});
 
 /**
  * Repositorio dedicado para la interacción con la base de datos de torneos
@@ -94,7 +123,6 @@ router.put('/:id', async (req: Request, res: Response) => {
  * Exporta el router para ser usado en app.ts
  */
 export default router;
-
 
 /**
  * Valida los datos de un torneo
