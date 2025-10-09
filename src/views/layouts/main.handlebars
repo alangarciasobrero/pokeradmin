@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PokerAdmin</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            margin: 0;
+            background: #f8fafc;
+        }
+        .pa-header {
+            background: linear-gradient(90deg, #3949ab 60%, #1a237e 100%);
+            color: #fff;
+            padding: 1.2rem 0 1.2rem 0;
+            text-align: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            box-shadow: 0 2px 12px #e3e9f7;
+            position: relative;
+        }
+        .pa-header .logo {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 0.7rem;
+        }
+        .pa-header .nav {
+            margin-top: 0.5rem;
+        }
+        .pa-header .nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 1.2rem;
+            font-size: 1.08rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .pa-header .nav a:hover {
+            color: #FFD600;
+        }
+        .pa-footer {
+            background: #e3e9f7;
+            color: #3949ab;
+            text-align: center;
+            padding: 1.1rem 0 1.1rem 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            margin-top: 3rem;
+            border-top: 1.5px solid #c5cae9;
+        }
+        .pa-footer .footer-link {
+            color: #3949ab;
+            text-decoration: underline;
+            margin-left: 0.5rem;
+        }
+        .pa-footer .footer-link:hover {
+            color: #1a237e;
+        }
+    </style>
+</head>
+<body>
+    {{> header }}
+    <main>
+        {{{body}}}
+    </main>
+    {{> footer }}
+</body>
+</html>

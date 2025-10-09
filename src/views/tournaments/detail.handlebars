@@ -1,0 +1,149 @@
+
+<!-- Tournament Detail View (Handlebars) -->
+{{!-- Contenedor principal de la vista de detalles de torneo --}}
+<div class="tournament-detail-container">
+    {{!-- Estilos embebidos para la vista de detalles --}}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap');
+        .tournament-detail-container {
+            max-width: 540px;
+            margin: 48px auto;
+            background: linear-gradient(135deg, #f8fafc 0%, #e3e9f7 100%);
+            border-radius: 18px;
+            box-shadow: 0 6px 32px rgba(60,60,120,0.13);
+            padding: 2.5rem 2.8rem 2.5rem 2.8rem;
+            font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+            border: 1.5px solid #e0e7ef;
+        }
+        .tournament-detail-container h1 {
+            color: #283593;
+            font-size: 2.3rem;
+            margin-bottom: 1.2rem;
+            text-align: center;
+            letter-spacing: 1px;
+            font-weight: 700;
+            text-shadow: 0 2px 8px #e3e9f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+        }
+        .tournament-detail-container .trophy-icon {
+            width: 2.2rem;
+            height: 2.2rem;
+            vertical-align: middle;
+        }
+        .tournament-detail-container .tournament-info {
+            margin-bottom: 2.2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 1px 8px rgba(60,60,120,0.07);
+            padding: 1.2rem 1.5rem;
+        }
+        .tournament-detail-container .tournament-info p {
+            margin: 0.7rem 0;
+            font-size: 1.13rem;
+            color: #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 0.3rem;
+        }
+        .tournament-detail-container .tournament-info p:last-child {
+            border-bottom: none;
+        }
+        .tournament-detail-container .icon {
+            margin-right: 0.7rem;
+            vertical-align: middle;
+            width: 1.7em;
+            height: 1.7em;
+            opacity: 0.9;
+            border-radius: 8px;
+            box-shadow: 0 1px 6px #e3e9f7;
+            background: #f5f7fa;
+        }
+        .tournament-detail-container .badge {
+            display: inline-block;
+            padding: 0.2em 0.7em;
+            border-radius: 8px;
+            font-size: 0.98em;
+            font-weight: 600;
+            color: #fff;
+            background: #3949ab;
+            margin-left: 0.5em;
+        }
+        .tournament-detail-container .badge-true {
+            background: #43a047;
+        }
+        .tournament-detail-container .badge-false {
+            background: #e53935;
+        }
+        .tournament-detail-container .tournament-info p {
+            margin: 0.7rem 0;
+            font-size: 1.13rem;
+            color: #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 0.3rem;
+        }
+        .tournament-detail-container .tournament-info p:last-child {
+            border-bottom: none;
+        }
+        .tournament-detail-container .label {
+            font-weight: 600;
+            color: #3949ab;
+            min-width: 170px;
+            display: inline-block;
+        }
+        .tournament-detail-container .back-link {
+            display: inline-block;
+            margin-top: 1.8rem;
+            color: #fff;
+            background: linear-gradient(90deg, #3949ab 60%, #1a237e 100%);
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.08rem;
+            box-shadow: 0 2px 8px #e3e9f7;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .tournament-detail-container .back-link:hover {
+            background: linear-gradient(90deg, #1a237e 60%, #3949ab 100%);
+            box-shadow: 0 4px 16px #c5cae9;
+        }
+    </style>
+    {{!-- Título con icono de trofeo y nombre del torneo --}}
+    <h1>
+        <svg class="trophy-icon" viewBox="0 0 24 24" fill="none"><defs><radialGradient id="gold" cx="50%" cy="50%" r="80%"><stop offset="0%" stop-color="#fffde4"/><stop offset="100%" stop-color="#FFD600"/></radialGradient></defs><path d="M7 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h1v2.09A7.001 7.001 0 0 0 5 14a7 7 0 0 0 14 0 7.001 7.001 0 0 0-3-5.91V6h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H7Zm1 2V4h8v1H8Zm4 16a5 5 0 0 1-5-5c0-2.21 1.44-4.08 3.5-4.77V6h3v2.23A5.002 5.002 0 0 1 17 13a5 5 0 0 1-5 5Z" fill="url(#gold)" stroke="#FFD600" stroke-width="1.2"/><circle cx="12" cy="19" r="1.2" fill="#FFD600"/></svg>
+        {{tournament.tournament_name}}
+    </h1>
+    {{!-- Información detallada del torneo, cada campo con su icono --}}
+    <div class="tournament-info">
+    {{!-- Fecha del torneo --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V9h14v11Zm0-13H5V6h14v1Z"/><rect x="7" y="11" width="10" height="2" rx="1" fill="#3949ab"/></svg> Date:</span> {{tournament.start_date}}</p>
+    {{!-- Buy-in del torneo --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#43a047"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">$</text></svg> Buy-in:</span> ${{tournament.buy_in}}</p>
+    {{!-- Re-entry permitido --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#1976d2"><rect x="4" y="4" width="16" height="16" rx="8"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">R</text></svg> Re-entry:</span> {{tournament.re_entry}}</p>
+    {{!-- Premio por knockout --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">K</text></svg> Knockout Bounty:</span> ${{tournament.knockout_bounty}}</p>
+    {{!-- Stack inicial --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#8e24aa"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">S</text></svg> Starting Stack:</span> {{tournament.starting_stack}}</p>
+    {{!-- Cuenta para ranking --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#00bcd4"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">CR</text></svg> Count to Ranking:</span> <span class="badge badge-{{tournament.count_to_ranking}}">{{tournament.count_to_ranking}}</span></p>
+    {{!-- Doble puntaje --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff7043"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">DP</text></svg> Double Points:</span> <span class="badge badge-{{tournament.double_points}}">{{tournament.double_points}}</span></p>
+    {{!-- Niveles de ciegas --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">BL</text></svg> Blind Levels:</span> {{tournament.blind_levels}}</p>
+    {{!-- Small blind --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#43a047"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">SB</text></svg> Small Blind:</span> {{tournament.small_blind}}</p>
+    {{!-- Descuento por puntualidad --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Punctuality Discount:</span> ${{tournament.punctuality_discount}}</p>
+    </div>
+    {{!-- Enlace para volver a la lista de torneos --}}
+    <a class="back-link" href="/tournaments">&#8592; Back to list</a>
+</div>
