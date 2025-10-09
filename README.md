@@ -42,10 +42,11 @@ PokerAdmin es una API REST desarrollada en Node.js y TypeScript para la gestión
 	- Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido (ajusta los valores según tu entorno):
 	  ```env
 	  DB_NAME=nombre_db
-	  DB_USER=usuario
-	  DB_PASS=contraseña
+	  DB_USERNAME=usuario
+	  DB_PASSWORD=contraseña
 	  DB_HOST=localhost
 	  DB_DIALECT=mysql
+	  DB_PORT=3306
 	  ```
 
 4. **Ejecuta el servidor en modo desarrollo:**
