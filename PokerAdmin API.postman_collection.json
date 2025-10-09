@@ -1,0 +1,239 @@
+{
+  "info": {
+    "name": "PokerAdmin API",
+    "_postman_id": "dbe7d57f-32a5-4b13-b8b1-3d4a81294ac7",
+    "description": "Colección de endpoints para probar la API de PokerAdmin (Players, Tournaments, Registrations, Results).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Ping Test",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/api/ping", "host": ["{{base_url}}"], "path": ["api", "ping"] }
+      }
+    },
+    {
+      "name": "Players",
+      "item": [
+        {
+          "name": "Get All Players",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/players", "host": ["{{base_url}}"], "path": ["api", "players"] }
+          }
+        },
+        {
+          "name": "Get Player by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/players/1", "host": ["{{base_url}}"], "path": ["api", "players", "1"] }
+          }
+        },
+        {
+          "name": "Create Player",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"email\": \"juan.perez@example.com\",\n  \"phone_number\": \"111111111\",\n  \"nickname\": \"Juampi\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/players", "host": ["{{base_url}}"], "path": ["api", "players"] }
+          }
+        },
+        {
+          "name": "Update Player",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nickname\": \"JPerez\",\n  \"suspended\": false\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/players/1", "host": ["{{base_url}}"], "path": ["api", "players", "1"] }
+          }
+        },
+        {
+          "name": "Delete Player",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/players/1", "host": ["{{base_url}}"], "path": ["api", "players", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tournaments",
+      "item": [
+        {
+          "name": "Get All Tournaments",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/tournaments", "host": ["{{base_url}}"], "path": ["api", "tournaments"] } }
+        },
+        {
+          "name": "Search Tournament by Name",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/tournaments/search?name=Major", "host": ["{{base_url}}"], "path": ["api", "tournaments", "search"], "query": [{ "key": "name", "value": "Major" }] } }
+        },
+        {
+          "name": "Create Tournament",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tournament_name\": \"Friday Night\",\n  \"start_date\": \"2025-10-10\",\n  \"buy_in\": 80000,\n  \"re_entry\": 1,\n  \"knockout_bounty\": 0,\n  \"starting_stack\": 40000,\n  \"count_to_ranking\": true,\n  \"double_points\": false,\n  \"blind_levels\": 12,\n  \"small_blind\": 200,\n  \"punctuality_discount\": 15\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/tournaments", "host": ["{{base_url}}"], "path": ["api", "tournaments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Registrations",
+      "item": [
+        {
+          "name": "Get All Registrations",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/registrations", "host": ["{{base_url}}"], "path": ["api", "registrations"] } }
+        },
+        {
+          "name": "Register Player in Tournament",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"player_id\": 1,\n  \"tournament_id\": 2,\n  \"punctuality\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/registrations", "host": ["{{base_url}}"], "path": ["api", "registrations"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Results",
+      "item": [
+        {
+          "name": "Get All Results",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/results", "host": ["{{base_url}}"], "path": ["api", "results"] } }
+        },
+        {
+          "name": "Create Result",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tournament_id\": 2,\n  \"player_id\": 1,\n  \"position\": 3\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/results", "host": ["{{base_url}}"], "path": ["api", "results"] }
+          }
+        }
+      ]
+    }
+  ,
+    {
+      "name": "Cash Games",
+      "item": [
+        {
+          "name": "Get All Cash Games",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/cash-games", "host": ["{{base_url}}"], "path": ["api", "cash-games"] }
+          }
+        },
+        {
+          "name": "Get Cash Game by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/cash-games/1", "host": ["{{base_url}}"], "path": ["api", "cash-games", "1"] }
+          }
+        },
+        {
+          "name": "Create Cash Game",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"player_id\": 1,\n  \"amount\": 5000,\n  \"date\": \"2025-10-05\",\n  \"description\": \"Ganancia mesa cash\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/cash-games", "host": ["{{base_url}}"], "path": ["api", "cash-games"] }
+          }
+        },
+        {
+          "name": "Update Cash Game",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 6000,\n  \"description\": \"Actualización de ganancia\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/cash-games/1", "host": ["{{base_url}}"], "path": ["api", "cash-games", "1"] }
+          }
+        },
+        {
+          "name": "Delete Cash Game",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/cash-games/1", "host": ["{{base_url}}"], "path": ["api", "cash-games", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Seasons",
+      "item": [
+        {
+          "name": "Get All Seasons",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/seasons", "host": ["{{base_url}}"], "path": ["api", "seasons"] }
+          }
+        },
+        {
+          "name": "Get Season by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/seasons/1", "host": ["{{base_url}}"], "path": ["api", "seasons", "1"] }
+          }
+        },
+        {
+          "name": "Create Season",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pica\",\n  \"descripcion\": \"Temporada temática\",\n  \"fecha_inicio\": \"2025-01-01\",\n  \"fecha_fin\": \"2025-12-31\",\n  \"torneos_totales\": 32,\n  \"torneos_jugados\": 0,\n  \"estado\": \"planificada\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/seasons", "host": ["{{base_url}}"], "path": ["api", "seasons"] }
+          }
+        },
+        {
+          "name": "Update Season",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Actualización\",\n  \"estado\": \"activa\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/seasons/1", "host": ["{{base_url}}"], "path": ["api", "seasons", "1"] }
+          }
+        },
+        {
+          "name": "Delete Season",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/seasons/1", "host": ["{{base_url}}"], "path": ["api", "seasons", "1"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" }
+  ]
+}
