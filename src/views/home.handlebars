@@ -1,6 +1,26 @@
 {{!-- Home de PokerAdmin con botón a ver torneos --}}
-<div class="home-card">
-    <img src="/images/logo_ramos_poker_3d.jpg" alt="Logo PokerAdmin" style="width:160px; margin-bottom:1.5rem; border-radius:50%; filter:drop-shadow(0 0 20px rgba(255,215,0,0.5));">
-    <h1>PokerAdmin</h1>
-    <p>Bienvenido a PokerAdmin, tu sistema para gestionar torneos de poker de manera profesional y sencilla.</p>
-    <a class="btn" href="/tournaments">Ver torneos</a>
+<div class="home-card" style="position:relative; min-height:480px;">
+    <!-- Cartas flotando -->
+    <div class="card" style="top:12%; left:8%; animation-delay:0s;">
+      <span style="font-size:2.2rem; color:#e53935;">K♥</span>
+    </div>
+    <div class="card" style="top:25%; right:10%; animation-delay:2s;">
+      <span style="font-size:2.2rem; color:#e53935;">9♥</span>
+    </div>
+    <div class="card" style="bottom:18%; left:15%; animation-delay:4s;">
+      <span style="font-size:2.2rem; color:#388e3c;">7♣</span>
+    </div>
+    <div class="card" style="bottom:10%; right:12%; animation-delay:6s;">
+      <span style="font-size:2.2rem; color:#222;">A♠</span>
+    </div>
+    <div class="card" style="top:45%; left:45%; transform:rotate(0deg); animation-delay:8s;">
+      <span style="font-size:2.2rem; color:#222;">J♠</span>
+    </div>
+    <!-- Logo centrado -->
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <img src="/images/logo_ramos_poker_3d.jpg" alt="Logo PokerAdmin" style="width:160px; margin-bottom:1.5rem; border-radius:50%; filter:drop-shadow(0 0 20px rgba(255,215,0,0.5)); display:block; margin-left:auto; margin-right:auto;">
+      <h1>PokerAdmin</h1>
+      <p>Bienvenido a PokerAdmin, tu sistema para gestionar torneos de poker de manera profesional y sencilla.</p>
+      <a class="btn" href="/tournaments">Ver torneos</a>
+    </div>
+</div>

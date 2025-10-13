@@ -1,0 +1,14 @@
+{{! Vista de inicio de sesión }}
+<div class="home-card" style="max-width:400px; margin:60px auto;">
+  <h1>Iniciar sesión</h1>
+  {{#if error}}
+    <div class="error-message" style="color:#e53935; margin-bottom:1rem; font-weight:600;">{{error}}</div>
+  {{/if}}
+  <form method="POST" action="/login" class="login-form">
+    <label for="username">Usuario</label>
+    <input type="text" id="username" name="username" required autofocus autocomplete="username">
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password">
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+</div>

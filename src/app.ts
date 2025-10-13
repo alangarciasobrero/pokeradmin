@@ -1,5 +1,6 @@
 import express from 'express'; // Framework principal para crear el servidor web
 import path from 'path'; // Módulo para manejar rutas de archivos y carpetas
+import session from 'express-session';
 
 import { engine } from 'express-handlebars'; // Motor de plantillas Handlebars para vistas
 
@@ -10,12 +11,22 @@ import registrationRoutes from './routes/registrationRoutes'
 import cashGameRoutes from './routes/cashGameRoutes'; 
 import resultRoutes from './routes/resultRoutes';
 import seasonRoutes from './routes/seasonRoutes';
-
-// Importa las rutas del SSR (Server Side Rendering)
+import authRoutes from './routes/authRoutes';
 import tournamentWebRoutes from './routes/tournamentWebRoutes';
+
 
 // Crea la aplicación Express (Una instancia de un servidor web)
 const app = express();
+
+// Configuración de sesión
+app.use(session({
+	secret: process.env.SESSION_SECRET || 'pokeradmin_secret',
+	resave: false,
+	saveUninitialized: false,
+	cookie: { maxAge: 1000 * 60 * 60 * 2 } // 2 horas
+}));
+// Servir archivos estáticos desde la carpeta 'public'
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Configuración del motor de vistas Handlebars
 // 'engine' registra Handlebars como motor de plantillas
@@ -27,30 +38,41 @@ app.engine('handlebars', engine({
 }));
 // Define que las vistas usarán el motor 'handlebars'
 app.set('view engine', 'handlebars');
-// Define la carpeta donde están las vistas
-app.set('views', path.join(__dirname, 'views'));
+// Define la carpeta donde están las vistas (siempre apunta a src/views)
+app.set('views', path.join(__dirname, '..', 'src', 'views'));
+
 
 // Permite a Express entender JSON en las peticiones
 app.use(express.json());
 // Permite a Express entender datos de formularios (urlencoded)
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas web (SSR): renderizan vistas HTML usando Handlebars
-// Ejemplo: GET /tournaments muestra la lista de torneos en una página web
-app.use('/tournaments', tournamentWebRoutes);
+// Rutas de autenticación (login/logout)
+app.use(authRoutes);
 
-// Home principal de PokerAdmin (no depende de tournaments)
-app.get('/', (req, res) => {
-    res.render('home');
+// Middleware para proteger rutas privadas
+function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+	if (!req.session.userId) {
+		return res.redirect('/login');
+	}
+	next();
+}
+
+// Rutas web (SSR): protegidas
+app.use('/tournaments', requireAuth, tournamentWebRoutes);
+
+// Home principal: protegida
+app.get('/', requireAuth, (req, res) => {
+	res.render('home');
 });
 
-// Rutas API REST: devuelven y reciben datos en formato JSON
-app.use('/api/tournaments', tournamentRoutes);
-app.use('/api/players', playerRoutes);
-app.use('/api/registrations', registrationRoutes);
-app.use('/api/results', resultRoutes);
-app.use('/api/cash-games', cashGameRoutes);
-app.use('/api/seasons', seasonRoutes);
+// Rutas API REST: protegidas
+app.use('/api/tournaments', requireAuth, tournamentRoutes);
+app.use('/api/players', requireAuth, playerRoutes);
+app.use('/api/registrations', requireAuth, registrationRoutes);
+app.use('/api/results', requireAuth, resultRoutes);
+app.use('/api/cash-games', requireAuth, cashGameRoutes);
+app.use('/api/seasons', requireAuth, seasonRoutes);
 
 // Exporta la app para usarla en server.ts
 export default app;
