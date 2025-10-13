@@ -26,6 +26,10 @@ router.post('/login', async (req: Request, res: Response) => {
   // Guardar usuario en sesión
   req.session.userId = user.id;
   req.session.username = user.username;
+  req.session.role = user.role;
+  if (user.role === 'admin') {
+    return res.redirect('/admin/dashboard');
+  }
   res.redirect('/');
 });
 

@@ -1,3 +1,4 @@
+/// <reference types="express-session" />
 import express from 'express'; // Framework principal para crear el servidor web
 import path from 'path'; // Módulo para manejar rutas de archivos y carpetas
 import session from 'express-session';
@@ -51,6 +52,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authRoutes);
 
 // Middleware para proteger rutas privadas
+
 function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
 	if (!req.session.userId) {
 		return res.redirect('/login');
@@ -58,11 +60,30 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
 	next();
 }
 
+// Middleware para proteger rutas solo para admins
+function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+	if (!req.session.userId || req.session.role !== 'admin') {
+		return res.status(403).send('Acceso denegado');
+	}
+	next();
+}
+
 // Rutas web (SSR): protegidas
 app.use('/tournaments', requireAuth, tournamentWebRoutes);
 
-// Home principal: protegida
+
+// Dashboard de admin
+app.get('/admin/dashboard', requireAdmin, (req, res) => {
+	res.render('admin_dashboard', {
+		username: req.session.username || 'admin'
+	});
+});
+
+// Home principal: protegida (puede redirigir a dashboard si es admin)
 app.get('/', requireAuth, (req, res) => {
+	if (req.session.role === 'admin') {
+		return res.redirect('/admin/dashboard');
+	}
 	res.render('home');
 });
 

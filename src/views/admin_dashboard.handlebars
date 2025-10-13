@@ -1,0 +1,27 @@
+{{! views/admin_dashboard.handlebars }}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Panel de Administración</h1>
+        <nav>
+            <ul>
+                <li><a href="/admin/users">Usuarios</a></li>
+                <li><a href="/admin/games">Partidas</a></li>
+                <li><a href="/admin/reports">Reportes</a></li>
+                <li><a href="/admin/settings">Configuración</a></li>
+                <li><a href="/logout">Cerrar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Bienvenido, {{username}}!</h2>
+        <p>Selecciona una opción del menú para comenzar.</p>
+    </main>
+</body>
+</html>
