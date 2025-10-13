@@ -1,0 +1,288 @@
+/* PokerAdmin - Estilos base para todo el sistema */
+
+body {
+  margin: 0;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  background: radial-gradient(circle at 30% 20%, #0b0c10 0%, #14161b 80%);
+  color: #fff;
+  min-height: 100vh;
+}
+
+/* Contenedor principal de cada vista */
+.main-wrapper, .home-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Cartas animadas (puedes usar en cualquier vista) */
+.card {
+  position: absolute;
+  width: 90px;
+  height: 130px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  transform: rotate(15deg);
+  animation: floatCard 12s infinite ease-in-out;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.1));
+}
+.card::before {
+  content: "♠";
+  font-size: 1.8rem;
+  color: rgba(255, 255, 255, 0.2);
+  position: absolute;
+  top: 6px; left: 10px;
+}
+@keyframes floatCard {
+  0% { transform: translateY(0) rotate(5deg); opacity: 0.7; }
+  50% { transform: translateY(-25px) rotate(-10deg); opacity: 1; }
+  100% { transform: translateY(0) rotate(5deg); opacity: 0.7; }
+}
+
+/* Brillos suaves */
+.glow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,215,0,0.05) 0%, transparent 70%);
+  animation: pulseGlow 6s ease-in-out infinite alternate;
+  filter: blur(50px);
+  z-index: 0;
+}
+@keyframes pulseGlow {
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* Tarjetas principales */
+.home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {
+  background: rgba(30, 30, 45, 0.85);
+  backdrop-filter: blur(6px);
+  border-radius: 20px;
+  border: 1.2px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+  padding: 2.8rem 3rem;
+  max-width: 650px;
+  margin: 48px auto;
+  z-index: 2;
+  animation: fadeIn 1.3s ease-in-out;
+  color: #fff;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.home-card img, .pa-card img {
+  width: 160px;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+  animation: logoPulse 4s infinite ease-in-out alternate;
+  border-radius: 50%;
+}
+@keyframes logoPulse {
+  0% { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.3)); }
+  100% { filter: drop-shadow(0 0 24px rgba(255, 215, 0, 0.8)); }
+}
+
+.home-card h1, .pa-card h1, .tournament-list-container h1, .tournament-detail-container h1, .tournament-form-container h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #FFD700;
+  margin-bottom: 1rem;
+}
+
+.home-card p, .pa-card p, .tournament-list-container p, .tournament-detail-container p, .tournament-form-container p {
+  font-size: 1.15rem;
+  color: #dfe6ff;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* Botones principales */
+.btn, .main-actions a, .add-tournament-btn, .back-link, .tournament-form button {
+  display: inline-block;
+  background: linear-gradient(90deg, #e53935 0%, #b71c1c 100%);
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  padding: 0.9rem 2.4rem;
+  box-shadow: 0 3px 12px rgba(229, 57, 53, 0.5);
+  border: none;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.btn:hover, .main-actions a:hover, .add-tournament-btn:hover, .back-link:hover, .tournament-form button:hover {
+  background: linear-gradient(90deg, #b71c1c 0%, #e53935 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(229, 57, 53, 0.8);
+}
+
+/* Listas y cajas de torneos */
+.tournament-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2.2rem 0;
+}
+.tournament-list li {
+  background: none;
+  border-radius: 10px;
+  margin-bottom: 1.1rem;
+  padding: 0;
+  box-shadow: none;
+  display: block;
+  transition: none;
+  cursor: pointer;
+}
+.tournament-list .tournament-box-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #23243a;
+  border-radius: 10px;
+  box-shadow: 0 1px 8px rgba(60, 60, 120, 0.07);
+  padding: 1.1rem 1.5rem;
+  color: #FFD700;
+  font-size: 1.18rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: box-shadow 0.2s, color 0.2s;
+  cursor: pointer;
+}
+.tournament-list .tournament-box-link:hover {
+  box-shadow: 0 4px 16px #FFD700;
+  color: #fff;
+  text-decoration: none;
+}
+.tournament-list .tournament-date {
+  color: #FFD700;
+  font-size: 1.05rem;
+  font-weight: 500;
+  background: #23243a;
+  border-radius: 6px;
+  padding: 0.2rem 0.7rem;
+  margin-left: 1.2rem;
+}
+
+/* Formularios */
+.tournament-form label {
+  font-weight: 600;
+  color: #FFD700;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.5px;
+}
+.tournament-form input,
+.tournament-form select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #FFD700;
+  font-size: 1.12rem;
+  background: #fff;
+  color: #23243a;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #FFD70033;
+}
+.tournament-form input:focus,
+.tournament-form select:focus {
+  border: 1.5px solid #e53935;
+  outline: none;
+  box-shadow: 0 2px 12px #FFD70099;
+}
+
+/* Detalles de torneo */
+.tournament-detail-container .label {
+  font-weight: 600;
+  color: #FFD700;
+  min-width: 170px;
+  display: inline-block;
+}
+.tournament-detail-container .badge {
+  display: inline-block;
+  padding: 0.2em 0.7em;
+  border-radius: 8px;
+  font-size: 0.98em;
+  font-weight: 600;
+  color: #fff;
+  background: #3949ab;
+  margin-left: 0.5em;
+}
+.tournament-detail-container .badge-true {
+  background: #43a047;
+}
+.tournament-detail-container .badge-false {
+  background: #e53935;
+}
+
+/* Footer y header */
+.pa-footer {
+  background: transparent;
+  color: #FFD700;
+  text-align: center;
+  padding: 1.1rem 0 1.1rem 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  margin-top: 3rem;
+  border-top: 1.5px solid #FFD70033;
+}
+.pa-footer .footer-link {
+  color: #FFD700;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}
+.pa-footer .footer-link:hover {
+  color: #fff;
+}
+.pa-header {
+  background: transparent;
+  color: #FFD700;
+  padding: 1.2rem 0 1.2rem 0;
+  text-align: center;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  box-shadow: none;
+  position: relative;
+}
+.pa-header .logo {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.7rem;
+}
+.pa-header .nav {
+  margin-top: 0.5rem;
+}
+.pa-header .nav a {
+  color: #FFD700;
+  text-decoration: none;
+  margin: 0 1.2rem;
+  font-size: 1.08rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.pa-header .nav a:hover {
+  color: #fff;
+}
+
+/* Utilidades */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+/* Responsive básico */
+@media (max-width: 700px) {
+  .home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {
+    padding: 1.2rem 0.5rem;
+    max-width: 98vw;
+  }
+}

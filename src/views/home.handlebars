@@ -1,61 +1,6 @@
 {{!-- Home de PokerAdmin con botón a ver torneos --}}
-<div class="home-container">
-    <style>
-        .home-container {
-            max-width: 540px;
-            margin: 56px auto;
-            background: linear-gradient(135deg, #f8fafc 0%, #e3e9f7 100%);
-            border-radius: 18px;
-            box-shadow: 0 6px 32px rgba(60,60,120,0.13);
-            padding: 2.8rem 2.8rem 2.5rem 2.8rem;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            border: 1.5px solid #e0e7ef;
-            text-align: center;
-        }
-        .home-container h1 {
-            color: #e53935;
-            font-size: 2.5rem;
-            margin-bottom: 1.2rem;
-            letter-spacing: 2px;
-            font-weight: 800;
-            text-shadow: 0 2px 8px #e3e9f7;
-        }
-        .home-container .diamond {
-            display: block;
-            margin: 0 auto 1.5rem auto;
-        }
-        .home-container p {
-            color: #283593;
-            font-size: 1.18rem;
-            margin-bottom: 2.2rem;
-        }
-        .home-container .main-actions {
-            margin-top: 2.2rem;
-        }
-        .home-container .main-actions a {
-            display: inline-block;
-            color: #fff;
-            background: linear-gradient(90deg, #3949ab 60%, #1a237e 100%);
-            padding: 0.8rem 2.2rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.18rem;
-            box-shadow: 0 2px 8px #e3e9f7;
-            transition: background 0.2s, box-shadow 0.2s;
-        }
-        .home-container .main-actions a:hover {
-            background: linear-gradient(90deg, #1a237e 60%, #3949ab 100%);
-            box-shadow: 0 4px 16px #c5cae9;
-        }
-    </style>
-    <svg class="diamond" width="54" height="54" viewBox="0 0 38 38" fill="none">
-        <polygon points="19,5 33,19 19,33 5,19" fill="#e53935" stroke="#3949ab" stroke-width="2.2"/>
-        <polygon points="19,8 30,19 19,30 8,19" fill="#FFD6D6" opacity="0.5"/>
-    </svg>
+<div class="home-card">
+    <img src="/images/logo_ramos_poker_3d.jpg" alt="Logo PokerAdmin" style="width:160px; margin-bottom:1.5rem; border-radius:50%; filter:drop-shadow(0 0 20px rgba(255,215,0,0.5));">
     <h1>PokerAdmin</h1>
-    <p>Bienvenido a PokerAdmin, la plataforma moderna para gestionar torneos de poker en tu club.</p>
-    <div class="main-actions">
-        <a href="/tournaments">Ver Torneos</a>
-    </div>
-</div>
+    <p>Bienvenido a PokerAdmin, tu sistema para gestionar torneos de poker de manera profesional y sencilla.</p>
+    <a class="btn" href="/tournaments">Ver torneos</a>

@@ -1,133 +1,41 @@
 {{!-- Formulario para crear o editar un torneo --}}
 <div class="tournament-form-container">
-    {{!-- Estilos embebidos para el formulario --}}
-    <style>
-        .tournament-form-container {
-            max-width: 540px;
-            margin: 48px auto;
-            background: linear-gradient(135deg, #f8fafc 0%, #e3e9f7 100%);
-            border-radius: 18px;
-            box-shadow: 0 6px 32px rgba(60,60,120,0.13);
-            padding: 2.5rem 2.8rem 2.5rem 2.8rem;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            border: 1.5px solid #e0e7ef;
-        }
-        .tournament-form-container h1 {
-            color: #283593;
-            font-size: 2.1rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            letter-spacing: 1px;
-            font-weight: 700;
-            text-shadow: 0 2px 8px #e3e9f7;
-        }
-        .tournament-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.3rem;
-        }
-        .tournament-form label {
-            font-weight: 600;
-            color: #3949ab;
-            margin-bottom: 0.3rem;
-            letter-spacing: 0.5px;
-        }
-        .tournament-form input,
-        .tournament-form select {
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            border: 1.5px solid #c5cae9;
-            font-size: 1.12rem;
-            background: #fff;
-            transition: border 0.2s, box-shadow 0.2s;
-            box-shadow: 0 1px 6px #e3e9f7;
-        }
-        .tournament-form input:focus,
-        .tournament-form select:focus {
-            border: 1.5px solid #3949ab;
-            outline: none;
-            box-shadow: 0 2px 12px #c5cae9;
-        }
-        .tournament-form button {
-            margin-top: 1.5rem;
-            background: linear-gradient(90deg, #3949ab 60%, #1a237e 100%);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 0.85rem 1.7rem;
-            font-size: 1.13rem;
-            font-weight: 700;
-            box-shadow: 0 2px 8px #e3e9f7;
-            cursor: pointer;
-            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-        }
-        .tournament-form button:hover {
-            background: linear-gradient(90deg, #1a237e 60%, #3949ab 100%);
-            box-shadow: 0 4px 16px #c5cae9;
-            transform: translateY(-2px) scale(1.03);
-        }
-        .tournament-form input[type="number"]::-webkit-inner-spin-button,
-        .tournament-form input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .tournament-form input[type="number"] {
-            -moz-appearance: textfield;
-        }
-        /* NUEVO: Layout para dos columnas */
-        .tournament-form-columns {
-            display: flex;
-            gap: 2.5rem;
-            margin-top: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-        .tournament-form-col {
-            flex: 1 1 0;
-            display: flex;
-            flex-direction: column;
-            gap: 1.1rem;
-        }
-    </style>
     <h1>{{formTitle}}</h1>
     <form class="tournament-form" action="{{formAction}}" method="POST">
-        {{!-- Campo: Nombre del torneo --}}
-        <label for="tournament_name">Name:</label>
+        <label for="tournament_name">Nombre del torneo:</label>
         <input type="text" id="tournament_name" name="tournament_name" value="{{tournament.tournament_name}}" required>
-        {{!-- Campo: Fecha --}}
-        <label for="start_date">Date:</label>
+        <label for="start_date">Fecha:</label>
         <input type="date" id="start_date" name="start_date" value="{{tournament.start_date}}" required>
         <div class="tournament-form-columns">
             <div class="tournament-form-col">
-                {{!-- Campos numéricos principales --}}
                 <label for="buy_in">Buy-in:</label>
                 <input type="number" id="buy_in" name="buy_in" value="{{tournament.buy_in}}" required>
                 <label for="re_entry">Re-entry:</label>
                 <input type="number" id="re_entry" name="re_entry" value="{{tournament.re_entry}}" required>
-                <label for="knockout_bounty">Knockout Bounty:</label> {{!-- Premio por eliminar a un jugador --}}
+                <label for="knockout_bounty">Bounty por eliminación:</label>
                 <input type="number" id="knockout_bounty" name="knockout_bounty" value="{{tournament.knockout_bounty}}" required>
-                <label for="starting_stack">Starting Stack:</label> {{!-- Fichas iniciales --}}
+                <label for="starting_stack">Stack inicial:</label>
                 <input type="number" id="starting_stack" name="starting_stack" value="{{tournament.starting_stack}}" required>
-                <label for="double_points">Double Points:</label> {{!-- ¿Otorga doble puntaje? --}}
+                <label for="double_points">Doble puntaje:</label>
                 <select id="double_points" name="double_points" required>
-                    <option value="true" {{#if tournament.double_points}}selected{{/if}}>Yes</option>
+                    <option value="true" {{#if tournament.double_points}}selected{{/if}}>Sí</option>
                     <option value="false" {{#unless tournament.double_points}}selected{{/unless}}>No</option>
                 </select>
             </div>
             <div class="tournament-form-col">
-                {{!-- Campos secundarios y booleanos --}}
-                <label for="blind_levels">Blind Levels:</label> {{!-- Niveles de ciegas --}}
+                <label for="blind_levels">Niveles de ciegas:</label>
                 <input type="number" id="blind_levels" name="blind_levels" value="{{tournament.blind_levels}}" required>
-                <label for="small_blind">Small Blind:</label> {{!-- Valor de la ciega chica --}}
+                <label for="small_blind">Small Blind:</label>
                 <input type="number" id="small_blind" name="small_blind" value="{{tournament.small_blind}}" required>
-                <label for="punctuality_discount">Punctuality Discount:</label> {{!-- Descuento por puntualidad --}}
+                <label for="punctuality_discount">Descuento por puntualidad:</label>
                 <input type="number" id="punctuality_discount" name="punctuality_discount" value="{{tournament.punctuality_discount}}" required>
-                <label for="count_to_ranking">Count to Ranking:</label> {{!-- ¿Cuenta para el ranking? --}}
+                <label for="count_to_ranking">Cuenta para ranking:</label>
                 <select id="count_to_ranking" name="count_to_ranking" required>
-                    <option value="true" {{#if tournament.count_to_ranking}}selected{{/if}}>Yes</option>
+                    <option value="true" {{#if tournament.count_to_ranking}}selected{{/if}}>Sí</option>
                     <option value="false" {{#unless tournament.count_to_ranking}}selected{{/unless}}>No</option>
                 </select>
             </div>
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit">Guardar</button>
     </form>
 </div>
