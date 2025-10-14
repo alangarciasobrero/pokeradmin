@@ -1,0 +1,72 @@
+{{! Formulario para crear o editar usuario }}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{formTitle}}</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{formTitle}}</h1>
+        <nav>
+            <ul>
+                <li><a href="/admin/dashboard">Dashboard</a></li>
+                <li><a href="/admin/users">Usuarios</a></li>
+                <li><a href="/admin/games">Partidas</a></li>
+                <li><a href="/admin/reports">Reportes</a></li>
+                <li><a href="/admin/settings">Configuración</a></li>
+                <li><a href="/logout">Cerrar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <form method="POST" action="{{formAction}}">
+            <label for="username">Usuario</label>
+            <input type="text" id="username" name="username" value="{{user.username}}" required>
+            <label for="full_name">Nombre completo</label>
+            <input type="text" id="full_name" name="full_name" value="{{user.full_name}}">
+                        <label for="role">Rol</label>
+                        <select id="role" name="role">
+                                <option value="admin" {{#if (eq user.role 'admin')}}selected{{/if}}>Admin</option>
+                                <option value="user" {{#if (eq user.role 'user')}}selected{{/if}}>Usuario</option>
+                        </select>
+
+                        <label>Avatar</label>
+                        <div style="display:flex; align-items:center; gap:1.5rem;">
+                                {{#if user.avatar}}
+                                    <img src="{{user.avatar}}" alt="avatar" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
+                                {{else}}
+                                    <span style="color:#aaa;">Sin avatar</span>
+                                {{/if}}
+                                <input type="file" name="avatarFile" accept="image/*">
+                        </div>
+                        <div style="margin:1rem 0;">
+                                <label>O elegir de la galería:</label>
+                                <div style="display:flex; gap:0.7rem; flex-wrap:wrap;">
+                                    {{#each gallery}}
+                                        <label style="cursor:pointer;">
+                                            <input type="radio" name="avatarGallery" value="{{this}}" {{#if (eq ../user.avatar this)}}checked{{/if}}>
+                                            <img src="{{this}}" alt="avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #FFD700;">
+                                        </label>
+                                    {{/each}}
+                                </div>
+                        </div>
+            <label for="password">Contraseña {{#unless user.id}}(obligatoria){{else}}(dejar vacío para no cambiar){{/unless}}</label>
+            <input type="password" id="password" name="password" {{#unless user.id}}required{{/unless}}>
+            <button type="submit">Guardar</button>
+        </form>
+        {{#if user.id}}
+        <form method="POST" action="/admin/users/{{user.id}}/delete" style="margin-top:2rem;">
+            <button type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar usuario</button>
+        </form>
+        {{/if}}
+        <hr>
+        <h3>Importar usuarios desde archivo</h3>
+        <form method="POST" action="/admin/users/import" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".csv,.xlsx" required>
+            <button type="submit">Importar</button>
+        </form>
+    </main>
+</body>
+</html>

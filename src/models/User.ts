@@ -7,6 +7,7 @@ export class User extends Model {
   public password_hash!: string;
   public full_name?: string;
   public role!: 'admin' | 'user';
+  public avatar?: string; // URL o path del avatar
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -30,6 +31,12 @@ User.init(
     full_name: {
       type: DataTypes.STRING(100),
       allowNull: true,
+    },
+    avatar: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+      comment: 'URL o path del avatar',
     },
     role: {
       type: DataTypes.ENUM('admin', 'user'),

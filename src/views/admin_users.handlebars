@@ -27,6 +27,7 @@
             <thead>
                 <tr>
                     <th>ID</th>
+                    <th>Avatar</th>
                     <th>Usuario</th>
                     <th>Nombre completo</th>
                     <th>Rol</th>
@@ -37,6 +38,13 @@
                 {{#each users}}
                 <tr>
                     <td>{{id}}</td>
+                    <td>
+                        {{#if avatar}}
+                          <img src="{{avatar}}" alt="avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                        {{else}}
+                          <span style="color:#aaa;">Sin avatar</span>
+                        {{/if}}
+                    </td>
                     <td>{{username}}</td>
                     <td>{{full_name}}</td>
                     <td>{{role}}</td>
