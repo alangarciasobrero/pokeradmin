@@ -14,6 +14,7 @@ import resultRoutes from './routes/resultRoutes';
 import seasonRoutes from './routes/seasonRoutes';
 import authRoutes from './routes/authRoutes';
 import tournamentWebRoutes from './routes/tournamentWebRoutes';
+import adminUserRoutes from './routes/adminUserRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -68,8 +69,11 @@ function requireAdmin(req: express.Request, res: express.Response, next: express
 	next();
 }
 
+
 // Rutas web (SSR): protegidas
 app.use('/tournaments', requireAuth, tournamentWebRoutes);
+// Gestión de usuarios (admin)
+app.use('/admin/users', adminUserRoutes);
 
 
 // Dashboard de admin

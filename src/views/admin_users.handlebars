@@ -1,0 +1,55 @@
+{{! views/admin_users.handlebars }}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Usuarios</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Gestión de Usuarios</h1>
+        <nav>
+            <ul>
+                <li><a href="/admin/dashboard">Dashboard</a></li>
+                <li><a href="/admin/users">Usuarios</a></li>
+                <li><a href="/admin/games">Partidas</a></li>
+                <li><a href="/admin/reports">Reportes</a></li>
+                <li><a href="/admin/settings">Configuración</a></li>
+                <li><a href="/logout">Cerrar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Usuarios registrados</h2>
+        <a href="/admin/users/new">+ Nuevo usuario</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Nombre completo</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each users}}
+                <tr>
+                    <td>{{id}}</td>
+                    <td>{{username}}</td>
+                    <td>{{full_name}}</td>
+                    <td>{{role}}</td>
+                    <td>
+                        <a href="/admin/users/{{id}}/edit">Editar</a> |
+                        <form action="/admin/users/{{id}}/delete" method="POST" style="display:inline">
+                            <button type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
