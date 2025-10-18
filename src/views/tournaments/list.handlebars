@@ -1,15 +1,27 @@
 {{!-- Vista de lista de torneos --}}
 <div class="tournament-list-container">
     <h1>Lista de Torneos</h1>
-    <ul class="tournament-list">
+    {{#if tournaments.length}}
+      <div class="games-list">
         {{#each tournaments}}
-        <li>
-            <a class="tournament-link tournament-box-link" href="/tournaments/{{this.id}}">
-                <span>{{this.tournament_name}}</span>
-                <span class="tournament-date">{{this.start_date}}</span>
-            </a>
-        </li>
+          <div class="game-card">
+            <div class="game-info">
+              <div><strong>Nombre:</strong> {{tournament_name}}</div>
+              <div><strong>Fecha:</strong> {{start_date}}</div>
+              <div><strong>Buy-in:</strong> ${{buy_in}}</div>
+              <div><strong>Stack inicial:</strong> {{starting_stack}}</div>
+            </div>
+          </div>
         {{/each}}
-    </ul>
+      </div>
+    {{else}}
+      <div class="empty-list">No hay torneos registrados.</div>
+    {{/if}}
     <a class="add-tournament-btn" href="/tournaments/new">Agregar Torneo</a>
 </div>
+<style>
+.games-list { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.game-card { background: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding: 1rem 1.5rem; min-width: 220px; }
+.game-info { font-size: 1rem; }
+.empty-list { color: #888; font-style: italic; margin-top: 1rem; }
+</style>

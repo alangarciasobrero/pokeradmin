@@ -5,9 +5,13 @@ const router = express.Router();
 
 // Validación básica para cash_games
 function validateCashGame(req: Request, res: Response, next: Function) {
-  const { player_id, amount, date } = req.body;
-  if (!player_id || typeof player_id !== 'number') {
-    return res.status(400).json({ error: 'player_id es requerido y debe ser numérico.' });
+  // Aceptar legacy `player_id` y normalizar a `user_id`
+  if (req.body.player_id && !req.body.user_id) {
+    req.body.user_id = req.body.player_id;
+  }
+  const { user_id, amount, date } = req.body;
+  if (!user_id || typeof user_id !== 'number') {
+    return res.status(400).json({ error: 'user_id es requerido y debe ser numérico.' });
   }
   if (amount === undefined || isNaN(Number(amount))) {
     return res.status(400).json({ error: 'amount es requerido y debe ser numérico.' });

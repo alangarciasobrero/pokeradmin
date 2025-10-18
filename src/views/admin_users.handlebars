@@ -1,63 +1,46 @@
 {{! views/admin_users.handlebars }}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestión de Usuarios</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>Gestión de Usuarios</h1>
-        <nav>
-            <ul>
-                <li><a href="/admin/dashboard">Dashboard</a></li>
-                <li><a href="/admin/users">Usuarios</a></li>
-                <li><a href="/admin/games">Partidas</a></li>
-                <li><a href="/admin/reports">Reportes</a></li>
-                <li><a href="/admin/settings">Configuración</a></li>
-                <li><a href="/logout">Cerrar sesión</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <h2>Usuarios registrados</h2>
-        <a href="/admin/users/new">+ Nuevo usuario</a>
-        <table>
+<div class="tournament-list-container" style="max-width:900px;">
+    <h1 style="margin-bottom:2.2rem;">Gestión de Usuarios</h1>
+    <div class="main-actions" style="margin-bottom:1.5rem; text-align:right;">
+        <a class="btn" href="/admin/users/new">+ Nuevo usuario</a>
+    </div>
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:separate; border-spacing:0 0.7rem;">
             <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Avatar</th>
-                    <th>Usuario</th>
-                    <th>Nombre completo</th>
-                    <th>Rol</th>
-                    <th>Acciones</th>
+                <tr style="background:rgba(255,255,255,0.04); color:#FFD700;">
+                    <th style="padding:0.7rem 0.5rem;">ID</th>
+                    <th style="padding:0.7rem 0.5rem;">Avatar</th>
+                    <th style="padding:0.7rem 0.5rem;">Usuario</th>
+                    <th style="padding:0.7rem 0.5rem;">Nombre completo</th>
+                    <th style="padding:0.7rem 0.5rem;">Rol</th>
+                    <th style="padding:0.7rem 0.5rem;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {{#each users}}
-                <tr>
-                    <td>{{id}}</td>
-                    <td>
+                <tr style="background:rgba(30,30,45,0.95); box-shadow:0 2px 12px #FFD70022; border-radius:12px;">
+                    <td style="padding:0.7rem 0.5rem; font-weight:600; color:#FFD700;">{{id}}</td>
+                    <td style="padding:0.7rem 0.5rem;">
                         {{#if avatar}}
-                          <img src="{{avatar}}" alt="avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                          <img src="{{avatar}}" alt="avatar" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #FFD700;">
                         {{else}}
                           <span style="color:#aaa;">Sin avatar</span>
                         {{/if}}
                     </td>
-                    <td>{{username}}</td>
-                    <td>{{full_name}}</td>
-                    <td>{{role}}</td>
-                    <td>
-                        <a href="/admin/users/{{id}}/edit">Editar</a> |
+                    <td style="padding:0.7rem 0.5rem; font-weight:600;">{{username}}</td>
+                    <td style="padding:0.7rem 0.5rem;">{{full_name}}</td>
+                    <td style="padding:0.7rem 0.5rem;">
+                        <span class="badge badge-{{role}}" style="background:{{#if (eq role 'admin')}}#3949ab{{else}}#43a047{{/if}}; color:#fff; padding:0.3em 1em; border-radius:8px; font-size:0.98em; font-weight:600;">{{role}}</span>
+                    </td>
+                    <td style="padding:0.7rem 0.5rem;">
+                        <a class="btn" style="padding:0.4em 1.2em; font-size:0.98em; margin-right:0.5em;" href="/admin/users/{{id}}/edit">Editar</a>
                         <form action="/admin/users/{{id}}/delete" method="POST" style="display:inline">
-                            <button type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar</button>
+                            <button class="btn" style="padding:0.4em 1.2em; font-size:0.98em; background:#23243a; color:#FFD700; border:1.2px solid #FFD700;" type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar</button>
                         </form>
                     </td>
                 </tr>
                 {{/each}}
             </tbody>
         </table>
-    </main>
-</body>
-</html>
+    </div>
+</div>

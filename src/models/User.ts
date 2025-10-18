@@ -6,6 +6,16 @@ export class User extends Model {
   public username!: string;
   public password_hash!: string;
   public full_name?: string;
+  public first_name?: string;
+  public last_name?: string;
+  public email?: string;
+  public phone_number?: string;
+  public nickname?: string;
+  public current_points?: number;
+  public suspended?: boolean;
+  public is_deleted?: boolean;
+  // Nuevo campo para indicar que el usuario tiene perfil jugador
+  public is_player!: boolean;
   public role!: 'admin' | 'user';
   public avatar?: string; // URL o path del avatar
   public readonly createdAt!: Date;
@@ -32,6 +42,46 @@ User.init(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    first_name: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: '',
+    },
+    last_name: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: '',
+    },
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      defaultValue: null,
+    },
+    phone_number: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      defaultValue: null,
+    },
+    nickname: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: null,
+    },
+    current_points: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    suspended: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     avatar: {
       type: DataTypes.STRING(255),
       allowNull: true,
@@ -41,7 +91,12 @@ User.init(
     role: {
       type: DataTypes.ENUM('admin', 'user'),
       allowNull: false,
-      defaultValue: 'admin',
+      defaultValue: 'user',
+    },
+    is_player: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     createdAt: {
       type: DataTypes.DATE,

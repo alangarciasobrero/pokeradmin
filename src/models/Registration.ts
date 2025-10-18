@@ -5,7 +5,7 @@ import sequelize from '../services/database';
 
 export class Registration extends Model {
   public id!: number;
-  public player_id!: number;
+  public user_id!: number;
   public tournament_id!: number;
   public registration_date!: Date;
   public punctuality!: boolean;
@@ -21,11 +21,11 @@ Registration.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    player_id: {
+    user_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
       references: {
-        model: 'players',
+        model: 'users',
         key: 'id',
       },
     },

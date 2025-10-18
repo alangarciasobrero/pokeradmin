@@ -13,9 +13,11 @@ const registrationRepo = new RegistrationRepository();
  * @returns null si es válido, o un string con el error
  */
 function validarRegistration(data: any, parcial = false): string | null {
-  if (!parcial || data.player_id !== undefined) {
-    if (!data.player_id || isNaN(Number(data.player_id)) || Number(data.player_id) <= 0) {
-      return 'player_id es obligatorio y debe ser un número válido';
+  // Soportar legacy `player_id` y normalizar a `user_id`
+  if (!parcial || data.player_id !== undefined || data.user_id !== undefined) {
+    const uid = data.user_id ?? data.player_id;
+    if (!uid || isNaN(Number(uid)) || Number(uid) <= 0) {
+      return 'user_id (o player_id legacy) es obligatorio y debe ser un número válido';
     }
   }
   if (!parcial || data.tournament_id !== undefined) {

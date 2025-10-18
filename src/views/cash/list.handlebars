@@ -1,0 +1,25 @@
+{{! cash/list.handlebars }}
+{{#if cashGames.length}}
+  <div class="games-list">
+    {{#each cashGames}}
+      <div class="game-card">
+        <div class="game-info">
+          <div><strong>Fecha:</strong> {{date}}</div>
+          <div><strong>Jugador ID:</strong> {{user_id}}</div>
+          <div><strong>Monto:</strong> ${{amount}}</div>
+          {{#if description}}
+            <div><strong>Descripción:</strong> {{description}}</div>
+          {{/if}}
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-list">No hay mesas cash registradas.</div>
+{{/if}}
+<style>
+.games-list { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.game-card { background: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding: 1rem 1.5rem; min-width: 220px; }
+.game-info { font-size: 1rem; }
+.empty-list { color: #888; font-style: italic; margin-top: 1rem; }
+</style>

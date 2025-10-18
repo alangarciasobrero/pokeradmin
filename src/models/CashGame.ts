@@ -1,27 +1,27 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../services/database';
 
-// Definición de los atributos de CashGame
+// Definición de los atributos de CashGame según la tabla real
 export interface CashGameAttributes {
   id: number;
-  player_id: number;
-  amount: number;
-  date: Date;
-  description?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  small_blind: number;
+  start_datetime: Date;
+  end_datetime?: Date | null;
+  total_commission?: number;
+  dealer?: string | null;
+  total_tips?: number;
 }
 
-// Para creación, id y timestamps son opcionales
-export interface CashGameCreationAttributes extends Optional<CashGameAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface CashGameCreationAttributes extends Optional<CashGameAttributes, 'id' | 'end_datetime' | 'total_commission' | 'dealer' | 'total_tips'> {}
 
-// Modelo Sequelize para cash_games
 export class CashGame extends Model<CashGameAttributes, CashGameCreationAttributes> implements CashGameAttributes {
   public id!: number;
-  public player_id!: number;
-  public amount!: number;
-  public date!: Date;
-  public description?: string;
+  public small_blind!: number;
+  public start_datetime!: Date;
+  public end_datetime?: Date | null;
+  public total_commission?: number;
+  public dealer?: string | null;
+  public total_tips?: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -33,28 +33,39 @@ CashGame.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    player_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+    small_blind: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: false,
     },
-    amount: {
-      type: DataTypes.DECIMAL(12, 2),
-      allowNull: false,
-      comment: 'Monto positivo o negativo (ganancia/pérdida)',
-    },
-    date: {
-      type: DataTypes.DATEONLY,
+    start_datetime: {
+      type: DataTypes.DATE,
       allowNull: false,
     },
-    description: {
-      type: DataTypes.STRING(255),
+    end_datetime: {
+      type: DataTypes.DATE,
       allowNull: true,
+      defaultValue: null,
+    },
+    total_commission: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: true,
+      defaultValue: 0,
+    },
+    dealer: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    total_tips: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: true,
+      defaultValue: 0,
     },
   },
   {
     sequelize,
     tableName: 'cash_games',
     modelName: 'CashGame',
+    timestamps: false,
   }
 );
 

@@ -7,7 +7,6 @@ import { engine } from 'express-handlebars'; // Motor de plantillas Handlebars p
 
 // Importa las rutas de la API y las rutas web (SSR)
 import tournamentRoutes from './routes/tournamentRoutes';
-import playerRoutes from './routes/playerRoutes';
 import registrationRoutes from './routes/registrationRoutes'
 import cashGameRoutes from './routes/cashGameRoutes'; 
 import resultRoutes from './routes/resultRoutes';
@@ -15,6 +14,8 @@ import seasonRoutes from './routes/seasonRoutes';
 import authRoutes from './routes/authRoutes';
 import tournamentWebRoutes from './routes/tournamentWebRoutes';
 import adminUserRoutes from './routes/adminUserRoutes';
+import userApiRoutes from './routes/userApiRoutes';
+import adminGamesRoutes from './routes/adminGamesRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -33,6 +34,12 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Configuración del motor de vistas Handlebars
 // 'engine' registra Handlebars como motor de plantillas
 app.engine('handlebars', engine({
+	extname: '.handlebars',
+	layoutsDir: path.join(process.cwd(), 'src', 'views', 'layouts'),
+	partialsDir: [
+		path.join(process.cwd(), 'src', 'views', 'partials'),
+		path.join(process.cwd(), 'src', 'views')
+	],
 	runtimeOptions: {
 		allowProtoPropertiesByDefault: true,
 		allowProtoMethodsByDefault: true
@@ -74,6 +81,10 @@ function requireAdmin(req: express.Request, res: express.Response, next: express
 app.use('/tournaments', requireAuth, tournamentWebRoutes);
 // Gestión de usuarios (admin)
 app.use('/admin/users', adminUserRoutes);
+// API users
+app.use('/api/users', userApiRoutes);
+// Gestión de partidas (admin)
+app.use('/admin/games', adminGamesRoutes);
 
 
 // Dashboard de admin
@@ -93,7 +104,6 @@ app.get('/', requireAuth, (req, res) => {
 
 // Rutas API REST: protegidas
 app.use('/api/tournaments', requireAuth, tournamentRoutes);
-app.use('/api/players', requireAuth, playerRoutes);
 app.use('/api/registrations', requireAuth, registrationRoutes);
 app.use('/api/results', requireAuth, resultRoutes);
 app.use('/api/cash-games', requireAuth, cashGameRoutes);
