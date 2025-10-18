@@ -43,8 +43,20 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
         // Esperamos columnas: username, password, first_name, last_name, email, role
         const username = row.username || row.user || row.Username || row.User;
         const password = row.password || row.pass || 'changeme';
-        const first_name = row.first_name || row.firstName || row.FirstName || null;
-        const last_name = row.last_name || row.lastName || row.LastName || null;
+        let first_name = row.first_name || row.firstName || row.FirstName || null;
+        let last_name = row.last_name || row.lastName || row.LastName || null;
+        // Support a single `full_name` column and split it into first/last when possible
+        const fullNameRaw = row.full_name || row.fullName || row.FullName || row.Fullname || null;
+        if ((!first_name || !last_name) && fullNameRaw) {
+          const parts = String(fullNameRaw).trim().split(/\s+/);
+          if (!first_name && parts.length > 0) first_name = parts.shift() || null;
+          if (!last_name && parts.length > 0) last_name = parts.join(' ');
+        }
+  // Fallbacks to avoid NOT NULL DB violations: use username as first_name and empty last_name
+  if (!first_name) first_name = String(username);
+  if (!last_name) last_name = '';
+  // Build a final full_name to store (prefer explicit fullNameRaw, else join first/last)
+  const finalFullName = fullNameRaw ? String(fullNameRaw).trim() : (String(first_name) + (last_name ? (' ' + last_name) : '')).trim();
         const email = row.email || row.Email || null;
         const role = (row.role || row.Role || 'user');
 
@@ -56,10 +68,16 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
         const bcrypt = await import('bcrypt');
         const hash = await bcrypt.hash(String(password), 10);
 
-        await User.create({ username, password_hash: hash, first_name, last_name, email, role: role === 'admin' ? 'admin' : 'user' });
+  await User.create({ username, password_hash: hash, first_name, last_name, full_name: finalFullName || null, email, role: role === 'admin' ? 'admin' : 'user' });
         results.created += 1;
       } catch (e: any) {
-        results.errors.push({ row: idx + 2, error: e.message || e });
+        // Try to build a clearer error message (Sequelize may include .errors array)
+        let msg = e && e.message ? e.message : String(e);
+        if (e && Array.isArray(e.errors)) {
+          const parts = e.errors.map((er: any) => er.message || JSON.stringify(er));
+          msg = msg + ": " + parts.join('; ');
+        }
+        results.errors.push({ row: idx + 2, error: msg });
       }
     }
 
