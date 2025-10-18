@@ -1,0 +1,7 @@
+<h2>Importar usuarios (CSV / XLSX)</h2>
+{{#if error}}<div class="error">{{error}}</div>{{/if}}
+<form action="{{formAction}}" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required />
+  <button type="submit">Subir y procesar</button>
+</form>
+<p>Formato esperado: columnas username, password, first_name, last_name, email, role (opcional)</p>

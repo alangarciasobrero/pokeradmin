@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
+import multer from 'multer';
+import XLSX from 'xlsx';
 
 const router = Router();
 
@@ -15,6 +17,56 @@ function requireAdmin(req: Request, res: Response, next: Function) {
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
   const users = await User.findAll({ attributes: ['id', 'username', 'full_name', 'role'] });
   res.render('admin_users', { users });
+});
+
+// GET /admin/users/import - form simple para subir archivo
+router.get('/import', requireAdmin, (req: Request, res: Response) => {
+  res.render('admin_users_import', { formAction: '/admin/users/import' });
+});
+
+// POST /admin/users/import - procesar CSV/XLSX y crear usuarios en batch
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
+router.post('/import', requireAdmin, upload.single('file'), async (req: Request, res: Response) => {
+  try {
+  if (!(req as any).file) return res.status(400).send('No se subió ningún archivo');
+
+  // Parsear buffer con xlsx (soporta CSV y XLSX)
+  const workbook = XLSX.read((req as any).file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+    const results: { created: number; errors: Array<any> } = { created: 0, errors: [] };
+
+    for (const [idx, row] of rows.entries()) {
+      try {
+        // Esperamos columnas: username, password, first_name, last_name, email, role
+        const username = row.username || row.user || row.Username || row.User;
+        const password = row.password || row.pass || 'changeme';
+        const first_name = row.first_name || row.firstName || row.FirstName || null;
+        const last_name = row.last_name || row.lastName || row.LastName || null;
+        const email = row.email || row.Email || null;
+        const role = (row.role || row.Role || 'user');
+
+        if (!username) {
+          results.errors.push({ row: idx + 2, error: 'username faltante' });
+          continue;
+        }
+
+        const bcrypt = await import('bcrypt');
+        const hash = await bcrypt.hash(String(password), 10);
+
+        await User.create({ username, password_hash: hash, first_name, last_name, email, role: role === 'admin' ? 'admin' : 'user' });
+        results.created += 1;
+      } catch (e: any) {
+        results.errors.push({ row: idx + 2, error: e.message || e });
+      }
+    }
+
+    res.render('admin_users_import_result', { results });
+  } catch (err) {
+    res.render('admin_users_import', { error: 'Error procesando archivo: ' + err, formAction: '/admin/users/import' });
+  }
 });
 
 // GET /admin/users/new - form crear

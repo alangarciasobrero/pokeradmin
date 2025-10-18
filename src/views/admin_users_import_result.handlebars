@@ -1,0 +1,11 @@
+<h2>Resultado de importación</h2>
+<p>Usuarios creados: {{results.created}}</p>
+{{#if results.errors}}
+  <h3>Errores</h3>
+  <ul>
+  {{#each results.errors}}
+    <li>Fila {{this.row}}: {{this.error}}</li>
+  {{/each}}
+  </ul>
+{{/if}}
+<a href="/admin/users">Volver al listado</a>
