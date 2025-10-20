@@ -11,9 +11,16 @@ function requireAdmin(req: Request, res: Response, next: Function) {
 }
 
 router.get('/list', requireAdmin, async (req: Request, res: Response) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(200, Math.max(5, Number(req.query.per_page) || 20));
   try {
-    const cashGames = await CashGameRepository.findAll();
-    res.render('admin/cash_list', { cashGames, username: req.session.username });
+    const { rows, count } = await CashGameRepository.getPaginated({ page, perPage });
+    const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
+    const links = {
+      prev: page > 1 ? `/admin/games/cash/list?page=${page - 1}&per_page=${perPage}` : null,
+      next: page < totalPages ? `/admin/games/cash/list?page=${page + 1}&per_page=${perPage}` : null
+    };
+    res.render('admin/cash_list', { cashGames: rows, meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages }, links, username: req.session.username });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al cargar cash games');
