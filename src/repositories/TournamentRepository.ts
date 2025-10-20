@@ -67,4 +67,14 @@ export class TournamentRepository {
             returning: true
         });
     }
+
+        /**
+         * Elimina un torneo por su ID
+         * @param id - ID a eliminar
+         * @returns Promise<number> filas eliminadas
+         */
+        async deleteById(id: number): Promise<number> {
+            const result = await (await import('../models/Tournament')).Tournament.destroy({ where: { id } });
+            return result;
+        }
 }

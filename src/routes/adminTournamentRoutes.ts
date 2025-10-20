@@ -30,17 +30,8 @@ router.get('/new', requireAdmin, (req: Request, res: Response) => {
 // Create (handled by API) - but support a form POST from SSR that forwards to API
 router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // The form posts standard fields compatible with /api/tournaments
-    const response = await fetch(`${req.protocol}://${req.get('host')}/api/tournaments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
-    });
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Create tournament failed:', text);
-      return res.status(400).send('No se pudo crear el torneo: ' + text);
-    }
+    // Use repository directly to create (avoid internal fetch and redirect issues)
+    await tournamentRepo.create(req.body as any);
     return res.redirect('/admin/games/tournaments/list');
   } catch (err) {
     console.error('Error creating tournament', err);
@@ -65,16 +56,8 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
 router.post('/:id', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   try {
-    const response = await fetch(`${req.protocol}://${req.get('host')}/api/tournaments/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
-    });
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Update tournament failed:', text);
-      return res.status(400).send('No se pudo actualizar el torneo: ' + text);
-    }
+    const [affectedRows] = await tournamentRepo.updateById(id, req.body as any);
+    if (affectedRows === 0) return res.status(404).send('No encontrado');
     return res.redirect(`/admin/games/tournaments/${id}`);
   } catch (err) {
     console.error('Error updating tournament', err);
@@ -86,12 +69,7 @@ router.post('/:id', requireAdmin, async (req: Request, res: Response) => {
 router.post('/:id/delete', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   try {
-    // If repository has deleteById, call it; otherwise forward to API
-    if ((tournamentRepo as any).deleteById) {
-      await (tournamentRepo as any).deleteById(id);
-    } else {
-      await fetch(`${req.protocol}://${req.get('host')}/api/tournaments/${id}`, { method: 'DELETE' });
-    }
+    await tournamentRepo.deleteById(id);
     return res.redirect('/admin/games/tournaments/list');
   } catch (err) {
     console.error('Error deleting tournament', err);
