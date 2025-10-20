@@ -28,7 +28,21 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
 });
 
 router.get('/new', requireAdmin, (req: Request, res: Response) => {
-  res.render('cash/form', { formTitle: 'Nueva Mesa Cash', formAction: '/api/cash-games' });
+  // Use admin form action so the admin POST handler is used
+  res.render('cash/form', { formTitle: 'Nueva Mesa Cash', formAction: '/admin/games/cash/new' });
+});
+
+// Edit form: render existing cash game into the same form
+router.get('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    const cash = await CashGameRepository.findById(id);
+    if (!cash) return res.redirect('/admin/games/cash/list');
+    res.render('cash/form', { formTitle: 'Editar Mesa Cash', formAction: `/admin/games/cash/${id}/edit`, cash });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/admin/games/cash/list');
+  }
 });
 
 router.get('/:id', requireAdmin, async (req: Request, res: Response) => {

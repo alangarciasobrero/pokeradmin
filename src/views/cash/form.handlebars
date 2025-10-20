@@ -3,13 +3,13 @@
   <h1>{{formTitle}}</h1>
   <form action="{{formAction}}" method="POST">
     <label for="user_id">User ID</label>
-    <input type="number" name="user_id" id="user_id" required>
+    <input type="number" name="user_id" id="user_id" required value="{{#if cash}}{{cash.user_id}}{{/if}}">
     <label for="amount">Amount</label>
-    <input type="number" name="amount" id="amount" step="0.01" required>
+    <input type="number" name="amount" id="amount" step="0.01" required value="{{#if cash}}{{cash.total_commission}}{{/if}}">
     <label for="date">Date</label>
-    <input type="datetime-local" name="date" id="date" required>
+    <input type="datetime-local" name="date" id="date" required value="{{#if cash}}{{cash.start_datetime}}{{/if}}">
     <label for="description">Description</label>
-    <input type="text" name="description" id="description">
+    <input type="text" name="description" id="description" value="{{#if cash}}{{cash.description}}{{/if}}">
     <button type="submit">Guardar</button>
   </form>
 </div>
