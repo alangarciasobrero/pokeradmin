@@ -1,0 +1,16 @@
+{{#> layouts/main title="Admin - Torneos" }}
+<h1>Gestión de Torneos (Admin)</h1>
+<a href="/admin/games/tournaments/new" class="btn">+ Nuevo Torneo</a>
+{{#if tournaments.length}}
+  <div class="admin-items">
+    {{#each tournaments}}
+      <div class="item">
+        <a href="/admin/games/tournaments/{{id}}">{{tournament_name}}</a>
+        <div class="meta">Fecha: {{start_date}} — Buy-in: ${{buy_in}}</div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div>No hay torneos.</div>
+{{/if}}
+{{/layouts/main}}

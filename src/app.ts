@@ -16,6 +16,9 @@ import tournamentWebRoutes from './routes/tournamentWebRoutes';
 import adminUserRoutes from './routes/adminUserRoutes';
 import userApiRoutes from './routes/userApiRoutes';
 import adminGamesRoutes from './routes/adminGamesRoutes';
+import adminTournamentRoutes from './routes/adminTournamentRoutes';
+import adminCashRoutes from './routes/adminCashRoutes';
+import adminRankingRoutes from './routes/adminRankingRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -85,6 +88,10 @@ app.use('/admin/users', adminUserRoutes);
 app.use('/api/users', userApiRoutes);
 // Gestión de partidas (admin)
 app.use('/admin/games', adminGamesRoutes);
+// Admin sub-pages (mounted under /admin/games/...)
+app.use('/admin/games/tournaments', adminTournamentRoutes);
+app.use('/admin/games/cash', adminCashRoutes);
+app.use('/admin/games/ranking', adminRankingRoutes);
 
 
 // Dashboard de admin

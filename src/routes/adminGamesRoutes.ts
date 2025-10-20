@@ -39,4 +39,18 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   });
 });
 
+// Mount admin sub-pages for more detailed management
+router.get('/tournaments', requireAdmin, (req: Request, res: Response) => {
+  // Redirect to the SSR admin tournaments management
+  res.redirect('/admin/games/tournaments/list');
+});
+
+router.get('/cash', requireAdmin, (req: Request, res: Response) => {
+  res.redirect('/admin/games/cash/list');
+});
+
+router.get('/ranking', requireAdmin, (req: Request, res: Response) => {
+  res.redirect('/admin/games/ranking');
+});
+
 export default router;

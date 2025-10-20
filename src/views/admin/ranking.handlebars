@@ -1,0 +1,36 @@
+{{#> layouts/main title="Admin - Ranking" }}
+<h1>Ranking</h1>
+<table>
+  <thead><tr><th>Pos</th><th>Usuario</th><th>Puntos</th><th>Rol</th></tr></thead>
+  <tbody>
+    {{#each users}}
+      <tr>
+        <td>{{@index}}</td>
+        <td>{{full_name}} ({{username}})</td>
+        <td>{{current_points}}</td>
+        <td>{{role}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{/layouts/main}}
+{{#> layouts/main title="Admin - Ranking" }}
+<h1>Ranking</h1>
+{{#if users.length}}
+  <table>
+    <thead><tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Rol</th></tr></thead>
+    <tbody>
+      {{#each users}}
+        <tr>
+          <td>{{@index}}</td>
+          <td>{{full_name}} ({{username}})</td>
+          <td>{{current_points}}</td>
+          <td>{{role}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+{{else}}
+  <div>No hay datos de ranking.</div>
+{{/if}}
+{{/layouts/main}}
