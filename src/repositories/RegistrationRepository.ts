@@ -11,7 +11,18 @@ export class RegistrationRepository {
    * Obtiene todas las inscripciones
    */
   async getAll(): Promise<Registration[]> {
-    return Registration.findAll();
+    try {
+      return await Registration.findAll();
+    } catch (err: any) {
+      // Fallback for legacy schema where column might be `player_id` instead of `user_id`
+      if (err && err.parent && err.parent.errno === 1054) {
+        const sequelize = (Registration as any).sequelize;
+        const rows: any[] = await sequelize.query('SELECT id, player_id as user_id, tournament_id, registration_date, punctuality FROM registrations', { type: (sequelize as any).QueryTypes.SELECT });
+        // Map raw rows to Registration-like objects (lightweight)
+        return rows.map(r => (Registration.build ? Registration.build(r) : r));
+      }
+      throw err;
+    }
   }
 
   /**
