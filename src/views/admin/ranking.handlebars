@@ -1,20 +1,31 @@
 {{#> layouts/main title="Admin - Ranking" }}
-<h1>Ranking</h1>
-{{#if users.length}}
-  <table>
-    <thead><tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Rol</th></tr></thead>
-    <tbody>
-      {{#each users}}
-        <tr>
-          <td>{{@index}}</td>
-          <td>{{full_name}} ({{username}})</td>
-          <td>{{current_points}}</td>
-          <td>{{role}}</td>
-        </tr>
-      {{/each}}
-    </tbody>
-  </table>
-{{else}}
-  <div>No hay datos de ranking.</div>
-{{/if}}
+<div class="admin-ranking">
+  <h1>Ranking</h1>
+  {{#if users.length}}
+    <table class="ranking-table">
+      <thead>
+        <tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Ganancias</th></tr>
+      </thead>
+      <tbody>
+        {{#each users}}
+          <tr>
+            <td>{{inc @index}}</td>
+            <td>{{#if this.full_name}}{{this.full_name}}{{else}}{{this.username}}{{/if}} ({{this.username}})</td>
+            <td>{{this.current_points}}</td>
+            <td>{{#if this.total_winnings}}${{this.total_winnings}}{{else}}$0{{/if}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div>No hay datos de ranking.</div>
+  {{/if}}
+</div>
+
+<style>
+.ranking-table { width:100%; border-collapse:collapse }
+.ranking-table th, .ranking-table td { padding:0.6rem 0.8rem; border-bottom:1px solid #eee }
+.ranking-table thead { background:#f8f9fa }
+</style>
+
 {{/layouts/main}}

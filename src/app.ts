@@ -71,6 +71,24 @@ Handlebars.registerHelper('range', function(start: number, end: number) {
 Handlebars.registerHelper('ifEquals', function(this: any, a: any, b: any, opts: any) {
     return (a == b) ? opts.fn(this) : opts.inverse(this);
 });
+// simple equality helper usable as subexpression: {{#if (eq a b)}}
+Handlebars.registerHelper('eq', function(a: any, b: any) {
+	return a == b;
+});
+// small format helpers
+Handlebars.registerHelper('formatDate', function(d: any) {
+	if (!d) return '';
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return d;
+	return dt.toISOString().slice(0,10);
+});
+Handlebars.registerHelper('currency', function(n: any) {
+	if (n === null || n === undefined) return '';
+	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+});
+Handlebars.registerHelper('inc', function(value: number) {
+	return Number(value) + 1;
+});
 
 // Rutas de autenticación (login/logout)
 app.use(authRoutes);
