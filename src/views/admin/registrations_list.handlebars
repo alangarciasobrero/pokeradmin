@@ -1,0 +1,24 @@
+<div class="registrations-list">
+  <h2>Inscripciones</h2>
+  {{#if registrations.length}}
+    <table>
+      <thead>
+        <tr><th>ID</th><th>User</th><th>Tournament</th><th>Date</th><th>Punctuality</th></tr>
+      </thead>
+      <tbody>
+        {{#each registrations}}
+          <tr>
+            <td>{{id}}</td>
+            <td>{{user_id}}</td>
+            <td>{{tournament_id}}</td>
+            <td>{{registration_date}}</td>
+            <td>{{punctuality}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div>No hay inscripciones.</div>
+  {{/if}}
+  <a class="btn" href="/admin/registrations/new">+ Nueva Inscripción</a>
+</div>
