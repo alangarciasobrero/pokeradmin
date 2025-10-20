@@ -21,7 +21,7 @@
         </nav>
     </header>
     <main>
-        <form method="POST" action="{{formAction}}">
+        <form method="POST" action="{{formAction}}" enctype="multipart/form-data">
             <label for="username">Usuario</label>
             <input type="text" id="username" name="username" value="{{user.username}}" required>
             <label for="full_name">Nombre completo</label>
@@ -34,20 +34,22 @@
 
                         <label>Avatar</label>
                         <div style="display:flex; align-items:center; gap:1.5rem;">
-                                {{#if user.avatar}}
-                                    <img src="{{user.avatar}}" alt="avatar" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
-                                {{else}}
-                                    <span style="color:#aaa;">Sin avatar</span>
-                                {{/if}}
-                                <input type="file" name="avatarFile" accept="image/*">
+                                <div id="avatar-preview" style="width:60px; height:60px; border-radius:50%; overflow:hidden; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
+                                  {{#if user.avatar}}
+                                    <img id="avatar-img" src="{{user.avatar}}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">
+                                  {{else}}
+                                    <span id="avatar-placeholder" style="color:#aaa;">Sin avatar</span>
+                                  {{/if}}
+                                </div>
+                                <input id="avatarFile" type="file" name="avatarFile" accept="image/*">
                         </div>
                         <div style="margin:1rem 0;">
                                 <label>O elegir de la galería:</label>
-                                <div style="display:flex; gap:0.7rem; flex-wrap:wrap;">
+                                <div id="gallery" style="display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.5rem;">
                                     {{#each gallery}}
-                                        <label style="cursor:pointer;">
-                                            <input type="radio" name="avatarGallery" value="{{this}}" {{#if (eq ../user.avatar this)}}checked{{/if}}>
-                                            <img src="{{this}}" alt="avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #FFD700;">
+                                        <label style="cursor:pointer; display:inline-block; text-align:center;">
+                                            <input type="radio" name="avatarGallery" value="{{this}}" style="display:none;" {{#if (eq ../user.avatar this)}}checked{{/if}}>
+                                            <img class="gallery-thumb" src="{{this}}" alt="avatar" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #FFD700; display:block;">
                                         </label>
                                     {{/each}}
                                 </div>
@@ -68,5 +70,52 @@
             <button type="submit">Importar</button>
         </form>
     </main>
+        <script>
+            // Preview uploaded file
+            const avatarInput = document.getElementById('avatarFile');
+            const avatarImg = document.getElementById('avatar-img');
+            const avatarPlaceholder = document.getElementById('avatar-placeholder');
+            const gallery = document.getElementById('gallery');
+
+            if (avatarInput) {
+                avatarInput.addEventListener('change', function(e) {
+                    const f = this.files && this.files[0];
+                    if (!f) return;
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+                        if (avatarImg) {
+                            avatarImg.src = ev.target.result;
+                        } else {
+                            const img = document.createElement('img'); img.id = 'avatar-img'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit='cover'; img.src = ev.target.result;
+                            const container = document.getElementById('avatar-preview');
+                            container.innerHTML = ''; container.appendChild(img);
+                        }
+                    };
+                    reader.readAsDataURL(f);
+                });
+            }
+
+            // Gallery click preview and check radio
+            if (gallery) {
+                gallery.addEventListener('click', function(e) {
+                    const target = e.target.closest('.gallery-thumb');
+                    if (!target) return;
+                    // find radio sibling
+                    const label = target.parentElement;
+                    const radio = label.querySelector('input[type=radio]');
+                    if (radio) radio.checked = true;
+                    // preview
+                    const src = target.src;
+                    if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+                    if (avatarImg) avatarImg.src = src; else {
+                        const img = document.createElement('img'); img.id = 'avatar-img'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit='cover'; img.src = src;
+                        const container = document.getElementById('avatar-preview'); container.innerHTML = ''; container.appendChild(img);
+                    }
+                    // clear file input
+                    if (avatarInput) avatarInput.value = '';
+                });
+            }
+        </script>
 </body>
 </html>
