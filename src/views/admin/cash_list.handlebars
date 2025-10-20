@@ -5,23 +5,8 @@
   <div class="admin-items">
     {{#each cashGames}}
       <div class="item">
-        <a href="/admin/games/cash/{{id}}">Fecha: {{start_datetime}} — Jugador: {{user_id}} — ${{amount}}</a>
-      </div>
-    {{/each}}
-  </div>
-{{else}}
-  <div>No hay mesas cash.</div>
-{{/if}}
-{{/layouts/main}}
-{{#> layouts/main title="Admin - Cash Games" }}
-<h1>Gestión de Cash Games (Admin)</h1>
-<a href="/admin/games/cash/new" class="btn">+ Nueva Mesa Cash</a>
-{{#if cashGames.length}}
-  <div class="admin-items">
-    {{#each cashGames}}
-      <div class="item">
         <a href="/admin/games/cash/{{id}}">Mesa #{{id}}</a>
-        <div class="meta">Fecha: {{start_datetime}} — Jugador: {{user_id}} — Monto: ${{amount}}</div>
+        <div class="meta">Fecha: {{start_datetime}} — Jugador: {{user_id}} — Monto: ${{total_tips}}</div>
       </div>
     {{/each}}
   </div>
