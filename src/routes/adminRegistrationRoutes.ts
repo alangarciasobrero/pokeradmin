@@ -78,4 +78,31 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+// View detail
+router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    const reg = await registrationRepo.getById(id);
+    if (!reg) return res.status(404).send('No encontrado');
+    const user = await User.findByPk(Number((reg as any).user_id));
+    const tournament = await Tournament.findByPk(Number((reg as any).tournament_id));
+    res.render('admin/registration_detail', { registration: reg, user, tournament, username: req.session.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener inscripción');
+  }
+});
+
+// Delete (POST)
+router.post('/:id/delete', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    await registrationRepo.deleteById(id);
+    res.redirect('/admin/registrations/list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al eliminar inscripción');
+  }
+});
+
 export default router;

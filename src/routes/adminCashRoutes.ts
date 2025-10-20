@@ -43,4 +43,58 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+// Create via admin form (POST to API already exists, but provide server-side forwarding)
+router.post('/new', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const payload = {
+      user_id: Number(req.body.user_id),
+      start_datetime: req.body.date,
+      end_datetime: req.body.end_date || null,
+      small_blind: Number(req.body.small_blind || 0),
+      total_commission: Number(req.body.amount || 0),
+      dealer: req.body.dealer || null,
+      total_tips: Number(req.body.total_tips || 0),
+      description: req.body.description || null
+    };
+    await CashGameRepository.create(payload as any);
+    res.redirect('/admin/games/cash/list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al crear cash game');
+  }
+});
+
+// Edit form will post here
+router.post('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const payload = {
+      start_datetime: req.body.date,
+      end_datetime: req.body.end_date || null,
+      small_blind: Number(req.body.small_blind || 0),
+      total_commission: Number(req.body.amount || 0),
+      dealer: req.body.dealer || null,
+      total_tips: Number(req.body.total_tips || 0),
+      description: req.body.description || null
+    };
+    await CashGameRepository.update(id, payload as any);
+    res.redirect('/admin/games/cash/list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al actualizar cash game');
+  }
+});
+
+// Delete cash game
+router.post('/:id/delete', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    await CashGameRepository.delete(id);
+    res.redirect('/admin/games/cash/list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al eliminar cash game');
+  }
+});
+
 export default router;
