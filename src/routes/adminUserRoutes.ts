@@ -15,8 +15,30 @@ function requireAdmin(req: Request, res: Response, next: Function) {
 
 // GET /admin/users - Listado de usuarios
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
-  const users = await User.findAll({ attributes: ['id', 'username', 'full_name', 'role'] });
-  res.render('admin_users', { users });
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(200, Math.max(5, Number(req.query.per_page) || 20));
+  const offset = (page - 1) * perPage;
+
+  try {
+    const { rows, count } = await User.findAndCountAll({
+      where: { is_deleted: false },
+      attributes: ['id', 'username', 'full_name', 'role', 'avatar', 'createdAt'],
+      limit: perPage,
+      offset,
+      order: [['createdAt', 'DESC']]
+    });
+
+    const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
+    const links = {
+      prev: page > 1 ? `/admin/users?page=${page - 1}&per_page=${perPage}` : null,
+      next: page < totalPages ? `/admin/users?page=${page + 1}&per_page=${perPage}` : null
+    };
+
+    res.render('admin_users', { users: rows, meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages }, links });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al listar usuarios');
+  }
 });
 
 // GET /admin/users/import - form simple para subir archivo
