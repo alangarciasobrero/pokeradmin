@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
 import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 import XLSX from 'xlsx';
 
 const router = Router();
@@ -48,6 +50,18 @@ router.get('/import', requireAdmin, (req: Request, res: Response) => {
 
 // POST /admin/users/import - procesar CSV/XLSX y crear usuarios en batch
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
+// disk storage for avatar uploads
+const avatarsDir = path.join(process.cwd(), 'public', 'uploads', 'avatars');
+if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true });
+const avatarStorage = multer.diskStorage({
+  destination: function (_req: any, _file: Express.Multer.File, cb: (err: any, dest?: string) => void) { cb(null, avatarsDir); },
+  filename: function (_req: any, file: Express.Multer.File, cb: (err: any, filename?: string) => void) {
+    const uniq = Date.now() + '-' + Math.round(Math.random() * 1e6);
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `avatar-${uniq}${ext}`);
+  }
+});
+const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 3 * 1024 * 1024 } });
 router.post('/import', requireAdmin, upload.single('file'), async (req: Request, res: Response) => {
   try {
   if (!(req as any).file) return res.status(400).send('No se subió ningún archivo');
@@ -111,17 +125,31 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
 
 // GET /admin/users/new - form crear
 router.get('/new', requireAdmin, (req: Request, res: Response) => {
-  res.render('admin_users_form', { formTitle: 'Nuevo usuario', formAction: '/admin/users', user: {}, gallery: [] });
+  // read gallery images
+  const galleryDir = path.join(process.cwd(), 'public', 'images', 'gallery');
+  let gallery: string[] = [];
+  try {
+    gallery = fs.readdirSync(galleryDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).map(f => `/images/gallery/${f}`);
+  } catch (e) {
+    gallery = [];
+  }
+  res.render('admin_users_form', { formTitle: 'Nuevo usuario', formAction: '/admin/users', user: {}, gallery });
 });
 
 // POST /admin/users - crear
-router.post('/', requireAdmin, async (req: Request, res: Response) => {
+// Create (support multipart for avatar upload)
+router.post('/', requireAdmin, uploadAvatar.single('avatarFile'), async (req: Request, res: Response) => {
   try {
     const { username, password, full_name, role, avatarGallery } = req.body;
+    let avatarPath = avatarGallery || null;
+    if ((req as any).file) {
+      // save relative path to public
+      avatarPath = `/uploads/avatars/${(req as any).file.filename}`;
+    }
     if (!username || !password) return res.render('admin_users_form', { error: 'username y password son requeridos', formTitle: 'Nuevo usuario', formAction: '/admin/users', user: req.body });
     const bcrypt = await import('bcrypt');
     const hash = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ username, password_hash: hash, full_name, role: role || 'user', avatar: avatarGallery || null });
+    const newUser = await User.create({ username, password_hash: hash, full_name, role: role || 'user', avatar: avatarPath || null });
     res.redirect('/admin/users');
   } catch (err) {
     res.render('admin_users_form', { error: 'No se pudo crear usuario', details: err, formTitle: 'Nuevo usuario', formAction: '/admin/users', user: req.body });
@@ -133,11 +161,19 @@ router.get('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const user = await User.findByPk(id);
   if (!user) return res.redirect('/admin/users');
-  res.render('admin_users_form', { formTitle: 'Editar usuario', formAction: '/admin/users/' + id, user, gallery: [] });
+  const galleryDir = path.join(process.cwd(), 'public', 'images', 'gallery');
+  let gallery: string[] = [];
+  try {
+    gallery = fs.readdirSync(galleryDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).map(f => `/images/gallery/${f}`);
+  } catch (e) {
+    gallery = [];
+  }
+  res.render('admin_users_form', { formTitle: 'Editar usuario', formAction: '/admin/users/' + id, user, gallery });
 });
 
 // POST /admin/users/:id - actualizar (POST para simplificar forms)
-router.post('/:id', requireAdmin, async (req: Request, res: Response) => {
+// Update (support avatar upload)
+router.post('/:id', requireAdmin, uploadAvatar.single('avatarFile'), async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const { username, password, full_name, role, avatarGallery } = req.body;
@@ -147,6 +183,7 @@ router.post('/:id', requireAdmin, async (req: Request, res: Response) => {
     user.full_name = full_name || user.full_name;
     user.role = role || user.role;
     if (avatarGallery) user.avatar = avatarGallery;
+    if ((req as any).file) user.avatar = `/uploads/avatars/${(req as any).file.filename}`;
     if (password) {
       const bcrypt = await import('bcrypt');
       user.password_hash = await bcrypt.hash(password, 10);
