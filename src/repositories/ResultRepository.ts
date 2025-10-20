@@ -44,4 +44,18 @@ export class ResultRepository {
   async deleteById(id: number): Promise<number> {
     return Result.destroy({ where: { id } });
   }
+
+  /**
+   * Obtiene todos los resultados agrupados por torneo
+   */
+  async getByTournament(): Promise<Record<number, Result[]>> {
+    const rows = await Result.findAll();
+    const map: Record<number, Result[]> = {};
+    for (const r of rows) {
+      const tid = Number((r as any).tournament_id);
+      if (!map[tid]) map[tid] = [];
+      map[tid].push(r);
+    }
+    return map;
+  }
 }

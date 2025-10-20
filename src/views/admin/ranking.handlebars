@@ -1,18 +1,18 @@
 {{#> layouts/main title="Admin - Ranking" }}
 <div class="admin-ranking">
   <h1>Ranking</h1>
-  {{#if users.length}}
+  {{#if leaderboard.length}}
     <table class="ranking-table">
       <thead>
         <tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Ganancias</th></tr>
       </thead>
       <tbody>
-        {{#each users}}
+        {{#each leaderboard}}
           <tr>
-            <td>{{inc @index}}</td>
-            <td>{{#if this.full_name}}{{this.full_name}}{{else}}{{this.username}}{{/if}} ({{this.username}})</td>
-            <td>{{this.current_points}}</td>
-            <td>{{#if this.total_winnings}}${{this.total_winnings}}{{else}}$0{{/if}}</td>
+            <td>{{this.position}}</td>
+            <td>{{this.username}}</td>
+            <td>{{this.total_points}}</td>
+            <td>{{this.total_winnings}}</td>
           </tr>
         {{/each}}
       </tbody>
