@@ -1,24 +1,72 @@
-<div class="registrations-list">
-  <h2>Inscripciones</h2>
+<div class="registrations-admin">
+  <header style="display:flex; justify-content:space-between; align-items:center;">
+    <h2>Inscripciones</h2>
+    <a class="btn btn-primary" href="/admin/registrations/new">+ Nueva Inscripción</a>
+  </header>
+
+  <form method="get" action="/admin/registrations/list" style="margin:0.75rem 0; display:flex; gap:0.5rem; align-items:center;">
+    <label>Filtrar por torneo:
+      <select name="tournament_id">
+        <option value="">Todos</option>
+        {{#each tournaments}}
+          <option value="{{this.id}}">{{this.tournament_name}}</option>
+        {{/each}}
+      </select>
+    </label>
+    <label>Filtrar por usuario:
+      <select name="user_id">
+        <option value="">Todos</option>
+        {{#each users}}
+          <option value="{{@key}}">{{this.full_name}} ({{this.username}})</option>
+        {{/each}}
+      </select>
+    </label>
+    <button class="btn" type="submit">Filtrar</button>
+  </form>
+
   {{#if registrations.length}}
-    <table>
+    <table class="registrations-table">
       <thead>
-        <tr><th>ID</th><th>User</th><th>Tournament</th><th>Date</th><th>Punctuality</th></tr>
+        <tr><th>ID</th><th>Usuario</th><th>Torneo</th><th>Fecha</th><th>Puntualidad</th><th>Acciones</th></tr>
       </thead>
       <tbody>
         {{#each registrations}}
           <tr>
             <td>{{id}}</td>
-            <td>{{user_id}}</td>
-            <td>{{tournament_id}}</td>
+            <td>{{#with (lookup ../users this.user_id)}}{{this.full_name}} ({{this.username}}){{else}}{{this.user_id}}{{/with}}</td>
+            <td>{{#with (lookup ../tournaments this.tournament_id)}}{{this.tournament_name}}{{else}}{{this.tournament_id}}{{/with}}</td>
             <td>{{registration_date}}</td>
             <td>{{punctuality}}</td>
+            <td>
+              <a class="btn btn-sm" href="/admin/registrations/{{id}}">Ver</a>
+              <form method="post" action="/admin/registrations/{{id}}/delete" style="display:inline-block;">
+                <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+              </form>
+            </td>
           </tr>
         {{/each}}
       </tbody>
     </table>
+
+    {{#if meta}}
+      <nav class="pagination" aria-label="Paginación de inscripciones">
+        {{#if links.prev}}<a class="btn" href="{{links.prev}}">← Anterior</a>{{else}}<span class="disabled">← Anterior</span>{{/if}}
+        <span class="page-info">Página {{meta.page}} de {{meta.total_pages}}</span>
+        {{#if links.next}}<a class="btn" href="{{links.next}}">Siguiente →</a>{{else}}<span class="disabled">Siguiente →</span>{{/if}}
+      </nav>
+    {{/if}}
+
   {{else}}
     <div>No hay inscripciones.</div>
   {{/if}}
-  <a class="btn" href="/admin/registrations/new">+ Nueva Inscripción</a>
 </div>
+
+<style>
+.registrations-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem }
+.registrations-table th, .registrations-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eaeaea; text-align:left }
+.btn { padding: 0.35rem 0.6rem; border-radius:6px; text-decoration:none }
+.btn-primary { background:#007bff; color:#fff }
+.btn-danger { background:#dc3545; color:#fff }
+.btn-sm { font-size:0.85rem }
+.disabled { opacity:0.45 }
+</style>

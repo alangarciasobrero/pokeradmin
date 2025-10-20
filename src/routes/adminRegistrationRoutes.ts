@@ -15,9 +15,35 @@ function requireAdmin(req: Request, res: Response, next: Function) {
 
 // List registrations (admin)
 router.get('/list', requireAdmin, async (req: Request, res: Response) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(200, Math.max(5, Number(req.query.per_page) || 20));
+  const filters: any = {};
+  if (req.query.tournament_id) filters.tournament_id = Number(req.query.tournament_id);
+  if (req.query.user_id) filters.user_id = Number(req.query.user_id);
   try {
-    const regs = await registrationRepo.getAll();
-    res.render('admin/registrations_list', { registrations: regs, username: req.session.username });
+    const { rows, count } = await registrationRepo.getPaginated({ page, perPage, where: filters });
+
+    // Load users and tournaments maps to show names instead of ids
+    const users = await User.findAll({ where: { is_deleted: false } });
+    const tmap: any = {};
+    const umap: any = {};
+    (await Tournament.findAll()).forEach((t: any) => { tmap[t.id] = t; });
+    users.forEach((u: any) => { umap[u.id] = u; });
+
+    const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
+    const links = {
+      prev: page > 1 ? `/admin/registrations/list?page=${page - 1}&per_page=${perPage}` : null,
+      next: page < totalPages ? `/admin/registrations/list?page=${page + 1}&per_page=${perPage}` : null
+    };
+
+    res.render('admin/registrations_list', {
+      registrations: rows,
+      username: req.session.username,
+      users: umap,
+      tournaments: tmap,
+      meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
+      links
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al obtener inscripciones');

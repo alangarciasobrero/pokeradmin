@@ -26,6 +26,44 @@ export class RegistrationRepository {
   }
 
   /**
+   * Obtiene inscripciones paginadas con contador y filtros opcionales
+   */
+  async getPaginated(options: { page?: number; perPage?: number; where?: any } = {}) {
+    const page = Math.max(1, Number(options.page) || 1);
+    const perPage = Math.min(200, Math.max(5, Number(options.perPage) || 20));
+    const offset = (page - 1) * perPage;
+
+    try {
+      const result = await Registration.findAndCountAll({
+        where: options.where || {},
+        limit: perPage,
+        offset,
+        order: [['registration_date', 'DESC']]
+      });
+      return {
+        rows: result.rows,
+        count: Number(result.count),
+        page,
+        perPage
+      };
+    } catch (err: any) {
+      // If column user_id missing, fallback to raw query and implement pagination manually
+      if (err && err.parent && err.parent.errno === 1054) {
+        const sequelize = (Registration as any).sequelize;
+        // simple raw select with limit/offset
+        const rows: any[] = await sequelize.query(
+          `SELECT id, player_id as user_id, tournament_id, registration_date, punctuality FROM registrations ORDER BY registration_date DESC LIMIT ${perPage} OFFSET ${offset}`,
+          { type: (sequelize as any).QueryTypes.SELECT }
+        );
+        const countRows: any[] = await sequelize.query(`SELECT COUNT(*) as c FROM registrations`, { type: (sequelize as any).QueryTypes.SELECT });
+        const cnt = Number(countRows[0].c || 0);
+        return { rows: rows.map(r => (Registration.build ? Registration.build(r) : r)), count: cnt, page, perPage };
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Obtiene una inscripción por su ID
    */
   async getById(id: number): Promise<Registration | null> {
