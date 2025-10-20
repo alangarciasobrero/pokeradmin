@@ -1,32 +1,67 @@
 {{#> layouts/main title="Admin - Torneos" }}
-<h1>Gestión de Torneos (Admin)</h1>
-<a href="/admin/games/tournaments/new" class="btn">+ Nuevo Torneo</a>
-{{#if tournaments.length}}
-  <div class="admin-items">
-    {{#each tournaments}}
-      <div class="item">
-        <a href="/admin/games/tournaments/{{id}}">{{tournament_name}}</a>
-        <div class="meta">Fecha: {{start_date}} — Buy-in: ${{buy_in}}</div>
-      </div>
-    {{/each}}
-  </div>
-  {{#if meta}}
-    <nav class="pagination">
-      {{#if links.prev}}<a class="btn" href="{{links.prev}}">← Anterior</a>{{/if}}
-      <span> Página {{meta.page}} / {{meta.total_pages}} </span>
-      {{#if links.next}}<a class="btn" href="{{links.next}}">Siguiente →</a>{{/if}}
-    </nav>
-    <div class="page-numbers">
-      {{#each (range 1 meta.total_pages)}}
-        {{#ifEquals this ../meta.page}}
-          <strong>{{this}}</strong>
-        {{else}}
-          <a href="/admin/games/tournaments/list?page={{this}}&per_page={{../meta.per_page}}">{{this}}</a>
-        {{/ifEquals}}
+<div class="admin-tournaments">
+  <header class="admin-header">
+    <h1>Gestión de Torneos</h1>
+    <a href="/admin/games/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
+  </header>
+
+  {{#if tournaments.length}}
+    <div class="tournaments-grid">
+      {{#each tournaments}}
+        <article class="t-card">
+          <h3 class="t-title"><a href="/admin/games/tournaments/{{id}}">{{tournament_name}}</a></h3>
+          <div class="t-meta">Fecha: <strong>{{start_date}}</strong></div>
+          <div class="t-meta">Buy-in: <strong>${{buy_in}}</strong> — Stack: <strong>{{starting_stack}}</strong></div>
+          <div class="t-actions">
+            <a class="btn btn-sm" href="/admin/games/tournaments/{{id}}">Ver / Editar</a>
+            <form method="post" action="/admin/games/tournaments/{{id}}/delete" style="display:inline;">
+              <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+            </form>
+          </div>
+        </article>
       {{/each}}
     </div>
+
+    {{#if meta}}
+      <nav class="pagination" aria-label="Paginación de torneos">
+        {{#if links.prev}}<a class="btn" href="{{links.prev}}">← Anterior</a>{{else}}<span class="disabled">← Anterior</span>{{/if}}
+        <span class="page-info">Página {{meta.page}} de {{meta.total_pages}}</span>
+        {{#if links.next}}<a class="btn" href="{{links.next}}">Siguiente →</a>{{else}}<span class="disabled">Siguiente →</span>{{/if}}
+      </nav>
+
+      <div class="page-numbers" role="navigation" aria-label="Navegación por páginas">
+        {{#each (range 1 meta.total_pages)}}
+          {{#ifEquals this ../meta.page}}
+            <span class="page current">{{this}}</span>
+          {{else}}
+            <a class="page" href="/admin/games/tournaments/list?page={{this}}&per_page={{../meta.per_page}}">{{this}}</a>
+          {{/ifEquals}}
+        {{/each}}
+      </div>
+    {{/if}}
+  {{else}}
+    <div class="empty">No hay torneos registrados.</div>
   {{/if}}
-{{else}}
-  <div>No hay torneos.</div>
-{{/if}}
+</div>
+
+<style>
+.admin-tournaments { max-width: 1100px; margin: 2rem auto; padding: 1rem; }
+.admin-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem }
+.tournaments-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem }
+.t-card { background:#ffffff; color:#111; border-radius:8px; padding:1rem; box-shadow:0 4px 12px rgba(0,0,0,0.08) }
+.t-title { margin:0 0 0.5rem 0 }
+.t-meta { color:#444; font-size:0.95rem; margin-bottom:0.25rem }
+.t-actions { margin-top:0.5rem }
+.btn { display:inline-block; padding:0.4rem 0.8rem; border-radius:6px; text-decoration:none }
+.btn-primary { background:#007bff; color:#fff }
+.btn-sm { font-size:0.9rem; padding:0.25rem 0.5rem }
+.btn-danger { background:#dc3545; color:#fff }
+.pagination { display:flex; gap:1rem; align-items:center; justify-content:center; margin-top:1rem }
+.page-numbers { display:flex; gap:0.5rem; justify-content:center; margin-top:0.5rem }
+.page { padding:0.3rem 0.55rem; border-radius:4px; background:#f1f1f1; color:#111; text-decoration:none }
+.page.current { background:#007bff; color:#fff; font-weight:bold }
+.disabled { opacity:0.45 }
+@media (max-width: 900px) { .tournaments-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .tournaments-grid { grid-template-columns: 1fr; } }
+</style>
 {{/layouts/main}}
