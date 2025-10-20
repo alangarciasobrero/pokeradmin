@@ -19,6 +19,7 @@ import adminGamesRoutes from './routes/adminGamesRoutes';
 import adminTournamentRoutes from './routes/adminTournamentRoutes';
 import adminCashRoutes from './routes/adminCashRoutes';
 import adminRankingRoutes from './routes/adminRankingRoutes';
+import adminRegistrationRoutes from './routes/adminRegistrationRoutes';
 import devRoutes from './routes/devRoutes';
 
 
@@ -93,6 +94,9 @@ app.use('/admin/games', adminGamesRoutes);
 app.use('/admin/games/tournaments', adminTournamentRoutes);
 app.use('/admin/games/cash', adminCashRoutes);
 app.use('/admin/games/ranking', adminRankingRoutes);
+
+// Admin registrations (SSR)
+app.use('/admin/registrations', adminRegistrationRoutes);
 
 // Dev-only routes (auto-login helpers). Registered only in development to avoid exposure.
 if (process.env.NODE_ENV === 'development') {
