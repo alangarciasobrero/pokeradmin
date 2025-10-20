@@ -43,14 +43,36 @@ router.get('/search', async (req: Request, res: Response) => {
  */
 const tournamentRepo = new TournamentRepository();
 
-// GET /api/tournaments
+// GET /api/tournaments (paginated)
 router.get('/', async (req: Request, res: Response) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(100, Math.max(5, Number(req.query.per_page) || 20));
+  const offset = (page - 1) * perPage;
+
   try {
-    const tournaments = await tournamentRepo.getAll();
-    if (!tournaments || tournaments.length === 0) {
-      return res.status(404).json({ error: 'No hay torneos registrados' });
-    }
-    res.json(tournaments);
+    const { rows, count } = await Tournament.findAndCountAll({
+      limit: perPage,
+      offset,
+      order: [['start_date', 'DESC']]
+    });
+
+    const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
+
+    res.json({
+      data: rows,
+      meta: {
+        page,
+        per_page: perPage,
+        total_items: Number(count),
+        total_pages: totalPages
+      },
+      links: {
+        first: `/api/tournaments?page=1&per_page=${perPage}`,
+        prev: page > 1 ? `/api/tournaments?page=${page - 1}&per_page=${perPage}` : null,
+        next: page < totalPages ? `/api/tournaments?page=${page + 1}&per_page=${perPage}` : null,
+        last: `/api/tournaments?page=${totalPages}&per_page=${perPage}`
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener torneos', details: error });
   }

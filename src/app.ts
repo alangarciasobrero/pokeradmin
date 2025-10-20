@@ -61,6 +61,17 @@ app.use(express.json());
 // Permite a Express entender datos de formularios (urlencoded)
 app.use(express.urlencoded({ extended: true }));
 
+// Register simple Handlebars helpers
+import Handlebars from 'handlebars';
+Handlebars.registerHelper('range', function(start: number, end: number) {
+	const out = [] as number[];
+	for (let i = start; i <= end; i++) out.push(i);
+	return out;
+});
+Handlebars.registerHelper('ifEquals', function(this: any, a: any, b: any, opts: any) {
+    return (a == b) ? opts.fn(this) : opts.inverse(this);
+});
+
 // Rutas de autenticación (login/logout)
 app.use(authRoutes);
 

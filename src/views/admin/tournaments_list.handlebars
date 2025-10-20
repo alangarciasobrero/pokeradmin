@@ -10,6 +10,22 @@
       </div>
     {{/each}}
   </div>
+  {{#if meta}}
+    <nav class="pagination">
+      {{#if links.prev}}<a class="btn" href="{{links.prev}}">← Anterior</a>{{/if}}
+      <span> Página {{meta.page}} / {{meta.total_pages}} </span>
+      {{#if links.next}}<a class="btn" href="{{links.next}}">Siguiente →</a>{{/if}}
+    </nav>
+    <div class="page-numbers">
+      {{#each (range 1 meta.total_pages)}}
+        {{#ifEquals this ../meta.page}}
+          <strong>{{this}}</strong>
+        {{else}}
+          <a href="/admin/games/tournaments/list?page={{this}}&per_page={{../meta.per_page}}">{{this}}</a>
+        {{/ifEquals}}
+      {{/each}}
+    </div>
+  {{/if}}
 {{else}}
   <div>No hay torneos.</div>
 {{/if}}

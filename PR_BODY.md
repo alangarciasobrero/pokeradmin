@@ -2,12 +2,9 @@
 
 Resumen de cambios
 
-- Unificación de `players` en `users`: se eliminó el modelo/route `Player` y se actualizó la app para usar `users` como fuente única.
-- Nuevo flag `is_player` (boolean) en la tabla `users` para indicar si un usuario tiene perfil de jugador.
-- Script y SQL de migración:
-  - `scripts/ensure_is_player.ts` — detecta/crea la columna `is_player` compatible con MySQL y marca los usuarios con `role='player'`.
-  - `sql/20251018_add_is_player.sql` — SQL de referencia para ejecutar manualmente.
-  - `scripts/mark_players.ts` — helper alternativo (requiere que la columna exista).
+ Feature: Admin tournaments CRUD (SSR) and dev auto-login
+ 
+ Additional change set pending in a follow-up branch: registrations (SSR) to allow admins to register players into tournaments from the admin UI. That work will add a minimal admin list and create form for registrations and wire it to the existing `Registration` model and `/api/registrations` endpoints.
 - Cambios en modelos y rutas:
   - `src/models/User.ts` actualizado (nuevos campos, `email` ahora nullable, `role` default `'user'`, `is_player` boolean).
   - `src/models/CashGame.ts`, `Registration.ts`, `Result.ts` y rutas relacionadas actualizadas para usar `user_id` (backward compatible con `player_id`).

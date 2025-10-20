@@ -11,11 +11,32 @@ function requireAdmin(req: Request, res: Response, next: Function) {
   next();
 }
 
-// List admin view
+// List admin view with pagination
 router.get('/list', requireAdmin, async (req: Request, res: Response) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(100, Math.max(5, Number(req.query.per_page) || 20));
+  const offset = (page - 1) * perPage;
+
   try {
-    const tournaments = await tournamentRepo.getAll();
-    res.render('admin/tournaments_list', { tournaments, username: req.session.username });
+    const { rows, count } = await (await import('../models/Tournament')).Tournament.findAndCountAll({
+      limit: perPage,
+      offset,
+      order: [['start_date', 'DESC']]
+    });
+
+    const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
+
+    const links = {
+      prev: page > 1 ? `/admin/games/tournaments/list?page=${page - 1}&per_page=${perPage}` : null,
+      next: page < totalPages ? `/admin/games/tournaments/list?page=${page + 1}&per_page=${perPage}` : null
+    };
+
+    res.render('admin/tournaments_list', {
+      tournaments: rows,
+      username: req.session.username,
+      meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
+      links
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al cargar torneos');
