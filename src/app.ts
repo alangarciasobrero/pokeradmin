@@ -19,6 +19,7 @@ import adminGamesRoutes from './routes/adminGamesRoutes';
 import adminTournamentRoutes from './routes/adminTournamentRoutes';
 import adminCashRoutes from './routes/adminCashRoutes';
 import adminRankingRoutes from './routes/adminRankingRoutes';
+import devRoutes from './routes/devRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -92,6 +93,11 @@ app.use('/admin/games', adminGamesRoutes);
 app.use('/admin/games/tournaments', adminTournamentRoutes);
 app.use('/admin/games/cash', adminCashRoutes);
 app.use('/admin/games/ranking', adminRankingRoutes);
+
+// Dev-only routes (auto-login helpers). Registered only in development to avoid exposure.
+if (process.env.NODE_ENV === 'development') {
+	app.use(devRoutes);
+}
 
 
 // Dashboard de admin
