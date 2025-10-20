@@ -27,5 +27,25 @@
 .ranking-table th, .ranking-table td { padding:0.6rem 0.8rem; border-bottom:1px solid #eee }
 .ranking-table thead { background:#f8f9fa }
 </style>
+<section class="ranking-rules">
+  <h2>Reglas y configuración</h2>
+  <div>
+    <h3>Tabla de puntos (posición → puntos)</h3>
+    <ol>
+      {{#each rules.pointsTable}}
+        <li>Pos {{@index+1}}: {{this}} pts</li>
+      {{/each}}
+    </ol>
+  </div>
+  <div>
+    <h3>Distribución de premios</h3>
+    <p>Posiciones pagadas: {{rules.prizeOverride.positions}}</p>
+    <ol>
+      {{#each rules.prizeOverride.percentages}}
+        <li>Pos {{@index+1}}: {{this}}%</li>
+      {{/each}}
+    </ol>
+  </div>
+</section>
 
 {{/layouts/main}}
