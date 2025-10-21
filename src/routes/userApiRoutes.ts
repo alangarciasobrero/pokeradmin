@@ -5,10 +5,27 @@ import User from '../models/User';
 const router = Router();
 
 // GET /api/users - list
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const users = await User.findAll({ attributes: ['id', 'username', 'full_name', 'role', 'avatar', 'createdAt'] });
-    res.json(users);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const perPage = Math.min(200, Math.max(5, Number(req.query.per_page) || 20));
+    const offset = (page - 1) * perPage;
+
+    const { rows, count } = await User.findAndCountAll({
+      where: { is_deleted: false },
+      attributes: ['id', 'username', 'full_name', 'role', 'avatar', 'createdAt'],
+      limit: perPage,
+      offset,
+      order: [['createdAt', 'DESC']]
+    });
+
+    const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
+    const links = {
+      prev: page > 1 ? `/api/users?page=${page - 1}&per_page=${perPage}` : null,
+      next: page < totalPages ? `/api/users?page=${page + 1}&per_page=${perPage}` : null
+    };
+
+    res.json({ data: rows, meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages }, links });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener usuarios', details: err });
   }

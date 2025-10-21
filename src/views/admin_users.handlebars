@@ -1,9 +1,16 @@
 {{! views/admin_users.handlebars }}
 <div class="tournament-list-container" style="max-width:900px;">
     <h1 style="margin-bottom:2.2rem;">Gestión de Usuarios</h1>
-    <div class="main-actions" style="margin-bottom:1.5rem; text-align:right;">
-        <a class="btn" href="/admin/users/new">+ Nuevo usuario</a>
-    </div>
+        <div class="main-actions" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+                <a class="btn" href="/admin/users/new">+ Nuevo usuario</a>
+                {{#if meta}}
+                    <div class="user-pagination">
+                        {{#if links.prev}}<a class="btn" href="{{links.prev}}">← Anterior</a>{{/if}}
+                        <span> Página {{meta.page}} / {{meta.total_pages}} </span>
+                        {{#if links.next}}<a class="btn" href="{{links.next}}">Siguiente →</a>{{/if}}
+                    </div>
+                {{/if}}
+        </div>
     <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:separate; border-spacing:0 0.7rem;">
             <thead>
@@ -20,13 +27,13 @@
                 {{#each users}}
                 <tr style="background:rgba(30,30,45,0.95); box-shadow:0 2px 12px #FFD70022; border-radius:12px;">
                     <td style="padding:0.7rem 0.5rem; font-weight:600; color:#FFD700;">{{id}}</td>
-                    <td style="padding:0.7rem 0.5rem;">
-                        {{#if avatar}}
-                          <img src="{{avatar}}" alt="avatar" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #FFD700;">
-                        {{else}}
-                          <span style="color:#aaa;">Sin avatar</span>
-                        {{/if}}
-                    </td>
+                                        <td style="padding:0.7rem 0.5rem;">
+                                                {{#if avatar}}
+                                                    <img src="{{avatar}}" alt="avatar" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #FFD700;">
+                                                {{else}}
+                                                    <span style="color:#aaa;">Sin avatar</span>
+                                                {{/if}}
+                                        </td>
                     <td style="padding:0.7rem 0.5rem; font-weight:600;">{{username}}</td>
                     <td style="padding:0.7rem 0.5rem;">{{full_name}}</td>
                     <td style="padding:0.7rem 0.5rem;">

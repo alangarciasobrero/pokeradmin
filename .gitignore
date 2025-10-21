@@ -1,4 +1,4 @@
-node_modules
+﻿node_modules
 
 dist/
 
@@ -147,3 +147,6 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+cookies.txt
+import_sample.csv
+qc/

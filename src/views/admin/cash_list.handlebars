@@ -1,0 +1,42 @@
+{{#> layouts/main title="Admin - Cash Games" }}
+<div class="admin-cash">
+  <header style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Gestión de Cash Games</h1>
+    <a href="/admin/games/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
+  </header>
+
+  {{#if cashGames.length}}
+    <div class="cash-grid">
+      {{#each cashGames}}
+        <article class="cash-card">
+          <h3>Mesa #{{id}}</h3>
+          <div class="meta">Inicio: {{formatDate start_datetime}} — Fin: {{formatDate end_datetime}}</div>
+          <div class="meta">Small blind: ${{currency small_blind}} — Comisión: ${{currency total_commission}}</div>
+          <div class="meta">Propinas: ${{currency total_tips}} — Dealer: {{dealer}}</div>
+          <div style="margin-top:0.6rem;"><a class="btn btn-sm" href="/admin/games/cash/{{id}}">Ver</a></div>
+        </article>
+      {{/each}}
+    </div>
+
+    {{#if meta}}
+      <nav class="pagination" aria-label="Paginación de cash games">
+        {{#if links.prev}}<a class="btn" href="{{links.prev}}">← Anterior</a>{{else}}<span class="disabled">← Anterior</span>{{/if}}
+        <span class="page-info">Página {{meta.page}} de {{meta.total_pages}}</span>
+        {{#if links.next}}<a class="btn" href="{{links.next}}">Siguiente →</a>{{else}}<span class="disabled">Siguiente →</span>{{/if}}
+      </nav>
+    {{/if}}
+  {{else}}
+    <div>No hay mesas cash.</div>
+  {{/if}}
+</div>
+
+<style>
+.cash-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; }
+.cash-card { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06) }
+.btn-primary { background:#007bff; color:#fff }
+.btn-sm { padding:0.35rem 0.6rem; font-size:0.9rem }
+.disabled { opacity:0.45 }
+@media (max-width:900px){ .cash-grid { grid-template-columns: repeat(2,1fr);} }
+@media (max-width:600px){ .cash-grid { grid-template-columns: 1fr;} }
+</style>
+{{/layouts/main}}

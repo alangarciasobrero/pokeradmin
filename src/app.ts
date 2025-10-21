@@ -16,6 +16,11 @@ import tournamentWebRoutes from './routes/tournamentWebRoutes';
 import adminUserRoutes from './routes/adminUserRoutes';
 import userApiRoutes from './routes/userApiRoutes';
 import adminGamesRoutes from './routes/adminGamesRoutes';
+import adminTournamentRoutes from './routes/adminTournamentRoutes';
+import adminCashRoutes from './routes/adminCashRoutes';
+import adminRankingRoutes from './routes/adminRankingRoutes';
+import adminRegistrationRoutes from './routes/adminRegistrationRoutes';
+import devRoutes from './routes/devRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -56,6 +61,35 @@ app.use(express.json());
 // Permite a Express entender datos de formularios (urlencoded)
 app.use(express.urlencoded({ extended: true }));
 
+// Register simple Handlebars helpers
+import Handlebars from 'handlebars';
+Handlebars.registerHelper('range', function(start: number, end: number) {
+	const out = [] as number[];
+	for (let i = start; i <= end; i++) out.push(i);
+	return out;
+});
+Handlebars.registerHelper('ifEquals', function(this: any, a: any, b: any, opts: any) {
+    return (a == b) ? opts.fn(this) : opts.inverse(this);
+});
+// simple equality helper usable as subexpression: {{#if (eq a b)}}
+Handlebars.registerHelper('eq', function(a: any, b: any) {
+	return a == b;
+});
+// small format helpers
+Handlebars.registerHelper('formatDate', function(d: any) {
+	if (!d) return '';
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return d;
+	return dt.toISOString().slice(0,10);
+});
+Handlebars.registerHelper('currency', function(n: any) {
+	if (n === null || n === undefined) return '';
+	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+});
+Handlebars.registerHelper('inc', function(value: number) {
+	return Number(value) + 1;
+});
+
 // Rutas de autenticación (login/logout)
 app.use(authRoutes);
 
@@ -85,6 +119,18 @@ app.use('/admin/users', adminUserRoutes);
 app.use('/api/users', userApiRoutes);
 // Gestión de partidas (admin)
 app.use('/admin/games', adminGamesRoutes);
+// Admin sub-pages (mounted under /admin/games/...)
+app.use('/admin/games/tournaments', adminTournamentRoutes);
+app.use('/admin/games/cash', adminCashRoutes);
+app.use('/admin/games/ranking', adminRankingRoutes);
+
+// Admin registrations (SSR)
+app.use('/admin/registrations', adminRegistrationRoutes);
+
+// Dev-only routes (auto-login helpers). Registered only in development to avoid exposure.
+if (process.env.NODE_ENV === 'development') {
+	app.use(devRoutes);
+}
 
 
 // Dashboard de admin

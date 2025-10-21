@@ -1,0 +1,23 @@
+<div class="registration-form-container">
+  <h2>{{formTitle}}</h2>
+  <form action="{{formAction}}" method="POST">
+    <label for="user_id">Jugador:</label>
+    <select name="user_id" id="user_id">
+      {{#each users}}
+        <option value="{{id}}">{{username}} - {{full_name}}</option>
+      {{/each}}
+    </select>
+
+    <label for="tournament_id">Torneo:</label>
+    <select name="tournament_id" id="tournament_id">
+      {{#each tournaments}}
+        <option value="{{id}}">{{tournament_name}} ({{start_date}})</option>
+      {{/each}}
+    </select>
+
+    <label for="punctuality">Puntualidad:</label>
+    <input type="checkbox" name="punctuality" id="punctuality" value="true">
+
+    <button type="submit" class="btn btn-primary">Registrar</button>
+  </form>
+</div>
