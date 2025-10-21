@@ -1,0 +1,44 @@
+{{#> layouts/main title="Participantes de Mesa Cash" }}
+<div class="admin-cash-participants">
+  <h1>Participantes — Mesa #{{cash.id}}</h1>
+  <p>Inicio: {{formatDate cash.start_datetime}} &nbsp; Small blind: {{currency cash.small_blind}}</p>
+
+  <section>
+    <h2>Añadir jugador</h2>
+    <form method="post" action="/admin/games/cash/{{cash.id}}/participants/new">
+      <label for="user_id">Jugador</label>
+      <select name="user_id" id="user_id">
+        <option value="">-- seleccionar --</option>
+        {{#each users}}
+          <option value="{{this.id}}">{{this.full_name}} ({{this.username}})</option>
+        {{/each}}
+      </select>
+      <label for="seat_number">Asiento (opcional)</label>
+      <input type="number" name="seat_number" id="seat_number" min="1" />
+      <button type="submit" class="btn">Agregar</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Lista de participantes</h2>
+    <table class="table">
+      <thead><tr><th>Id</th><th>Jugador</th><th>Asiento</th><th>Ingreso</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {{#each participants}}
+          <tr>
+            <td>{{this.id}}</td>
+            <td>{{#if (lookup ../umap this.user_id)}}{{(lookup ../umap this.user_id).full_name}} ({{(lookup ../umap this.user_id).username}}){{else}}ID {{this.user_id}}{{/if}}</td>
+            <td>{{this.seat_number}}</td>
+            <td>{{formatDate this.joined_at}}</td>
+            <td>
+              <form method="post" action="/admin/games/cash/{{../cash.id}}/participants/{{this.id}}/delete" style="display:inline;">
+                <button class="btn btn-danger" type="submit">Quitar</button>
+              </form>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </section>
+</div>
+{{/layouts/main}}

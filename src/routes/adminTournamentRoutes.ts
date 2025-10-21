@@ -86,6 +86,9 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   // Normalize form input coming as strings and then create
   const normalized = normalizeTournamentInput(req.body);
   await tournamentRepo.create(normalized as any);
+    if (req.session) {
+      req.session.flash = { type: 'success', message: 'Torneo creado correctamente' };
+    }
     return res.redirect('/admin/games/tournaments/list');
   } catch (err) {
     console.error('Error creating tournament', err);

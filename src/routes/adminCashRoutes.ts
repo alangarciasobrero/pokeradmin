@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import CashGameRepository from '../repositories/CashGameRepository';
+import CashParticipantRepository from '../repositories/CashParticipantRepository';
+import User from '../models/User';
 
 const router = Router();
 
@@ -111,4 +113,48 @@ router.post('/:id/delete', requireAdmin, async (req: Request, res: Response) => 
   }
 });
 
+// Participants management
+router.get('/:id/participants', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    const cash = await CashGameRepository.findById(id);
+    if (!cash) return res.status(404).send('Cash game no encontrado');
+    const participants = await CashParticipantRepository.findByCashGame(id);
+    // load users map
+    const users = await User.findAll({ where: { is_deleted: false } });
+    const umap: any = {};
+    users.forEach((u: any) => umap[u.id] = u);
+    res.render('admin/cash_participants_list', { cash, participants, users, umap, username: req.session.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al cargar participantes');
+  }
+});
+
+router.post('/:id/participants/new', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    const userId = Number(req.body.user_id);
+    if (!userId) return res.redirect(`/admin/games/cash/${id}/participants`);
+    await CashParticipantRepository.create({ cash_game_id: id, user_id: userId, seat_number: req.body.seat_number ? Number(req.body.seat_number) : null });
+    res.redirect(`/admin/games/cash/${id}/participants`);
+  } catch (err) {
+    console.error(err);
+    res.redirect(`/admin/games/cash/${id}/participants`);
+  }
+});
+
+router.post('/:id/participants/:pid/delete', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const pid = Number(req.params.pid);
+  try {
+    await CashParticipantRepository.deleteById(pid);
+    res.redirect(`/admin/games/cash/${id}/participants`);
+  } catch (err) {
+    console.error(err);
+    res.redirect(`/admin/games/cash/${id}/participants`);
+  }
+});
+
 export default router;
+

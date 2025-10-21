@@ -10,7 +10,7 @@
   <div class="tab-content" id="tab-torneos">
     <div class="tab-header">
       <h2>Torneos</h2>
-      <a href="/admin/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
+      <a href="/admin/games/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
     </div>
     <div id="tournaments-list">
       {{> tournaments/list tournaments=tournaments}}
@@ -19,7 +19,7 @@
   <div class="tab-content" id="tab-cash" style="display:none;">
     <div class="tab-header">
       <h2>Cash Games</h2>
-      <a href="/admin/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
+      <a href="/admin/games/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
     </div>
     <div id="cashgames-list">
       {{> cash/list cashGames=cashGames}}
@@ -34,6 +34,17 @@
     </div>
   </div>
 </div>
+  <aside class="admin-quick-links" style="margin-top:1.5rem;">
+    <h3>Atajos Rápidos</h3>
+    <div class="links">
+      <a href="/admin/games/tournaments/list">Torneos (admin)</a> ·
+      <a href="/admin/registrations/list">Inscripciones</a> ·
+      <a href="/admin/games/cash/list">Mesas Cash</a> ·
+      <a href="/admin/games/ranking">Ranking</a> ·
+      <a href="/admin/users">Usuarios</a> ·
+      <a href="/admin/users/import">Importar usuarios</a>
+    </div>
+  </aside>
 <script>
   // Simple tab logic
   document.addEventListener('DOMContentLoaded', function() {

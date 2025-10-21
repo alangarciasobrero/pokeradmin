@@ -26,7 +26,11 @@ function validarRegistration(data: any, parcial = false): string | null {
     }
   }
   if (data.punctuality !== undefined && typeof data.punctuality !== 'boolean') {
-    return 'punctuality debe ser booleano';
+    // Allow common string representations from HTML forms ("on", "true", "1") and coerce to boolean
+    const v = String(data.punctuality).toLowerCase();
+    if (['true', '1', 'on'].includes(v)) data.punctuality = true;
+    else if (['false', '0', 'off'].includes(v)) data.punctuality = false;
+    else return 'punctuality debe ser booleano';
   }
   return null;
 }

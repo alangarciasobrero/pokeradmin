@@ -36,8 +36,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     const activeTournaments = tournaments.filter((t: any) => new Date(t.start_date) <= now && (!t.end_date || new Date(t.end_date) >= now)).length;
     const activeCashGames = cashGames.filter((c: any) => !c.end_datetime).length;
     // estimate players playing by counting registrations for tournaments starting today or active
-    const Registration = (await import('../models/Registration')).Registration;
-    const regs = await Registration.findAll({ where: {} });
+  const registrationRepo = await import('../repositories/RegistrationRepository');
+  const regs = await (new registrationRepo.RegistrationRepository()).getAll();
     const playersPlaying = regs.length; // rough estimate for now
     summary = { activeTournaments, activeCashGames, playersPlaying };
   } catch (err) {

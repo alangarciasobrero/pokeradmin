@@ -42,7 +42,9 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
       users: umap,
       tournaments: tmap,
       meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
-      links
+      links,
+      selected_tournament_id: req.query.tournament_id ? Number(req.query.tournament_id) : null,
+      selected_user_id: req.query.user_id ? Number(req.query.user_id) : null
     });
   } catch (err) {
     console.error(err);
@@ -55,7 +57,8 @@ router.get('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
     const tournaments = await Tournament.findAll({ order: [['start_date', 'DESC']] });
     const users = await User.findAll({ where: { is_deleted: false } });
-    res.render('registrations/form', { formTitle: 'Nueva Inscripción', formAction: '/api/registrations', tournaments, users });
+  // Post to the SSR admin create handler so we normalize punctuality server-side
+  res.render('registrations/form', { formTitle: 'Nueva Inscripción', formAction: '/admin/registrations/new', tournaments, users });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al preparar formulario');

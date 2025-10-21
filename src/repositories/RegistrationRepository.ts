@@ -74,7 +74,24 @@ export class RegistrationRepository {
    * Crea una nueva inscripción
    */
   async create(data: Partial<Registration>): Promise<Registration> {
-    return Registration.create(data);
+    try {
+      return await Registration.create(data);
+    } catch (err: any) {
+      // If legacy schema uses player_id instead of user_id, fallback to raw insert
+      if (err && err.parent && err.parent.errno === 1054) {
+        const sequelize = (Registration as any).sequelize;
+        const playerId = (data as any).user_id ?? (data as any).player_id;
+        const tournamentId = (data as any).tournament_id;
+        const registrationDate = (data as any).registration_date || new Date();
+        const punctuality = (data as any).punctuality === undefined ? false : !!(data as any).punctuality;
+        const sql = 'INSERT INTO registrations (player_id, tournament_id, registration_date, punctuality) VALUES (?, ?, ?, ?)';
+        const res: any = await sequelize.query(sql, { replacements: [playerId, tournamentId, registrationDate, punctuality] });
+        // get insertId
+        const insertId = res && res[0] && res[0].insertId ? res[0].insertId : null;
+        return { id: insertId, user_id: playerId, tournament_id: tournamentId, registration_date: registrationDate, punctuality } as any;
+      }
+      throw err;
+    }
   }
 
   /**

@@ -1,121 +1,129 @@
-{{! Formulario para crear o editar usuario }}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>{{formTitle}}</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>{{formTitle}}</h1>
-        <nav>
-            <ul>
-                <li><a href="/admin/dashboard">Dashboard</a></li>
-                <li><a href="/admin/users">Usuarios</a></li>
-                <li><a href="/admin/games">Partidas</a></li>
-                <li><a href="/admin/reports">Reportes</a></li>
-                <li><a href="/admin/settings">Configuración</a></li>
-                <li><a href="/logout">Cerrar sesión</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <form method="POST" action="{{formAction}}" enctype="multipart/form-data">
+{{#> layouts/main title=formTitle }}
+
+<div class="admin-user-form">
+    <h1>{{formTitle}}</h1>
+
+    {{#if flash}}
+        <div class="flash flash-{{flash.type}}">{{flash.message}}</div>
+    {{/if}}
+    {{#if error}}
+        <div class="flash flash-error">{{error}}</div>
+    {{/if}}
+
+    <form method="POST" action="{{formAction}}" enctype="multipart/form-data">
+        <div class="form-row">
             <label for="username">Usuario</label>
             <input type="text" id="username" name="username" value="{{user.username}}" required>
+        </div>
+        <div class="form-row">
             <label for="full_name">Nombre completo</label>
             <input type="text" id="full_name" name="full_name" value="{{user.full_name}}">
-                        <label for="role">Rol</label>
-                        <select id="role" name="role">
-                                <option value="admin" {{#if (eq user.role 'admin')}}selected{{/if}}>Admin</option>
-                                <option value="user" {{#if (eq user.role 'user')}}selected{{/if}}>Usuario</option>
-                        </select>
+        </div>
+        <div class="form-row">
+            <label for="role">Rol</label>
+            <select id="role" name="role">
+                <option value="admin" {{#if (eq user.role 'admin')}}selected{{/if}}>Admin</option>
+                <option value="user" {{#if (eq user.role 'user')}}selected{{/if}}>Usuario</option>
+            </select>
+        </div>
 
-                        <label>Avatar</label>
-                        <div style="display:flex; align-items:center; gap:1.5rem;">
-                                <div id="avatar-preview" style="width:60px; height:60px; border-radius:50%; overflow:hidden; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
-                                  {{#if user.avatar}}
-                                    <img id="avatar-img" src="{{user.avatar}}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">
-                                  {{else}}
-                                    <span id="avatar-placeholder" style="color:#aaa;">Sin avatar</span>
-                                  {{/if}}
-                                </div>
-                                <input id="avatarFile" type="file" name="avatarFile" accept="image/*">
-                        </div>
-                        <div style="margin:1rem 0;">
-                                <label>O elegir de la galería:</label>
-                                <div id="gallery" style="display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.5rem;">
-                                    {{#each gallery}}
-                                        <label style="cursor:pointer; display:inline-block; text-align:center;">
-                                            <input type="radio" name="avatarGallery" value="{{this}}" style="display:none;" {{#if (eq ../user.avatar this)}}checked{{/if}}>
-                                            <img class="gallery-thumb" src="{{this}}" alt="avatar" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #FFD700; display:block;">
-                                        </label>
-                                    {{/each}}
-                                </div>
-                        </div>
+        <div class="form-row">
+            <label>Avatar</label>
+            <div style="display:flex; align-items:center; gap:1.5rem;">
+                <div id="avatar-preview" style="width:60px; height:60px; border-radius:50%; overflow:hidden; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
+                    {{#if user.avatar}}
+                        <img id="avatar-img" src="{{user.avatar}}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">
+                    {{else}}
+                        <span id="avatar-placeholder" style="color:#aaa;">Sin avatar</span>
+                    {{/if}}
+                </div>
+                <input id="avatarFile" type="file" name="avatarFile" accept="image/*">
+            </div>
+        </div>
+
+        <div class="form-row" style="margin:1rem 0;">
+            <label>O elegir de la galería:</label>
+            <div id="gallery" style="display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.5rem;">
+                {{#each gallery}}
+                    <label style="cursor:pointer; display:inline-block; text-align:center;">
+                        <input type="radio" name="avatarGallery" value="{{this}}" style="display:none;" {{#if (eq ../user.avatar this)}}checked{{/if}}>
+                        <img class="gallery-thumb" src="{{this}}" alt="avatar" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #FFD700; display:block;">
+                    </label>
+                {{/each}}
+            </div>
+        </div>
+
+        <div class="form-row">
             <label for="password">Contraseña {{#unless user.id}}(obligatoria){{else}}(dejar vacío para no cambiar){{/unless}}</label>
             <input type="password" id="password" name="password" {{#unless user.id}}required{{/unless}}>
-            <button type="submit">Guardar</button>
-        </form>
-        {{#if user.id}}
+        </div>
+
+        <div style="margin-top:1rem;">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+
+    {{#if user.id}}
         <form method="POST" action="/admin/users/{{user.id}}/delete" style="margin-top:2rem;">
             <button type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar usuario</button>
         </form>
-        {{/if}}
-        <hr>
-        <h3>Importar usuarios desde archivo</h3>
-        <form method="POST" action="/admin/users/import" enctype="multipart/form-data">
-            <input type="file" name="file" accept=".csv,.xlsx" required>
-            <button type="submit">Importar</button>
-        </form>
-    </main>
-        <script>
-            // Preview uploaded file
-            const avatarInput = document.getElementById('avatarFile');
-            const avatarImg = document.getElementById('avatar-img');
-            const avatarPlaceholder = document.getElementById('avatar-placeholder');
-            const gallery = document.getElementById('gallery');
+    {{/if}}
 
-            if (avatarInput) {
-                avatarInput.addEventListener('change', function(e) {
-                    const f = this.files && this.files[0];
-                    if (!f) return;
-                    const reader = new FileReader();
-                    reader.onload = function(ev) {
-                        if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
-                        if (avatarImg) {
-                            avatarImg.src = ev.target.result;
-                        } else {
-                            const img = document.createElement('img'); img.id = 'avatar-img'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit='cover'; img.src = ev.target.result;
-                            const container = document.getElementById('avatar-preview');
-                            container.innerHTML = ''; container.appendChild(img);
-                        }
-                    };
-                    reader.readAsDataURL(f);
-                });
-            }
+    <hr>
+    <h3>Importar usuarios desde archivo</h3>
+    <form method="POST" action="/admin/users/import" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv,.xlsx" required>
+        <button type="submit">Importar</button>
+    </form>
 
-            // Gallery click preview and check radio
-            if (gallery) {
-                gallery.addEventListener('click', function(e) {
-                    const target = e.target.closest('.gallery-thumb');
-                    if (!target) return;
-                    // find radio sibling
-                    const label = target.parentElement;
-                    const radio = label.querySelector('input[type=radio]');
-                    if (radio) radio.checked = true;
-                    // preview
-                    const src = target.src;
-                    if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
-                    if (avatarImg) avatarImg.src = src; else {
-                        const img = document.createElement('img'); img.id = 'avatar-img'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit='cover'; img.src = src;
-                        const container = document.getElementById('avatar-preview'); container.innerHTML = ''; container.appendChild(img);
-                    }
-                    // clear file input
-                    if (avatarInput) avatarInput.value = '';
-                });
+</div>
+
+<script>
+    // Preview uploaded file
+    const avatarInput = document.getElementById('avatarFile');
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarPlaceholder = document.getElementById('avatar-placeholder');
+    const gallery = document.getElementById('gallery');
+
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            const f = this.files && this.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+                if (avatarImg) {
+                    avatarImg.src = ev.target.result;
+                } else {
+                    const img = document.createElement('img'); img.id = 'avatar-img'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit='cover'; img.src = ev.target.result;
+                    const container = document.getElementById('avatar-preview');
+                    container.innerHTML = ''; container.appendChild(img);
+                }
+            };
+            reader.readAsDataURL(f);
+        });
+    }
+
+    // Gallery click preview and check radio
+    if (gallery) {
+        gallery.addEventListener('click', function(e) {
+            const target = e.target.closest('.gallery-thumb');
+            if (!target) return;
+            // find radio sibling
+            const label = target.parentElement;
+            const radio = label.querySelector('input[type=radio]');
+            if (radio) radio.checked = true;
+            // preview
+            const src = target.src;
+            if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+            if (avatarImg) avatarImg.src = src; else {
+                const img = document.createElement('img'); img.id = 'avatar-img'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit='cover'; img.src = src;
+                const container = document.getElementById('avatar-preview'); container.innerHTML = ''; container.appendChild(img);
             }
-        </script>
-</body>
-</html>
+            // clear file input
+            if (avatarInput) avatarInput.value = '';
+        });
+    }
+</script>
+
+{{/layouts/main}}
