@@ -15,8 +15,10 @@
       {{/each}}
     </select>
 
-    <label for="punctuality">Puntualidad:</label>
-    <input type="checkbox" name="punctuality" id="punctuality" value="true">
+  <label for="punctuality">Puntualidad:</label>
+  <!-- hidden fallback so the field is always present when the checkbox is unchecked -->
+  <input type="hidden" name="punctuality" value="false">
+  <input type="checkbox" name="punctuality" id="punctuality" value="true">
 
     <button type="submit" class="btn btn-primary">Registrar</button>
   </form>
