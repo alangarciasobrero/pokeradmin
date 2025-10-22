@@ -77,8 +77,10 @@ export class RegistrationRepository {
     try {
       return await Registration.create(data);
     } catch (err: any) {
-      // If legacy schema uses player_id instead of user_id, fallback to raw insert
-      if (err && err.parent && err.parent.errno === 1054) {
+      // If legacy schema uses player_id instead of user_id OR FK to players prevents insertion,
+      // fallback to raw insert and attempt to create minimal players row when necessary.
+      const errno = err && err.parent && err.parent.errno;
+      if (errno === 1054 || errno === 1452) {
         const sequelize = (Registration as any).sequelize;
         const playerId = (data as any).user_id ?? (data as any).player_id;
         const tournamentId = (data as any).tournament_id;
