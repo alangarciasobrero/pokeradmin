@@ -25,7 +25,24 @@ export class ResultRepository {
    * Crea un nuevo resultado
    */
   async create(data: Partial<Result>): Promise<Result> {
-    return Result.create(data);
+    try {
+      return await Result.create(data);
+    } catch (err: any) {
+      // Fallback when DB schema uses player_id instead of user_id or doesn't have user_id
+      if (err && err.parent && err.parent.errno === 1054) {
+        const sequelize = (Result as any).sequelize;
+        const userId = (data as any).user_id ?? (data as any).player_id;
+        const tournamentId = (data as any).tournament_id;
+        const position = (data as any).position;
+        const finalTable = (data as any).final_table === undefined ? false : !!(data as any).final_table;
+        // Try raw insert using player_id column name
+        const sql = 'INSERT INTO results (tournament_id, player_id, position, final_table) VALUES (?, ?, ?, ?)';
+        const res: any = await sequelize.query(sql, { replacements: [tournamentId, userId, position, finalTable] });
+        const insertId = res && res[0] && (res[0].insertId || (res[0][0] && res[0][0].insertId)) ? (res[0].insertId || res[0][0].insertId) : null;
+        return { id: insertId, tournament_id: tournamentId, user_id: userId, position, final_table: finalTable } as any;
+      }
+      throw err;
+    }
   }
 
   /**

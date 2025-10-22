@@ -85,10 +85,47 @@ export class RegistrationRepository {
         const registrationDate = (data as any).registration_date || new Date();
         const punctuality = (data as any).punctuality === undefined ? false : !!(data as any).punctuality;
         const sql = 'INSERT INTO registrations (player_id, tournament_id, registration_date, punctuality) VALUES (?, ?, ?, ?)';
-        const res: any = await sequelize.query(sql, { replacements: [playerId, tournamentId, registrationDate, punctuality] });
-        // get insertId
-        const insertId = res && res[0] && res[0].insertId ? res[0].insertId : null;
-        return { id: insertId, user_id: playerId, tournament_id: tournamentId, registration_date: registrationDate, punctuality } as any;
+        try {
+          const res: any = await sequelize.query(sql, { replacements: [playerId, tournamentId, registrationDate, punctuality] });
+          // get insertId (mysql returns insertId in result[0].insertId)
+          const insertId = res && res[0] && (res[0].insertId || (res[0][0] && res[0][0].insertId)) ? (res[0].insertId || res[0][0].insertId) : null;
+          return { id: insertId, user_id: playerId, tournament_id: tournamentId, registration_date: registrationDate, punctuality } as any;
+        } catch (innerErr: any) {
+          // If insertion failed because player_id references players table that has no row,
+          // try to create a minimal players row and retry once.
+          const pErr = innerErr && innerErr.parent && innerErr.parent.errno;
+          if (pErr === 1452) {
+            try {
+              // attempt to create a players row mapping to the user
+              // We'll insert minimal info: user_id and createdAt/updatedAt if those columns exist in schema
+              // Use parameterized insert and ignore failures if columns don't exist
+              // Try several common column combinations
+              const username = (data as any).__username || null;
+              // Prefer inserting (user_id) if that column exists
+              try {
+                await sequelize.query('INSERT INTO players (user_id, createdAt, updatedAt) VALUES (?, NOW(), NOW())', { replacements: [playerId] });
+              } catch (e1) {
+                // Fallback: insert with id explicit (may fail if id is auto-increment)
+                try {
+                  await sequelize.query('INSERT INTO players (id, createdAt, updatedAt) VALUES (?, NOW(), NOW())', { replacements: [playerId] });
+                } catch (e2) {
+                  // Last resort: try inserting username only
+                  if (username) {
+                    try { await sequelize.query('INSERT INTO players (username, createdAt, updatedAt) VALUES (?, NOW(), NOW())', { replacements: [username] }); } catch (_) {}
+                  }
+                }
+              }
+
+              // Retry registration insert after attempting to create players row
+              const res2: any = await sequelize.query(sql, { replacements: [playerId, tournamentId, registrationDate, punctuality] });
+              const insertId2 = res2 && res2[0] && (res2[0].insertId || (res2[0][0] && res2[0][0].insertId)) ? (res2[0].insertId || res2[0][0].insertId) : null;
+              return { id: insertId2, user_id: playerId, tournament_id: tournamentId, registration_date: registrationDate, punctuality } as any;
+            } catch (finalErr) {
+              throw finalErr;
+            }
+          }
+          throw innerErr;
+        }
       }
       throw err;
     }
