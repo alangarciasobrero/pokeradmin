@@ -11,7 +11,22 @@
         </span>
         <span>PokerAdmin</span>
     </a>
-    <nav class="nav">
-        <a href="/tournaments">Torneos</a>
-    </nav>
+        <nav class="nav">
+                <a href="/tournaments">Torneos</a>
+                {{#if role}}
+                        {{#if (eq role 'admin')}}
+                            <a href="/admin/dashboard">Dashboard</a>
+                            <a href="/admin/games/tournaments/list">Torneos (gestión)</a>
+                            <a href="/admin/registrations/list">Inscripciones</a>
+                            <a href="/admin/games/cash/list">Mesas Cash</a>
+                            <a href="/admin/games/ranking">Ranking</a>
+                            <a href="/admin/users">Usuarios</a>
+                        {{/if}}
+                {{/if}}
+                {{#if username}}
+                    <form method="post" action="/logout" style="display:inline;">
+                        <button type="submit" class="btn-logout">Cerrar sesión ({{username}})</button>
+                    </form>
+                {{/if}}
+        </nav>
 </header>

@@ -20,6 +20,7 @@ import adminTournamentRoutes from './routes/adminTournamentRoutes';
 import adminCashRoutes from './routes/adminCashRoutes';
 import adminRankingRoutes from './routes/adminRankingRoutes';
 import adminRegistrationRoutes from './routes/adminRegistrationRoutes';
+import adminSettingsRoutes from './routes/adminSettingsRoutes';
 import devRoutes from './routes/devRoutes';
 
 
@@ -110,6 +111,20 @@ function requireAdmin(req: express.Request, res: express.Response, next: express
 	next();
 }
 
+// Simple session-based flash middleware
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+	// Ensure session exists
+	if (!req.session) return next();
+	const sess: any = req.session as any;
+	res.locals.flash = sess.flash || null;
+	// expose username and role for templates
+	res.locals.username = sess.username || null;
+	res.locals.role = sess.role || null;
+	// clear flash after exposing
+	delete sess.flash;
+	next();
+});
+
 
 // Rutas web (SSR): protegidas
 app.use('/tournaments', requireAuth, tournamentWebRoutes);
@@ -123,6 +138,9 @@ app.use('/admin/games', adminGamesRoutes);
 app.use('/admin/games/tournaments', adminTournamentRoutes);
 app.use('/admin/games/cash', adminCashRoutes);
 app.use('/admin/games/ranking', adminRankingRoutes);
+
+// Admin game settings (points/prize editor)
+app.use('/admin/games/settings', adminSettingsRoutes);
 
 // Admin registrations (SSR)
 app.use('/admin/registrations', adminRegistrationRoutes);

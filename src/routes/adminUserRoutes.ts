@@ -54,8 +54,8 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 const avatarsDir = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true });
 const avatarStorage = multer.diskStorage({
-  destination: function (_req: any, _file: Express.Multer.File, cb: (err: any, dest?: string) => void) { cb(null, avatarsDir); },
-  filename: function (_req: any, file: Express.Multer.File, cb: (err: any, filename?: string) => void) {
+  destination: function (_req: any, _file: Express.Multer.File, cb: (err: Error | null, dest: string) => void) { cb(null, avatarsDir); },
+  filename: function (_req: any, file: Express.Multer.File, cb: (err: Error | null, filename: string) => void) {
     const uniq = Date.now() + '-' + Math.round(Math.random() * 1e6);
     const ext = path.extname(file.originalname) || '.jpg';
     cb(null, `avatar-${uniq}${ext}`);
