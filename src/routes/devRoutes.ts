@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import UserRepository from '../repositories/UserRepository';
+import sequelize from '../services/database';
 
 const router = Router();
 
@@ -32,7 +33,6 @@ router.post('/dev/ensure-player/:userId', async (req: Request, res: Response) =>
   const userId = Number(req.params.userId);
   if (!userId || isNaN(userId) || userId <= 0) return res.status(400).json({ error: 'Invalid userId' });
   try {
-    const sequelize = (await import('../models/User')).default.sequelize;
     const attempts: any[] = [];
     // Try insert using user_id column
     try {
