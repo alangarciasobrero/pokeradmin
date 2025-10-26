@@ -37,7 +37,7 @@
                     <td style="padding:0.7rem 0.5rem; font-weight:600;">{{username}}</td>
                     <td style="padding:0.7rem 0.5rem;">{{full_name}}</td>
                     <td style="padding:0.7rem 0.5rem;">
-                        <span class="badge badge-{{role}}" style="background:{{#if (eq role 'admin')}}#3949ab{{else}}#43a047{{/if}}; color:#fff; padding:0.3em 1em; border-radius:8px; font-size:0.98em; font-weight:600;">{{role}}</span>
+                        <span class="badge badge-{{role}}" style="background:{{#if (eq role 'admin')}}#3949ab{{else}}#43a047{{/if}}; color:#fff; padding:0.3em 1em; border-radius:8px; font-size:0.98em; font-weight:600;">{{#if (eq role 'admin')}}Admin{{else}}Player{{/if}}</span>
                     </td>
                     <td style="padding:0.7rem 0.5rem;">
                         <a class="btn" style="padding:0.4em 1.2em; font-size:0.98em; margin-right:0.5em;" href="/admin/users/{{id}}/edit">Editar</a>
