@@ -42,6 +42,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.engine('handlebars', engine({
 	extname: '.handlebars',
 	layoutsDir: path.join(process.cwd(), 'src', 'views', 'layouts'),
+	defaultLayout: false,
 	partialsDir: [
 		path.join(process.cwd(), 'src', 'views', 'partials'),
 		path.join(process.cwd(), 'src', 'views')
