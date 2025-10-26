@@ -132,7 +132,12 @@ router.post('/debug', requireAdmin, async (req: Request, res: Response) => {
     const pointsTable = loadPointsTable();
     const prizeOverride = loadPrizeOverride() || DEFAULT_PRIZE_CONFIG;
     const leaderboard = rankingSvc.buildLeaderboard(tournaments, registrationsByTournament, resultsByTournament, pointsTable, prizeOverride);
-    return res.json({ ok: true, leaderboard, tournaments: tournaments.length });
+    const userIds = leaderboard.map((l: any) => l.user_id);
+    let users: any[] = [];
+    if (userIds.length > 0) {
+      users = await (await import('../models/User')).default.findAll({ where: { id: userIds } });
+    }
+    return res.json({ ok: true, leaderboard, users, tournaments: tournaments.length });
   } catch (err) {
     const e: any = err;
     return res.status(500).json({ ok: false, error: String(e && (e.stack || e)) });
