@@ -56,6 +56,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 
     const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll);
 
+    console.log('[adminRanking] tournaments loaded:', Array.isArray(tournaments) ? tournaments.length : typeof tournaments);
+
     // fetch registrations grouped by tournament
     const regsAll = await registrationRepo.getAll();
     const registrationsByTournament: Record<number, any[]> = {};
@@ -65,7 +67,10 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       registrationsByTournament[tid].push(r);
     }
 
-    const resultsByTournament = await resultRepo.getByTournament();
+  const resultsByTournament = await resultRepo.getByTournament();
+
+  console.log('[adminRanking] registrationsByTournament keys:', Object.keys(registrationsByTournament).length);
+  console.log('[adminRanking] resultsByTournament keys:', Object.keys(resultsByTournament || {}).length);
 
   const pointsTable = loadPointsTable();
   const prizeOverride = loadPrizeOverride() || DEFAULT_PRIZE_CONFIG;
@@ -88,7 +93,12 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 
   res.render('admin/ranking', { leaderboard: enriched, username: req.session.username, rules: { pointsTable, prizeOverride } });
   } catch (err) {
-    console.error(err);
+    const e: any = err;
+    console.error('[adminRanking] Error building ranking:', e && (e.stack || e));
+    // In development expose the stack to help debugging the redirect-loop follow-up
+    if (process.env.NODE_ENV === 'development') {
+      return res.status(500).send('Error cargando ranking: ' + String(e && (e.stack || e)));
+    }
     res.status(500).send('Error cargando ranking');
   }
 });
