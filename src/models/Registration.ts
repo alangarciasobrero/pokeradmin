@@ -21,6 +21,7 @@ Registration.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    // Use canonical `user_id` referencing the `users` table.
     user_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,

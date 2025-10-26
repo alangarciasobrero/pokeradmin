@@ -64,8 +64,7 @@ router.get('/cash', requireAdmin, (req: Request, res: Response) => {
   res.redirect('/admin/games/cash/list');
 });
 
-router.get('/ranking', requireAdmin, (req: Request, res: Response) => {
-  res.redirect('/admin/games/ranking');
-});
+// Note: The ranking page is handled by the dedicated adminRankingRoutes mounted at
+// /admin/games/ranking. Do not intercept or redirect here to avoid redirect loops.
 
 export default router;

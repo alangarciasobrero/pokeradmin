@@ -13,11 +13,11 @@ const registrationRepo = new RegistrationRepository();
  * @returns null si es válido, o un string con el error
  */
 function validarRegistration(data: any, parcial = false): string | null {
-  // Soportar legacy `player_id` y normalizar a `user_id`
-  if (!parcial || data.player_id !== undefined || data.user_id !== undefined) {
-    const uid = data.user_id ?? data.player_id;
+  // Require canonical `user_id` (we no longer accept legacy `player_id`)
+  if (!parcial || data.user_id !== undefined) {
+    const uid = data.user_id;
     if (!uid || isNaN(Number(uid)) || Number(uid) <= 0) {
-      return 'user_id (o player_id legacy) es obligatorio y debe ser un número válido';
+      return 'user_id es obligatorio y debe ser un número válido';
     }
   }
   if (!parcial || data.tournament_id !== undefined) {
@@ -74,6 +74,9 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
   const data = req.body;
+  console.log('POST /api/registrations body:', data);
+  // Expect clients to send `user_id` only. Coerce punctuality server-side above.
+  try { const pth = 'logs/registration_requests.log'; const payload = { time: new Date().toISOString(), body: data }; const fs = require('fs'); try { fs.mkdirSync('logs', { recursive: true }) } catch(_){}; fs.appendFileSync(pth, JSON.stringify(payload) + '\n'); } catch(_){}
   const errorMsg = validarRegistration(data);
   if (errorMsg) {
     return res.status(400).json({ error: errorMsg });
@@ -82,7 +85,12 @@ router.post('/', async (req: Request, res: Response) => {
     const registration = await registrationRepo.create(data);
     res.status(201).json(registration);
   } catch (error) {
-    res.status(400).json({ error: 'No se pudo crear la inscripción', details: error });
+    // Log the error server-side to help debugging (do not leak full internals to clients)
+    console.error('Failed to create registration:', error);
+    // Provide a small, useful error response for clients/tests
+    const errAny: any = error;
+    const details = errAny && errAny.message ? errAny.message : errAny;
+    res.status(400).json({ error: 'No se pudo crear la inscripción', details });
   }
 });
 

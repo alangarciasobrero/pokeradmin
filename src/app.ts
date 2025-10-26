@@ -62,6 +62,16 @@ app.use(express.json());
 // Permite a Express entender datos de formularios (urlencoded)
 app.use(express.urlencoded({ extended: true }));
 
+// Better error handling for JSON parse errors (body-parser)
+// This returns a helpful JSON error instead of the default HTML stack.
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+	if (err && err.type === 'entity.parse.failed') {
+		console.error('JSON parse error on request', req.method, req.path, err);
+		return res.status(400).json({ error: 'Invalid JSON body', details: err.message });
+	}
+	next(err);
+});
+
 // Register simple Handlebars helpers
 import Handlebars from 'handlebars';
 Handlebars.registerHelper('range', function(start: number, end: number) {

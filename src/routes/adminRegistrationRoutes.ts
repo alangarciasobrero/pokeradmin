@@ -69,8 +69,8 @@ router.get('/new', requireAdmin, async (req: Request, res: Response) => {
 router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
     const payload = {
-      user_id: req.body.user_id || req.body.player_id,
-      tournament_id: req.body.tournament_id,
+      user_id: Number(req.body.user_id),
+      tournament_id: Number(req.body.tournament_id),
       punctuality: req.body.punctuality === 'true' || req.body.punctuality === 'on'
     };
     await registrationRepo.create(payload as any);
