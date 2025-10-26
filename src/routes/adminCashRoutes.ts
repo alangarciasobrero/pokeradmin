@@ -34,6 +34,11 @@ router.get('/new', requireAdmin, (req: Request, res: Response) => {
   res.render('cash/form', { formTitle: 'Nueva Mesa Cash', formAction: '/admin/games/cash/new' });
 });
 
+// Alias for older links using '/create'
+router.get('/create', requireAdmin, (req: Request, res: Response) => {
+  return res.redirect('/admin/games/cash/new');
+});
+
 // Edit form: render existing cash game into the same form
 router.get('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);

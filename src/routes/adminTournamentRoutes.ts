@@ -48,6 +48,11 @@ router.get('/new', requireAdmin, (req: Request, res: Response) => {
   res.render('tournaments/form', { formTitle: 'Nuevo Torneo (Admin)', formAction: '/api/tournaments' });
 });
 
+// Backwards-compatible alias: some links use '/create'
+router.get('/create', requireAdmin, (req: Request, res: Response) => {
+  return res.redirect('/admin/games/tournaments/new');
+});
+
 /**
  * Normaliza los tipos recibidos desde un formulario HTML (strings) a los tipos esperados
  * por el repositorio/API: numbers, booleans y fechas.
