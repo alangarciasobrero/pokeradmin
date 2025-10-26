@@ -101,9 +101,16 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   res.render('admin/ranking', { leaderboard: enriched, username: req.session.username, rules: { pointsTable, prizeOverride } });
   } catch (err) {
     const e: any = err;
-    console.error('[adminRanking] Error building ranking:', e && (e.stack || e));
+    const stack = String(e && (e.stack || e));
+    console.error('[adminRanking] Error building ranking:', stack);
+    try {
+      const pth = 'logs/ranking_errors.log';
+      const fsn = await import('fs');
+      try { fsn.mkdirSync('logs', { recursive: true }); } catch (_) {}
+      fsn.appendFileSync(pth, JSON.stringify({ time: new Date().toISOString(), error: stack }) + '\n');
+    } catch (_) {}
     // For debugging in local dev, return the error stack so the E2E runner can surface it.
-    return res.status(500).send('Error cargando ranking: ' + String(e && (e.stack || e)));
+    return res.status(500).send('Error cargando ranking: ' + stack);
   }
 });
 
