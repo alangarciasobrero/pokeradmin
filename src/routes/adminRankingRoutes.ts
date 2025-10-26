@@ -95,11 +95,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   } catch (err) {
     const e: any = err;
     console.error('[adminRanking] Error building ranking:', e && (e.stack || e));
-    // In development expose the stack to help debugging the redirect-loop follow-up
-    if (process.env.NODE_ENV === 'development') {
-      return res.status(500).send('Error cargando ranking: ' + String(e && (e.stack || e)));
-    }
-    res.status(500).send('Error cargando ranking');
+    // For debugging in local dev, return the error stack so the E2E runner can surface it.
+    return res.status(500).send('Error cargando ranking: ' + String(e && (e.stack || e)));
   }
 });
 
