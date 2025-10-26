@@ -130,7 +130,15 @@ try {
   $snippet = if ($content.Length -gt 1200) { $content.Substring(0,1200) + '... [truncated]' } else { $content }
   Write-Output $snippet
 } catch {
-  Write-Output "GET ranking failed: $($_.Exception.Message)"
+  if ($_.Exception.Response) {
+    $resp = $_.Exception.Response
+    $sr = New-Object IO.StreamReader($resp.GetResponseStream())
+    $body = $sr.ReadToEnd()
+    Write-Output "GET ranking failed status: $($resp.StatusCode.Value__)"
+    Write-Output $body
+  } else {
+    Write-Output "GET ranking failed: $($_.Exception.Message)"
+  }
   exit 1
 }
 

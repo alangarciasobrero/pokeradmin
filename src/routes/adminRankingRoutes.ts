@@ -76,11 +76,18 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   const prizeOverride = loadPrizeOverride() || DEFAULT_PRIZE_CONFIG;
   const leaderboard = rankingSvc.buildLeaderboard(tournaments, registrationsByTournament, resultsByTournament, pointsTable, prizeOverride);
 
-    // attach username for each entry
-    const userIds = leaderboard.map(l => l.user_id);
-    const users = await (await import('../models/User')).default.findAll({ where: { id: userIds } });
-    const userMap: Record<number, any> = {};
-    for (const u of users) userMap[Number((u as any).id)] = u;
+  console.log('[adminRanking] leaderboard length:', Array.isArray(leaderboard) ? leaderboard.length : typeof leaderboard);
+
+  // attach username for each entry
+  const userIds = leaderboard.map(l => l.user_id);
+  let users: any[] = [];
+  if (userIds.length > 0) {
+    users = await (await import('../models/User')).default.findAll({ where: { id: userIds } });
+  } else {
+    console.log('[adminRanking] no userIds to lookup');
+  }
+  const userMap: Record<number, any> = {};
+  for (const u of users) userMap[Number((u as any).id)] = u;
 
     const enriched = leaderboard.map((l, idx) => ({
       position: idx + 1,
