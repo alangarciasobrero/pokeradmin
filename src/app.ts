@@ -42,7 +42,8 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.engine('handlebars', engine({
 	extname: '.handlebars',
 	layoutsDir: path.join(process.cwd(), 'src', 'views', 'layouts'),
-	defaultLayout: false,
+	// Use the default layout so views are wrapped with `layouts/main` unless they opt out
+	defaultLayout: 'main',
 	partialsDir: [
 		path.join(process.cwd(), 'src', 'views', 'partials'),
 		path.join(process.cwd(), 'src', 'views')
