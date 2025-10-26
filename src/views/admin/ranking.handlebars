@@ -31,9 +31,9 @@
   <h2>Reglas y configuración</h2>
   <div>
     <h3>Tabla de puntos (posición → puntos)</h3>
-    <ol>
+      <ol>
       {{#each rules.pointsTable}}
-        <li>Pos {{@index+1}}: {{this}} pts</li>
+        <li>Pos {{inc @index}}: {{this}} pts</li>
       {{/each}}
     </ol>
   </div>
@@ -42,7 +42,7 @@
     <p>Posiciones pagadas: {{rules.prizeOverride.positions}}</p>
     <ol>
       {{#each rules.prizeOverride.percentages}}
-        <li>Pos {{@index+1}}: {{this}}%</li>
+        <li>Pos {{inc @index}}: {{this}}%</li>
       {{/each}}
     </ol>
   </div>
