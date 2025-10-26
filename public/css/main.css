@@ -253,6 +253,7 @@ body {
   letter-spacing: 2px;
   box-shadow: none;
   position: relative;
+  z-index: 1000; /* ensure header sits above other content so links are clickable */
 }
 .pa-header .logo {
   display: inline-block;
