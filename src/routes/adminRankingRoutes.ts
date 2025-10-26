@@ -115,3 +115,26 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 });
 
 export default router;
+
+// Debug endpoint: returns raw leaderboard JSON for diagnostics (dev only)
+router.post('/debug', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const includeAll = req.query.includeAll === '1';
+    const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll);
+    const regsAll = await registrationRepo.getAll();
+    const registrationsByTournament: Record<number, any[]> = {};
+    for (const r of regsAll) {
+      const tid = Number((r as any).tournament_id);
+      if (!registrationsByTournament[tid]) registrationsByTournament[tid] = [];
+      registrationsByTournament[tid].push(r);
+    }
+    const resultsByTournament = await resultRepo.getByTournament();
+    const pointsTable = loadPointsTable();
+    const prizeOverride = loadPrizeOverride() || DEFAULT_PRIZE_CONFIG;
+    const leaderboard = rankingSvc.buildLeaderboard(tournaments, registrationsByTournament, resultsByTournament, pointsTable, prizeOverride);
+    return res.json({ ok: true, leaderboard, tournaments: tournaments.length });
+  } catch (err) {
+    const e: any = err;
+    return res.status(500).json({ ok: false, error: String(e && (e.stack || e)) });
+  }
+});
