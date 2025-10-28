@@ -153,6 +153,27 @@ export default router;
  * @returns null si es válido, o un string con el error
  */
 function validarTorneo(data: any, parcial = false): string | null {
+  // intentar normalizar valores booleanos que vienen desde formularios HTML (strings)
+  function parseBool(v: any): boolean | undefined {
+    if (v === true || v === false) return v;
+    if (v === 1 || v === 0) return Boolean(v);
+    if (typeof v === 'string') {
+      const s = v.trim().toLowerCase();
+      if (s === 'true' || s === '1' || s === 'on' || s === 'yes') return true;
+      if (s === 'false' || s === '0' || s === 'off' || s === 'no') return false;
+    }
+    return undefined;
+  }
+  if (data && typeof data === 'object') {
+    if (data.count_to_ranking !== undefined) {
+      const b = parseBool(data.count_to_ranking);
+      if (b !== undefined) data.count_to_ranking = b;
+    }
+    if (data.double_points !== undefined) {
+      const b2 = parseBool(data.double_points);
+      if (b2 !== undefined) data.double_points = b2;
+    }
+  }
   if (!parcial || data.tournament_name !== undefined) {
     if (!data.tournament_name || typeof data.tournament_name !== 'string') {
       return 'El nombre del torneo es obligatorio y debe ser texto';
