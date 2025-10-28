@@ -217,6 +217,19 @@ function validarTorneo(data: any, parcial = false): string | null {
       const d = parseDate(data.start_date);
       if (d !== undefined) data.start_date = d;
     }
+    // puntualidad: checkbox que activa el descuento
+    if (data.punctuality_apply !== undefined) {
+      const pa = parseBool(data.punctuality_apply);
+      if (pa === false) {
+        // si no aplica, forzar descuento a 0
+        data.punctuality_discount = 0;
+      } else if (pa === true) {
+        // si aplica y no viene valor, preset 20
+        if (data.punctuality_discount === undefined || data.punctuality_discount === '') {
+          data.punctuality_discount = 20;
+        }
+      }
+    }
   }
   if (!parcial || data.tournament_name !== undefined) {
     if (!data.tournament_name || typeof data.tournament_name !== 'string') {

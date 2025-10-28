@@ -76,6 +76,12 @@ function normalizeTournamentInput(data: any) {
       out[f] = (v === true || v === 'true' || v === '1' || v === 1);
     }
   }
+  // punctuality checkbox handling: if apply checkbox sent and false, zero the discount; if true and missing, default to 20
+  if (out.punctuality_apply !== undefined) {
+    const pa = (out.punctuality_apply === true || out.punctuality_apply === 'true' || out.punctuality_apply === '1' || out.punctuality_apply === 1);
+    if (!pa) out.punctuality_discount = 0;
+    else if (out.punctuality_discount === undefined || out.punctuality_discount === null || out.punctuality_discount === '') out.punctuality_discount = 20;
+  }
   for (const f of dateFields) {
     if (out[f] !== undefined && out[f] !== null && out[f] !== '') {
       const d = new Date(out[f]);
