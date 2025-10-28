@@ -1,5 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { TournamentRepository } from '../repositories/TournamentRepository';
+import { Registration } from '../models/Registration';
+import { Payment } from '../models/Payment';
+import { User } from '../models/User';
+import { RegistrationRepository } from '../repositories/RegistrationRepository';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
@@ -114,10 +118,64 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const tournament = await tournamentRepo.getById(id);
     if (!tournament) return res.status(404).send('No encontrado');
-    res.render('tournaments/detail', { tournament, username: req.session.username });
+    // load registrations and users for the inline registration form
+    const registrations = await Registration.findAll({ where: { tournament_id: id }, order: [['registration_date','ASC']] });
+    const users = await User.findAll({ where: { is_deleted: false }, order: [['username','ASC']] });
+    res.render('tournaments/detail', { tournament, registrations, users, username: req.session.username });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error');
+  }
+});
+
+// Admin: register a user into a tournament from the tournament detail page
+router.post('/:id/register', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const data = req.body || {};
+  try {
+    const tournament = await tournamentRepo.getById(id);
+    if (!tournament) return res.status(404).send('Torneo no encontrado');
+
+    // handle inline user creation
+    let userId = data.user_id ? Number(data.user_id) : null;
+    if ((!userId || isNaN(userId)) && data.new_user_username) {
+      // create a minimal user record
+      const existing = await User.findOne({ where: { username: data.new_user_username } });
+      if (existing) userId = existing.id;
+      else {
+        const nu = await User.create({ username: data.new_user_username, password_hash: 'imported', full_name: data.new_user_full_name || null, is_player: true });
+        userId = nu.id;
+      }
+    }
+    if (!userId) {
+      if (req.session) req.session.flash = { type: 'error', message: 'Debes seleccionar o crear un usuario' };
+      return res.redirect(`/admin/games/tournaments/${id}`);
+    }
+
+    const amountPaid = data.amount_paid ? Number(data.amount_paid) : 0;
+    const method = data.method || null;
+
+    // compute punctuality: registration at server time compared with tournament.start_date
+    const now = new Date();
+    const start = new Date(tournament.start_date as any);
+    const punctuality = now <= start;
+
+    // create registration
+    const registration = await Registration.create({ user_id: userId, tournament_id: id, registration_date: now, punctuality });
+
+    // expected amount after punctuality discount
+    const pct = Number(tournament.punctuality_discount || 0);
+    const expectedAmount = Number(tournament.buy_in || 0) * (1 - (pct / 100));
+
+    // create payment record linking to registration
+    await Payment.create({ user_id: userId, amount: expectedAmount, payment_date: now, source: 'tournament', reference_id: registration.id, paid: (amountPaid >= expectedAmount), paid_amount: amountPaid, method });
+
+    if (req.session) req.session.flash = { type: 'success', message: 'Inscripción realizada correctamente' };
+    return res.redirect(`/admin/games/tournaments/${id}`);
+  } catch (err) {
+    console.error('Error registering user in tournament', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al registrar jugador' };
+    return res.redirect(`/admin/games/tournaments/${id}`);
   }
 });
 
