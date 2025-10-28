@@ -1,0 +1,45 @@
+<section class="pa-card cash-bulk-close">
+  <h1>Cerrar mesas en lote — {{formatDate date}}</h1>
+
+  {{#if openGames}}
+    <p>Mesas abiertas encontradas: {{openGames.length}}</p>
+    <table class="pa-table">
+      <thead><tr><th>ID</th><th>Inicio</th><th>Dealer</th><th>Comisión</th><th>Propinas</th></tr></thead>
+      <tbody>
+        {{#each openGames}}
+          <tr>
+            <td>{{this.id}}</td>
+            <td>{{formatDate this.start_datetime}}</td>
+            <td>{{this.dealer}}</td>
+            <td>{{currency this.total_commission}}</td>
+            <td>{{currency this.total_tips}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <h3>Totales por repartidor</h3>
+    <ul>
+      {{#each (objectEntries perDealer)}}
+        {{!-- each yields [dealerName, data] --}}
+        <li>
+          <strong>{{this.0}}</strong> — Mesas: {{this.1.games}} — Comisión: {{currency this.1.total_commission}} — Propinas: {{currency this.1.total_tips}}
+        </li>
+      {{/each}}
+    </ul>
+
+    <form method="post" action="/admin/games/cash/bulk-close">
+      <input type="hidden" name="date" value="{{formatDate date 'YYYY-MM-DD'}}" />
+      <button class="btn" type="submit">Cerrar todas las mesas encontradas y crear pagos agregados</button>
+      <a class="btn" href="/admin/games/cash/list" style="margin-left:0.6rem;">Cancelar</a>
+    </form>
+  {{else}}
+    <p>No se encontraron mesas abiertas para esta fecha.</p>
+  {{/if}}
+
+  <style>
+    .cash-bulk-close .pa-table { width:100%; border-collapse:collapse; }
+    .cash-bulk-close th, .cash-bulk-close td { padding:0.5rem; border-bottom:1px solid #eee; }
+    .btn { background:#007bff; color:#fff; padding:8px 12px; border-radius:6px; text-decoration:none; }
+  </style>
+</section>

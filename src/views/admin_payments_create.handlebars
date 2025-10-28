@@ -1,0 +1,30 @@
+<section class="pa-card admin-payments-create">
+  <h1>Registrar pago manual</h1>
+
+  {{#if error}}
+    <div class="flash flash-error">{{error}}</div>
+  {{/if}}
+
+  <form method="post" action="{{formAction}}" class="tournament-form">
+    <label for="user_id">User ID</label>
+    <input name="user_id" id="user_id" value="{{form.user_id}}" />
+
+    <label for="amount">Monto</label>
+    <input name="amount" id="amount" value="{{form.amount}}" />
+    <p class="note">Nota: para ajustes manuales (credito/débito) usar signo negativo para débito o positivo para abono. Ej: -50000 para registrar una deuda.</p>
+
+    <label for="source">Fuente (tournament/cash/other)</label>
+    <input name="source" id="source" value="{{form.source}}" />
+
+    <label for="reference_id">Reference ID (opcional)</label>
+    <input name="reference_id" id="reference_id" value="{{form.reference_id}}" />
+
+    <label for="method">Método</label>
+    <input name="method" id="method" value="{{form.method}}" />
+
+    <label><input type="checkbox" name="personal_account" {{#if form.personal_account}}checked{{/if}} /> Cuenta personal (saldo)</label>
+    <label><input type="checkbox" name="paid" {{#if form.paid}}checked{{/if}} /> Marcar como pagado</label>
+
+    <div style="margin-top:1rem;"><button class="btn" type="submit">Crear pago</button></div>
+  </form>
+</section>

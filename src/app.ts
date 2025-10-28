@@ -12,6 +12,7 @@ import cashGameRoutes from './routes/cashGameRoutes';
 import resultRoutes from './routes/resultRoutes';
 import seasonRoutes from './routes/seasonRoutes';
 import authRoutes from './routes/authRoutes';
+import { getAdminDashboard } from './controllers/adminDashboardController';
 import tournamentWebRoutes from './routes/tournamentWebRoutes';
 import adminUserRoutes from './routes/adminUserRoutes';
 import userApiRoutes from './routes/userApiRoutes';
@@ -22,6 +23,7 @@ import adminRankingRoutes from './routes/adminRankingRoutes';
 import adminRegistrationRoutes from './routes/adminRegistrationRoutes';
 import adminSettingsRoutes from './routes/adminSettingsRoutes';
 import devRoutes from './routes/devRoutes';
+import adminPaymentRoutes from './routes/adminPaymentRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -76,6 +78,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Register simple Handlebars helpers
 import Handlebars from 'handlebars';
+import { requireAuth as requireAuthMiddleware, requireAdmin as requireAdminMiddleware } from './middleware/requireAuth';
+
 Handlebars.registerHelper('range', function(start: number, end: number) {
 	const out = [] as number[];
 	for (let i = start; i <= end; i++) out.push(i);
@@ -103,35 +107,29 @@ Handlebars.registerHelper('inc', function(value: number) {
 	return Number(value) + 1;
 });
 
+// helper to render admin-only blocks: {{#isAdmin role}}...{{/isAdmin}}
+Handlebars.registerHelper('isAdmin', function(this: any, role: any, opts: any) {
+	return role === 'admin' ? opts.fn(this) : opts.inverse(this);
+});
+
 // Rutas de autenticación (login/logout)
 app.use(authRoutes);
 
-// Middleware para proteger rutas privadas
-
-function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-	if (!req.session.userId) {
-		return res.redirect('/login');
-	}
-	next();
-}
-
-// Middleware para proteger rutas solo para admins
-function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-	if (!req.session.userId || req.session.role !== 'admin') {
-		return res.status(403).send('Acceso denegado');
-	}
-	next();
-}
-
-// Simple session-based flash middleware
+// Simple session-based flash middleware and expose currentUser to templates
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
 	// Ensure session exists
 	if (!req.session) return next();
 	const sess: any = req.session as any;
 	res.locals.flash = sess.flash || null;
-	// expose username and role for templates
+	// expose username and role and a normalized currentUser for templates
 	res.locals.username = sess.username || null;
 	res.locals.role = sess.role || null;
+	res.locals.currentUser = {
+		id: sess.userId || null,
+		username: sess.username || null,
+		role: sess.role || null,
+		avatar: sess.avatar || null
+	};
 	// clear flash after exposing
 	delete sess.flash;
 	next();
@@ -139,7 +137,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 
 
 // Rutas web (SSR): protegidas
-app.use('/tournaments', requireAuth, tournamentWebRoutes);
+app.use('/tournaments', requireAuthMiddleware, tournamentWebRoutes);
 // Gestión de usuarios (admin)
 app.use('/admin/users', adminUserRoutes);
 // API users
@@ -157,6 +155,9 @@ app.use('/admin/games/settings', adminSettingsRoutes);
 // Admin registrations (SSR)
 app.use('/admin/registrations', adminRegistrationRoutes);
 
+// Admin payments
+app.use('/admin/payments', requireAdminMiddleware, adminPaymentRoutes);
+
 // Dev-only routes (auto-login helpers). Registered only in development to avoid exposure.
 if (process.env.NODE_ENV === 'development') {
 	app.use(devRoutes);
@@ -164,26 +165,22 @@ if (process.env.NODE_ENV === 'development') {
 
 
 // Dashboard de admin
-app.get('/admin/dashboard', requireAdmin, (req, res) => {
-	res.render('admin_dashboard', {
-		username: req.session.username || 'admin'
-	});
-});
+app.get('/admin/dashboard', requireAdminMiddleware, getAdminDashboard);
 
 // Home principal: protegida (puede redirigir a dashboard si es admin)
-app.get('/', requireAuth, (req, res) => {
-	if (req.session.role === 'admin') {
+app.get('/', requireAuthMiddleware, (req, res) => {
+	if (req.session?.role === 'admin') {
 		return res.redirect('/admin/dashboard');
 	}
 	res.render('home');
 });
 
 // Rutas API REST: protegidas
-app.use('/api/tournaments', requireAuth, tournamentRoutes);
-app.use('/api/registrations', requireAuth, registrationRoutes);
-app.use('/api/results', requireAuth, resultRoutes);
-app.use('/api/cash-games', requireAuth, cashGameRoutes);
-app.use('/api/seasons', requireAuth, seasonRoutes);
+app.use('/api/tournaments', requireAuthMiddleware, tournamentRoutes);
+app.use('/api/registrations', requireAuthMiddleware, registrationRoutes);
+app.use('/api/results', requireAuthMiddleware, resultRoutes);
+app.use('/api/cash-games', requireAuthMiddleware, cashGameRoutes);
+app.use('/api/seasons', requireAuthMiddleware, seasonRoutes);
 
 // Exporta la app para usarla en server.ts
 export default app;

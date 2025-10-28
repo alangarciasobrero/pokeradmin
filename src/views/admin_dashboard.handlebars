@@ -1,7 +1,77 @@
-{{! Admin dashboard (uses main layout) }}
-  <div class="admin-dashboard">
-    <div class="page-header">
-      <h1>Panel de Administración</h1>
-    </div>
-    <p>Selecciona una opción del menú para comenzar.</p>
-  </div>
+<section class="pa-card admin-dashboard">
+  <h1>Admin Dashboard</h1>
+
+  {{!-- Render the compact live summary partial (expects a `summary` object) --}}
+  {{> admin/live_summary summary=summary}}
+
+  {{#if financialTotals}}
+    <section style="margin-top:1rem;">
+      <h3>Totales financieros del día</h3>
+      <div style="display:flex; gap:1.2rem;">
+        <div class="card"><strong>Comisión (casa):</strong> {{currency financialTotals.totalCommission}}</div>
+        <div class="card"><strong>Propinas (total):</strong> {{currency financialTotals.totalTips}}</div>
+      </div>
+    </section>
+  {{/if}}
+
+  <section>
+    <h2>Torneos activos</h2>
+    {{#if tournamentsActive}}
+      <ul class="tournament-list">
+        {{#each tournamentsActive}}
+          <li>
+            <div class="tournament-box-link">
+              <div>
+                <strong>{{this.name}}</strong>
+                <div class="tournament-date">Jugadores: {{this.players}}</div>
+              </div>
+              <div>
+                <a class="btn" href="/admin/games/tournaments/{{this.id}}/registrations">Ver inscripciones</a>
+              </div>
+            </div>
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p>No hay torneos activos</p>
+    {{/if}}
+  </section>
+
+  <section>
+    <h2>Mesas cash activas</h2>
+    {{#if cashGamesActive}}
+      <ul>
+        {{#each cashGamesActive}}
+          <li>
+            <strong>{{this.tableName}}</strong> — Jugadores: {{this.players}} — Repartidor: {{this.dealer}}
+            <a href="/admin/games/cash/{{this.id}}" class="btn">Ver mesa</a>
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p>No hay mesas cash activas</p>
+    {{/if}}
+  </section>
+
+  <section>
+    <h2>Deudores del día</h2>
+    {{#if debtorsToday}}
+      <table class="pa-table">
+        <thead>
+          <tr><th>Usuario</th><th>Deuda</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+          {{#each debtorsToday}}
+            <tr>
+              <td>{{this.name}}</td>
+              <td>{{this.amountDue}}</td>
+              <td><a href="/admin/users/{{this.userId}}" class="btn">Ver</a></td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p>No hay deudores hoy</p>
+    {{/if}}
+  </section>
+</section>

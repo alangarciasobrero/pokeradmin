@@ -1,0 +1,45 @@
+<section class="pa-card admin-user-ledger">
+  <h1>Libro mayor - {{user.full_name}} (ID: {{user.id}})</h1>
+
+  <section>
+    <h2>Saldo</h2>
+    <p>Total pagado: {{currency totals.totalPaid}}</p>
+    <p>Total inscripciones: {{currency totals.totalRegistrationsCost}}</p>
+    <p><strong>Balance: {{currency totals.balance}}</strong> {{#if (gt totals.balance 0)}}(A favor){{else}}(Deuda){{/if}}</p>
+  </section>
+
+  <section>
+    <h2>Movimientos (Pagos)</h2>
+    {{#if payments.length}}
+      <table class="pa-table">
+        <thead><tr><th>ID</th><th>Monto</th><th>Fecha</th><th>Fuente</th><th>Pagado</th></tr></thead>
+        <tbody>
+          {{#each payments}}
+            <tr>
+              <td>{{this.id}}</td>
+              <td>{{currency this.amount}}</td>
+              <td>{{formatDate this.payment_date}}</td>
+              <td>{{this.source}}</td>
+              <td>{{#if this.paid}}Sí{{else}}No{{/if}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p>No hay pagos registrados</p>
+    {{/if}}
+  </section>
+
+  <section>
+    <h2>Inscripciones</h2>
+    {{#if registrations.length}}
+      <ul>
+        {{#each registrations}}
+          <li>Torneo ID: {{this.tournament_id}} - Fecha: {{formatDate this.registration_date}}</li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p>No hay inscripciones registradas</p>
+    {{/if}}
+  </section>
+</section>

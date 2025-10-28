@@ -1,5 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
+import Payment from '../models/Payment';
+import { Registration } from '../models/Registration';
+import CashParticipant from '../models/CashParticipant';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
@@ -202,6 +205,36 @@ router.post('/:id/delete', requireAdmin, async (req: Request, res: Response) => 
     await User.destroy({ where: { id } });
     res.redirect('/admin/users');
   } catch (err) {
+    res.redirect('/admin/users');
+  }
+});
+
+// GET /admin/users/:id/ledger - muestra movimientos y saldo del usuario
+router.get('/:id/ledger', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const user = await User.findByPk(id);
+    if (!user) return res.redirect('/admin/users');
+
+    const payments = await Payment.findAll({ where: { user_id: id }, order: [['payment_date','DESC']] });
+    const registrations = await Registration.findAll({ where: { user_id: id }, include: [] });
+    const cashParts = await CashParticipant.findAll({ where: { user_id: id } });
+
+    // calcular totales: sum pagos pagados, sum inscripciones buy_in
+    const totalPaid = payments.reduce((s, p: any) => s + Number(p.paid ? (p.paid_amount || p.amount) : 0), 0);
+    // sumar buy_in de torneos vinculados a las inscripciones
+    let totalRegistrationsCost = 0;
+    for (const r of registrations) {
+      // carga lazily el torneo si es necesario
+      const t = await (await import('../models/Tournament')).Tournament.findByPk((r as any).tournament_id);
+      if (t) totalRegistrationsCost += Number((t as any).buy_in || 0);
+    }
+
+    const balance = totalPaid - totalRegistrationsCost;
+
+    res.render('admin_user_ledger', { user, payments, registrations, cashParts, totals: { totalPaid, totalRegistrationsCost, balance } });
+  } catch (e) {
+    console.error('Error ledger user', e);
     res.redirect('/admin/users');
   }
 });

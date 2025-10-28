@@ -1,0 +1,29 @@
+<section class="pa-card cash-close">
+  <h1>Cerrar Mesa Cash — {{cash.id}}</h1>
+  <p>Inicio: {{formatDate cash.start_datetime}} — Estado: {{#if cash.end_datetime}}Cerrada{{else}}Abierta{{/if}}</p>
+
+  <form method="post" action="/admin/games/cash/{{cash.id}}/close">
+    <div>
+      <label>Total comisión (a la casa)</label>
+      <input name="total_commission" value="{{cash.total_commission}}" />
+    </div>
+    <div>
+      <label>Total propinas</label>
+      <input name="total_tips" value="{{cash.total_tips}}" />
+    </div>
+    <div>
+      <label>Dealer (user id) — opcional</label>
+      <input name="dealer_user_id" placeholder="user id" />
+    </div>
+    <div style="margin-top:1rem;">
+      <button class="btn" type="submit">Cerrar mesa y registrar pagos</button>
+      <a class="btn" href="/admin/games/cash/{{cash.id}}" style="margin-left:0.6rem;">Cancelar</a>
+    </div>
+  </form>
+
+  <style>
+    .cash-close label { display:block; font-weight:600; margin-bottom:0.2rem; }
+    .cash-close input { width:220px; padding:6px 8px; border:1px solid #ddd; border-radius:6px; }
+    .cash-close .btn { background:#007bff; color:#fff; padding:8px 12px; border-radius:6px; text-decoration:none; }
+  </style>
+</section>

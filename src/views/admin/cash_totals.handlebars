@@ -1,0 +1,30 @@
+<section class="pa-card cash-totals">
+  <h1>Totales diarios — {{formatDate date}}</h1>
+
+  {{#if games}}
+    <p>Mesas encontradas: {{games.length}}</p>
+    <p><a class="btn" href="/admin/games/cash/totals.csv?date={{formatDate date 'YYYY-MM-DD'}}">Descargar CSV</a></p>
+
+    <table class="pa-table">
+      <thead><tr><th>Repartidor</th><th>Mesas</th><th>Comisión</th><th>Propinas</th></tr></thead>
+      <tbody>
+        {{#each (objectEntries perDealer)}}
+          <tr>
+            <td>{{this.0}}</td>
+            <td>{{this.1.games}}</td>
+            <td>{{currency this.1.total_commission}}</td>
+            <td>{{currency this.1.total_tips}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <p>No hay mesas en esa fecha.</p>
+  {{/if}}
+
+  <style>
+    .pa-table { width:100%; border-collapse:collapse; }
+    .pa-table th, .pa-table td { padding:8px; border-bottom:1px solid #eee; }
+    .btn { background:#007bff; color:#fff; padding:8px 12px; border-radius:6px; text-decoration:none; }
+  </style>
+</section>

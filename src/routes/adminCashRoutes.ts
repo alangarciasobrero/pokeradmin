@@ -2,6 +2,9 @@ import { Router, Request, Response } from 'express';
 import CashGameRepository from '../repositories/CashGameRepository';
 import CashParticipantRepository from '../repositories/CashParticipantRepository';
 import User from '../models/User';
+import { renderCloseForm, handleClosePost } from '../controllers/adminCashController';
+import { renderBulkClose, handleBulkClosePost } from '../controllers/adminCashController';
+import { renderTotals, exportTotalsCSV } from '../controllers/adminCashController';
 
 const router = Router();
 
@@ -160,6 +163,20 @@ router.post('/:id/participants/:pid/delete', requireAdmin, async (req: Request, 
     res.redirect(`/admin/games/cash/${id}/participants`);
   }
 });
+
+// Close cash game: render form
+router.get('/:id/close', requireAdmin, renderCloseForm);
+
+// Close cash game: process closure and create commission/tips payments
+router.post('/:id/close', requireAdmin, handleClosePost);
+
+// Bulk close: show open games for a date and aggregated per-dealer totals
+router.get('/bulk-close', requireAdmin, renderBulkClose);
+router.post('/bulk-close', requireAdmin, handleBulkClosePost);
+
+// Totals page and CSV export
+router.get('/totals', requireAdmin, renderTotals);
+router.get('/totals.csv', requireAdmin, exportTotalsCSV);
 
 export default router;
 
