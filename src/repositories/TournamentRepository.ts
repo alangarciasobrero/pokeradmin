@@ -77,4 +77,12 @@ export class TournamentRepository {
             const result = await (await import('../models/Tournament')).Tournament.destroy({ where: { id } });
             return result;
         }
+
+        /**
+         * Obtiene torneos que cuentan para ranking (o todos si includeAll=true)
+         */
+        async getTournamentsForRanking(includeAll = false): Promise<Tournament[]> {
+            if (includeAll) return Tournament.findAll();
+            return Tournament.findAll({ where: { count_to_ranking: true } });
+        }
 }

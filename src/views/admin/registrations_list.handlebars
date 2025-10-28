@@ -1,15 +1,15 @@
 <div class="registrations-admin">
-  <header style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
     <h2>Inscripciones</h2>
     <a class="btn btn-primary" href="/admin/registrations/new">+ Nueva Inscripción</a>
-  </header>
+  </div>
 
   <form method="get" action="/admin/registrations/list" style="margin:0.75rem 0; display:flex; gap:0.5rem; align-items:center;">
     <label>Filtrar por torneo:
       <select name="tournament_id">
         <option value="">Todos</option>
         {{#each tournaments}}
-          <option value="{{this.id}}">{{this.tournament_name}}</option>
+          <option value="{{this.id}}" {{#if (eq ../selected_tournament_id this.id)}}selected{{/if}}>{{this.tournament_name}}</option>
         {{/each}}
       </select>
     </label>
@@ -17,7 +17,7 @@
       <select name="user_id">
         <option value="">Todos</option>
         {{#each users}}
-          <option value="{{@key}}">{{this.full_name}} ({{this.username}})</option>
+          <option value="{{@key}}" {{#if (eq ../selected_user_id @key)}}selected{{/if}}>{{this.full_name}} ({{this.username}})</option>
         {{/each}}
       </select>
     </label>

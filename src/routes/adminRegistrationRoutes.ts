@@ -42,7 +42,9 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
       users: umap,
       tournaments: tmap,
       meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
-      links
+      links,
+      selected_tournament_id: req.query.tournament_id ? Number(req.query.tournament_id) : null,
+      selected_user_id: req.query.user_id ? Number(req.query.user_id) : null
     });
   } catch (err) {
     console.error(err);
@@ -55,7 +57,8 @@ router.get('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
     const tournaments = await Tournament.findAll({ order: [['start_date', 'DESC']] });
     const users = await User.findAll({ where: { is_deleted: false } });
-    res.render('registrations/form', { formTitle: 'Nueva Inscripción', formAction: '/api/registrations', tournaments, users });
+  // Post to the SSR admin create handler so we normalize punctuality server-side
+  res.render('registrations/form', { formTitle: 'Nueva Inscripción', formAction: '/admin/registrations/new', tournaments, users });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al preparar formulario');
@@ -66,8 +69,8 @@ router.get('/new', requireAdmin, async (req: Request, res: Response) => {
 router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
     const payload = {
-      user_id: req.body.user_id || req.body.player_id,
-      tournament_id: req.body.tournament_id,
+      user_id: Number(req.body.user_id),
+      tournament_id: Number(req.body.tournament_id),
       punctuality: req.body.punctuality === 'true' || req.body.punctuality === 'on'
     };
     await registrationRepo.create(payload as any);
@@ -75,6 +78,33 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al crear inscripción');
+  }
+});
+
+// View detail
+router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    const reg = await registrationRepo.getById(id);
+    if (!reg) return res.status(404).send('No encontrado');
+    const user = await User.findByPk(Number((reg as any).user_id));
+    const tournament = await Tournament.findByPk(Number((reg as any).tournament_id));
+    res.render('admin/registration_detail', { registration: reg, user, tournament, username: req.session.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener inscripción');
+  }
+});
+
+// Delete (POST)
+router.post('/:id/delete', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    await registrationRepo.deleteById(id);
+    res.redirect('/admin/registrations/list');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al eliminar inscripción');
   }
 });
 

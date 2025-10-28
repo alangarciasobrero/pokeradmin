@@ -1,0 +1,28 @@
+<header class="pa-header pa-header-player">
+    <a href="/" class="brand" style="text-decoration:none; color:inherit; display:inline-flex; align-items:center; gap:0.5rem;">
+        <span class="logo">
+            <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+                <polygon points="19,5 33,19 19,33 5,19" fill="#e53935" stroke="#3949ab" stroke-width="2.2"/>
+                <polygon points="19,8 30,19 19,30 8,19" fill="#FFD6D6" opacity="0.5"/>
+            </svg>
+        </span>
+        <span class="brand-title">Poker</span>
+    </a>
+    <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/tournaments">Torneos</a>
+        <a href="/tournaments/upcoming">Próximos</a>
+        <a href="/cash-games">Mesas cash</a>
+        <a href="/ranking">Ranking</a>
+    </nav>
+    <div class="actions">
+        {{#if username}}
+            <a href="/profile" class="btn-link">Mi perfil ({{username}})</a>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit" class="btn-logout">Salir</button>
+            </form>
+        {{else}}
+            <a href="/login">Iniciar sesión</a>
+        {{/if}}
+    </div>
+</header>
