@@ -43,9 +43,10 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
-// New form (redirect to existing web form but with admin context)
+// New form (render admin form that POSTS back to this SSR route so we can redirect after create)
 router.get('/new', requireAdmin, (req: Request, res: Response) => {
-  res.render('tournaments/form', { formTitle: 'Nuevo Torneo (Admin)', formAction: '/api/tournaments' });
+  // Post to the admin POST handler so the browser receives a redirect instead of raw JSON
+  res.render('tournaments/form', { formTitle: 'Nuevo Torneo (Admin)', formAction: '/admin/games/tournaments/new' });
 });
 
 // Backwards-compatible alias: some links use '/create'
