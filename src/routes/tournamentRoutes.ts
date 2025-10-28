@@ -164,7 +164,38 @@ function validarTorneo(data: any, parcial = false): string | null {
     }
     return undefined;
   }
+  // intenta convertir a número si viene como string
+  function parseNumber(v: any): number | undefined {
+    if (v == null || v === '') return undefined;
+    if (typeof v === 'number' && !isNaN(v)) return v;
+    const n = Number(v);
+    return isNaN(n) ? undefined : n;
+  }
+  // intenta convertir a Date si viene como string
+  function parseDate(v: any): Date | undefined {
+    if (!v) return undefined;
+    if (v instanceof Date && !isNaN(v.getTime())) return v;
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? undefined : d;
+  }
+  // mapear variantes de nombres de campo (por si un formulario mal construido envía espacios o guiones)
   if (data && typeof data === 'object') {
+    const aliasMap: { [k: string]: string } = {
+      'starting stack': 'starting_stack',
+      'starting-stack': 'starting_stack',
+      'small blind': 'small_blind',
+      'small-blind': 'small_blind',
+      'punctuality discount': 'punctuality_discount',
+      'punctuality-discount': 'punctuality_discount'
+    };
+    for (const k of Object.keys(aliasMap)) {
+      if (data[k] !== undefined && data[aliasMap[k]] === undefined) {
+        data[aliasMap[k]] = data[k];
+      }
+    }
+  }
+  if (data && typeof data === 'object') {
+    // booleanos
     if (data.count_to_ranking !== undefined) {
       const b = parseBool(data.count_to_ranking);
       if (b !== undefined) data.count_to_ranking = b;
@@ -172,6 +203,19 @@ function validarTorneo(data: any, parcial = false): string | null {
     if (data.double_points !== undefined) {
       const b2 = parseBool(data.double_points);
       if (b2 !== undefined) data.double_points = b2;
+    }
+    // números
+    const numFields = ['buy_in', 're_entry', 'knockout_bounty', 'starting_stack', 'blind_levels', 'small_blind', 'punctuality_discount'];
+    for (const f of numFields) {
+      if (data[f] !== undefined) {
+        const n = parseNumber(data[f]);
+        if (n !== undefined) data[f] = n;
+      }
+    }
+    // fechas
+    if (data.start_date !== undefined) {
+      const d = parseDate(data.start_date);
+      if (d !== undefined) data.start_date = d;
     }
   }
   if (!parcial || data.tournament_name !== undefined) {
