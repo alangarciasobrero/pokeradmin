@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { TournamentRepository } from '../repositories/TournamentRepository';
+import { requireAdmin } from '../middleware/requireAuth';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
@@ -14,13 +15,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Formulario para crear un nuevo torneo (SSR) - sólo admins
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 router.get('/new', requireAdmin, (req: Request, res: Response) => {
   res.render('tournaments/form', {

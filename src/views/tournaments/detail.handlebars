@@ -29,8 +29,171 @@
     {{!-- Descuento por puntualidad --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Punctuality Discount:</span> ${{tournament.punctuality_discount}}</p>
     </div>
-    {{!-- Enlace para volver a la lista de torneos --}}
-    <a class="back-link" href="/tournaments">&#8592; Back to list</a>
+        {{!-- Enlace para volver a la lista de torneos --}}
+        <a class="back-link" href="/tournaments">&#8592; Back to list</a>
+
+            <div class="admin-actions">
+                {{#if tournament.registration_open}}
+                    <button id="openCloseModalBtn" class="btn btn-danger">Cerrar inscripciones (previsualizar)</button>
+                {{else}}
+                    <form method="post" action="/admin/games/tournaments/{{tournament.id}}/open-registrations" style="display:inline">
+                        <button type="submit" class="btn">Reabrir inscripciones</button>
+                    </form>
+                {{/if}}
+
+                <form method="post" action="/admin/games/tournaments/{{tournament.id}}/close-tournament" style="display:inline; margin-left:0.5rem;">
+                    <button type="submit" class="btn btn-warning">Cerrar torneo</button>
+                </form>
+            </div>
+
+            <!-- Modal container for preview/confirm -->
+            <div id="closeModal" class="modal" style="display:none;">
+                <div class="modal-content">
+                    <h3>Previsualizar cierre de inscripciones</h3>
+                    <div id="modalBody">Cargando...</div>
+                    <div style="margin-top:1rem">
+                        <button id="confirmCloseBtn" class="btn btn-primary">Confirmar cierre y pagar premios</button>
+                        <button id="cancelCloseBtn" class="btn">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+                .modal-content { background: #fff; padding: 1rem; border-radius: 6px; max-width: 720px; width: 100%; }
+            </style>
+
+                <script>
+                (function(){
+                    // wrap preview-close wiring in an async IIFE to avoid top-level await
+                    (async function() {
+                        const tid = {{tournament.id}};
+                        const openBtn = document.getElementById('openCloseModalBtn');
+                        const modal = document.getElementById('closeModal');
+                        const body = modal ? modal.querySelector('#modalBody') : null;
+                        const confirmBtn = document.getElementById('confirmCloseBtn');
+                        const cancelBtn = document.getElementById('cancelCloseBtn');
+
+                        function renderPreview(j) {
+                            try {
+                                let html = `<p>Pozo total: <strong id="modalPot">${(j.pot||0).toFixed(2)}</strong></p>`;
+                                html += `<p>Comisión sugerida: <input id="commissionPct" type="number" value="${j.commissionPct||10}" step="0.1"> % — <span id="commissionAmount">${((j.pot||0)*((j.commissionPct||10)/100)).toFixed(2)}</span> EUR</p>`;
+                                html += `<p>Pozo para premios: <strong id="modalPrizePool">${(j.prizePool||0).toFixed(2)}</strong></p>`;
+                                html += '<h4>Prémios sugeridos (editable)</h4><div id="prizesList">';
+                                const parts = j.participants || [];
+                                (j.defaultPrizes||[]).forEach(p => {
+                                    html += `<div class="prizeRow">Pos ${p.position}: <input class="prizeAmt" data-pos="${p.position}" value="${(p.amount||0).toFixed(2)}" style="width:8rem"> EUR <select class="prizeUser" data-pos="${p.position}"><option value="">-- asignar --</option>`;
+                                    parts.forEach(u => { html += `<option value="${u.user_id}">${u.username}${u.full_name ? ' - ' + u.full_name : ''}</option>`; });
+                                    html += `</select> <span class="prizeWarning" style="color:#900;margin-left:0.5rem"></span></div>`;
+                                });
+                                html += '</div>';
+                                html += '<h4>Participantes</h4><ul id="modalParticipants">';
+                                parts.forEach(p => { html += `<li>${p.username} — pagado: ${(p.paid||0).toFixed(2)} — esperado: ${(p.expected||0).toFixed(2)} <button class="assignBtn" data-user="${p.user_id}">Asignar como ganador</button></li>`; });
+                                html += '</ul>';
+                                html += '<div id="prizeTotals" style="margin-top:0.5rem;color:#900"></div>';
+                                if (body) body.innerHTML = html;
+                            } catch (e) {
+                                if (body) body.innerHTML = '<p>Error cargando previsualización</p>';
+                            }
+                        }
+
+                        if (openBtn) {
+                            openBtn.addEventListener('click', async () => {
+                                if (!modal || !body) return;
+                                modal.style.display = 'flex';
+                                body.innerHTML = 'Cargando...';
+                                try {
+                                    const res = await fetch(`/admin/games/tournaments/${tid}/preview-close`);
+                                    const j = await res.json();
+                                    renderPreview(j);
+
+                                    // wire recalc and assign handlers after rendering
+                                    const commissionInput = body.querySelector('#commissionPct');
+                                    const commissionAmountSpan = body.querySelector('#commissionAmount');
+                                    const prizePoolSpan = body.querySelector('#modalPrizePool');
+                                    const pot = Number((j && j.pot) || 0);
+
+                                    function recalcTotals() {
+                                        const pct = commissionInput ? Number((commissionInput).value) : (j.commissionPct || 10);
+                                        const commissionAmt = +(pot * (pct / 100));
+                                        if (commissionAmountSpan) commissionAmountSpan.textContent = commissionAmt.toFixed(2);
+                                        const prizePool = +(pot - commissionAmt);
+                                        if (prizePoolSpan) prizePoolSpan.textContent = prizePool.toFixed(2);
+                                        const prizeAmtEls = Array.from(body.querySelectorAll('.prizeAmt'));
+                                        let totalPrizes = 0;
+                                        prizeAmtEls.forEach(e => { totalPrizes += Number(e.value) || 0; });
+                                        const totalsEl = body.querySelector('#prizeTotals');
+                                        if (totalsEl) totalsEl.textContent = `Suma premios: ${totalPrizes.toFixed(2)} — Pozo disponible: ${prizePool.toFixed(2)}`;
+                                        const over = totalPrizes > prizePool + 0.0001;
+                                        const prizeWarnings = Array.from(body.querySelectorAll('.prizeWarning'));
+                                        prizeWarnings.forEach(w => { w.textContent = ''; });
+                                        if (over) {
+                                            if (totalsEl) totalsEl.style.color = '#900';
+                                            if (confirmBtn) confirmBtn.disabled = true;
+                                        } else {
+                                            if (totalsEl) totalsEl.style.color = '';
+                                            if (confirmBtn) confirmBtn.disabled = false;
+                                        }
+                                    }
+
+                                    Array.from(body.querySelectorAll('.prizeAmt')).forEach(e => e.addEventListener('input', recalcTotals));
+                                    if (commissionInput) commissionInput.addEventListener('input', recalcTotals);
+                                    recalcTotals();
+
+                                    const assigns = body.querySelectorAll('.assignBtn');
+                                    assigns.forEach(b => {
+                                        b.addEventListener('click', () => {
+                                            const uid = b.getAttribute('data-user');
+                                            const selects = body.querySelectorAll('.prizeUser');
+                                            for (const s of selects) {
+                                                if (s.value === '') { s.value = uid; break; }
+                                            }
+                                            recalcTotals();
+                                        });
+                                    });
+
+                                } catch (e) {
+                                    body.innerHTML = '<p>Error cargando previsualización</p>';
+                                }
+                            });
+                        }
+
+                        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+
+                        if (confirmBtn) confirmBtn.addEventListener('click', async () => {
+                            if (!body) return;
+                            const pctEl = document.getElementById('commissionPct');
+                            const commissionPct = pctEl ? Number(pctEl.value) : 10;
+                            const prizes = [];
+                            const prizeAmtEls = body.querySelectorAll('.prizeAmt');
+                            const prizeUserEls = body.querySelectorAll('.prizeUser');
+                            for (let i=0;i<prizeAmtEls.length;i++) {
+                                const amt = Number(prizeAmtEls[i].value) || 0;
+                                const pos = Number(prizeAmtEls[i].getAttribute('data-pos'));
+                                const userSel = prizeUserEls[i];
+                                const userId = userSel ? Number(userSel.value) : null;
+                                if (amt > 0 && userId) {
+                                    prizes.push({ position: pos, user_id: userId, amount: amt });
+                                }
+                            }
+                            if (confirmBtn) confirmBtn.disabled = true;
+                            try {
+                                const res = await fetch(`/admin/games/tournaments/${tid}/confirm-close`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ commissionPct, prizes }) });
+                                const j = await res.json();
+                                if (j.ok) {
+                                    if (body) body.innerHTML = `<p>Cierre completado. Pozo: ${j.pot.toFixed(2)}. Comision: ${j.commissionAmount.toFixed(2)}. Premios: ${j.prizePool.toFixed(2)}</p>`;
+                                } else {
+                                    if (body) body.innerHTML = '<p>Error al cerrar torneo</p>';
+                                }
+                            } catch (e) {
+                                if (body) body.innerHTML = '<p>Error al confirmar cierre</p>';
+                            } finally { if (confirmBtn) confirmBtn.disabled = false; }
+                        });
+
+                    })();
+                })();
+                </script>
+                <script src="/js/quickpay-modal.js"></script>
 </div>
 
     {{!-- Inline registration form for admins --}}
@@ -38,18 +201,16 @@
     <div class="tournament-registrations">
         <h2>Registrar jugador</h2>
         <form method="post" action="/admin/games/tournaments/{{tournament.id}}/register">
-            <label for="user_id">Usuario (seleccionar):</label>
-            <select id="user_id" name="user_id">
-                <option value="">-- Buscar usuario --</option>
-                {{#each users}}
-                    <option value="{{this.id}}">{{this.username}} {{#if this.full_name}}- {{this.full_name}}{{/if}}</option>
-                {{/each}}
-            </select>
+            <label for="user_search_input">Usuario (buscar o seleccionar):</label>
+            <input list="user_search_list" id="user_search_input" name="user_search_input" placeholder="Escribe username o nombre..." autocomplete="off" />
+            <datalist id="user_search_list"></datalist>
+            <input type="hidden" id="user_id" name="user_id" value="" />
             <p>O crear usuario rápido:</p>
             <label for="new_user_username">Usuario:</label>
             <input id="new_user_username" name="new_user_username" placeholder="nuevo_username">
             <label for="new_user_full_name">Nombre completo (opcional):</label>
             <input id="new_user_full_name" name="new_user_full_name" placeholder="Nombre Apellido">
+            <button type="button" id="quick_create_user_btn">Crear y seleccionar</button>
 
             <label for="amount_paid">Monto pagado ahora:</label>
             <input type="number" id="amount_paid" name="amount_paid" step="0.01" min="0">
@@ -64,25 +225,139 @@
 
             <button type="submit">Registrar</button>
         </form>
+        <script src="/js/user-autocomplete.js"></script>
+        <script src="/js/typeahead-quickcreate.js"></script>
+        <script>
+            // attach typeahead for tournament registration (fallbacks to old autocomplete if needed)
+            (function(){
+                if (window.TypeaheadQuickCreate) {
+                    window.TypeaheadQuickCreate.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' });
+                } else if (window.UserAutocomplete) {
+                    window.UserAutocomplete.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id', datalistSelector: '#user_search_list' });
+                }
 
-        <h3>Participantes</h3>
-        {{#if registrations.length}}
-            <table class="registrations-table">
-                <thead><tr><th>#</th><th>Usuario</th><th>Fecha</th><th>Puntualidad</th><th>Acciones</th></tr></thead>
-                <tbody>
-                    {{#each registrations}}
-                        <tr>
-                            <td>{{@index}}</td>
-                            <td>{{this.user_id}}</td>
-                            <td>{{formatDate this.registration_date}}</td>
-                            <td>{{this.punctuality}}</td>
-                            <td><a class="btn" href="/admin/registrations/{{this.id}}">Ver</a></td>
-                        </tr>
-                    {{/each}}
-                </tbody>
-            </table>
-        {{else}}
-            <p>No hay participantes aún.</p>
-        {{/if}}
+                // wire quick create button to open modal
+                const btn = document.getElementById('quick_create_user_btn');
+                if (btn && window.TypeaheadQuickCreate) {
+                    btn.addEventListener('click', async () => {
+                        window.TypeaheadQuickCreate.openQuickCreate({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' });
+                    });
+                } else if (btn && window.UserAutocomplete) {
+                    // legacy fallback: inline quick-create
+                    btn.addEventListener('click', async () => {
+                        const u = document.getElementById('new_user_username');
+                        const f = document.getElementById('new_user_full_name');
+                        const uval = u && u.value ? u.value : '';
+                        const fval = f && f.value ? f.value : '';
+                        if (!uval) return alert('Ingrese un username válido');
+                        try {
+                            const created = await window.UserAutocomplete.createUser(uval.trim(), fval.trim());
+                            const hid = document.getElementById('user_id');
+                            const input = document.getElementById('user_search_input');
+                            if (hid) hid.value = created.id;
+                            if (input) input.value = `${created.username}${created.full_name ? ' - ' + created.full_name : ''}`;
+                            if (u) u.value = '';
+                            if (f) f.value = '';
+                            alert('Usuario creado y seleccionado');
+                        } catch (err) {
+                            alert('Error creando usuario: ' + (err && err.error ? err.error : err));
+                        }
+                    });
+                }
+            })();
+        </script>
+
+                <h3>Participantes</h3>
+                <div>
+                        <table class="registrations-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nombre</th>
+                                        <th>Acción</th>
+                                        <th>Puntualidad</th>
+                                        <th>Hora</th>
+                                        <th>Pagó</th>
+                                        <th>Método_pago</th>
+                                        <th>Pago Parcial</th>
+                                        <th>Cuenta Personal</th>
+                                        <th>Deuda actual</th>
+                                        <th>Importe al pozo</th>
+                                        <th>POSICION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- client populated -->
+                                </tbody>
+                        </table>
+                        <div style="margin-top:0.5rem">
+                            <button id="savePositionsBtn" class="btn btn-primary">Guardar posiciones</button>
+                            <span id="savePositionsMsg" style="margin-left:1rem"></span>
+                        </div>
+                        <script>
+                            (function(){
+                                const tid = {{tournament.id}};
+                                async function loadParticipants(){
+                                    try {
+                                        const res = await fetch(`/admin/games/tournaments/${tid}/participants-json`);
+                                        if (!res.ok) throw new Error('fetch failed');
+                                        const j = await res.json();
+                                        const parts = j.participants || [];
+                                        const tbody = document.querySelector('.registrations-table tbody');
+                                        if (!tbody) return;
+                                        tbody.innerHTML = '';
+                                        parts.forEach((p, idx) => {
+                                            const tr = document.createElement('tr');
+                                            const name = p.full_name ? (p.username + ' - ' + p.full_name) : p.username;
+                                            const paidLabel = (p.paid && p.paid > 0) ? 'SI' : 'NO';
+                                            const partial = (p.paid && p.paid > 0 && p.paid < p.expected) ? p.paid.toFixed(2) : '';
+                                            tr.innerHTML = `
+                                                <td>${idx+1}</td>
+                                                <td>${name}</td>
+                                                <td>${p.action}</td>
+                                                <td>${p.punctuality ? 'SI' : 'NO'}</td>
+                                                <td>${new Date(p.registration_date).toLocaleString()}</td>
+                                                <td>${paidLabel}</td>
+                                                <td>${p.lastMethod || ''}</td>
+                                                <td>${partial}</td>
+                                                <td>${p.personal_account ? 'SI' : ''}</td>
+                                                <td>${(p.debt||0).toFixed(2)}</td>
+                                                <td>${(p.amount_contributed_to_pot||0).toFixed(2)}</td>
+                                                <td>
+                                                  <button class="quick-pay-btn" data-user-id="${p.user_id}" ${((p.debt||0) <= 0 && !p.personal_account) ? 'disabled' : ''}>Pagar rápido</button>
+                                                </td>
+                                                <td><input type="number" class="reg-position" data-rid="${p.registration_id}" value="${p.position||''}" style="width:4rem" /></td>
+                                            `;
+                                            tbody.appendChild(tr);
+                                        });
+                                        window.REGISTERED_USERS = new Set((parts||[]).map(p => String(p.user_id)));
+                                    } catch (e) { console.error('Error loading participants', e); }
+                                }
+                                window.loadParticipants = loadParticipants;
+                                loadParticipants();
+
+                                const btn = document.getElementById('savePositionsBtn');
+                                const msg = document.getElementById('savePositionsMsg');
+                                if (btn) {
+                                    btn.addEventListener('click', async () => {
+                                        const inputs = Array.from(document.querySelectorAll('.reg-position'));
+                                        const positions = inputs.map(i => ({ registration_id: Number(i.dataset.rid), position: (i.value === '') ? null : Number(i.value) }));
+                                        btn.disabled = true; msg.textContent = 'Guardando...';
+                                        try {
+                                            const res = await fetch(`/admin/games/tournaments/${tid}/positions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions }) });
+                                            const j = await res.json();
+                                            if (res.ok && j.ok) {
+                                                msg.textContent = 'Posiciones guardadas';
+                                                setTimeout(()=> loadParticipants(), 700);
+                                            } else {
+                                                msg.textContent = 'Error guardando posiciones';
+                                            }
+                                        } catch (e) { msg.textContent = 'Error de red'; }
+                                        finally { btn.disabled = false; }
+                                    });
+                                }
+                            })();
+                        </script>
+                </div>
     </div>
     {{/isAdmin}}

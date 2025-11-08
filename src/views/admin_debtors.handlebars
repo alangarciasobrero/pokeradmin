@@ -1,0 +1,28 @@
+<section class="pa-card admin-debtors">
+  <h1>Deudores</h1>
+  <form method="get" action="/admin/debtors">
+    <label for="date">Fecha:</label>
+    <input type="date" id="date" name="date" value="{{formatDate date}}" />
+    <button type="submit">Filtrar</button>
+  </form>
+
+  {{#if rows.length}}
+    <table class="pa-table">
+      <thead><tr><th>Usuario</th><th>Nombre</th><th>Monto adeudado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>{{this.user.username}}</td>
+            <td>{{this.user.full_name}}</td>
+            <td>{{currency this.amountDue}}</td>
+            <td>
+              <a class="btn" href="/admin/users/{{this.user.id}}/ledger">Ver ledger</a>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <p>No hay deudores para la fecha seleccionada</p>
+  {{/if}}
+</section>

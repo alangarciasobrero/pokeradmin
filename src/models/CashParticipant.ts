@@ -26,8 +26,8 @@ export class CashParticipant extends Model<CashParticipantAttributes, CashPartic
 CashParticipant.init(
   {
   id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
-  cash_game_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'cash_games', key: 'id' } },
-  user_id: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' } },
+  cash_game_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, references: { model: 'cash_games', key: 'id' } },
+  user_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, references: { model: 'users', key: 'id' } },
     seat_number: { type: DataTypes.INTEGER, allowNull: true },
     joined_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     left_at: { type: DataTypes.DATE, allowNull: true, defaultValue: null }

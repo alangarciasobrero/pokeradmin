@@ -1,17 +1,12 @@
 import { Router, Request, Response } from 'express';
+import { requireAdmin } from '../middleware/requireAuth';
 import { Tournament } from '../models/Tournament';
 import CashGame from '../models/CashGame';
 
 
 const router = Router();
 
-// Middleware para proteger solo admin (igual que en adminUserRoutes)
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
   // Obtener torneos y cash games

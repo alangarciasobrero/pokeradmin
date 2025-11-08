@@ -1,7 +1,9 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import paymentRepo from '../repositories/PaymentRepository';
 import { requireAdmin } from '../middleware/requireAuth';
 import Payment from '../models/Payment';
+import sequelize from '../services/database';
 
 const router = express.Router();
 
@@ -28,13 +30,16 @@ router.post('/create', requireAdmin, async (req, res) => {
   try {
     const { user_id, amount, source, reference_id, method, personal_account, paid } = req.body as any;
     if (!user_id || !amount) return res.render('admin_payments_create', { error: 'user_id y amount son requeridos', formAction: '/admin/payments/create', form: req.body });
+  const methodWithActor = req.session && (req.session as any).username ? (method ? `${method}|by:${(req.session as any).username}:${(req.session as any).userId}` : `manual|by:${(req.session as any).username}:${(req.session as any).userId}`) : (method || null);
+    const recordedByName = req.session && (req.session as any).username ? String((req.session as any).username) : null;
     const p = await Payment.create({
       user_id: Number(user_id),
       amount: Number(amount),
       payment_date: new Date(),
       source: source || null,
       reference_id: reference_id ? Number(reference_id) : null,
-      method: method || null,
+      method: methodWithActor,
+      recorded_by_name: recordedByName,
       personal_account: personal_account === 'on' || personal_account === true ? true : false,
       paid: paid === 'on' || paid === true ? true : false,
       paid_amount: paid === 'on' || paid === true ? Number(amount) : 0
@@ -80,6 +85,124 @@ router.post('/:id/update', requireAdmin, async (req, res) => {
   } catch (e) {
     console.error('Error updating payment', e);
     res.status(500).send('Error');
+  }
+});
+
+// POST /admin/payments/settle - quick settlement endpoint (admin)
+router.post('/settle', requireAdmin, async (req, res) => {
+  const body: any = req.body || {};
+  const userId = Number(body.userId || body.user_id);
+  const rawAmount = body.amount;
+  const allocationPreference = body.allocationPreference || 'day-first';
+  const method = body.method || 'manual';
+  const useCredit = body.useCredit === true || body.useCredit === 'true' || body.useCredit === 'on';
+  const idempotencyKey = body.idempotencyKey || null;
+  const paymentDate = body.paymentDate ? new Date(body.paymentDate) : new Date();
+
+  if (!userId || !rawAmount) return res.status(400).json({ error: 'userId and amount are required' });
+  const amount = Number(rawAmount);
+  if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'amount must be positive' });
+
+  const recordedByName = req.session && (req.session as any).username ? String((req.session as any).username) : null;
+  const methodWithIdemp = idempotencyKey ? `${method}|idemp:${idempotencyKey}` : method;
+
+  try {
+    // idempotency: if a payment with this idemp key exists for user, return it
+    if (idempotencyKey) {
+      const existing = await Payment.findOne({ where: { user_id: userId, method: { [Op.like]: `%idemp:${idempotencyKey}%` } as any } });
+      if (existing) return res.json({ ok: true, alreadyProcessed: true, payment: existing });
+    }
+
+    const createdPayments: any[] = [];
+
+    await sequelize.transaction(async (tx) => {
+      let remaining = amount;
+
+      // Optionally consume available credit first
+      let creditAvailable = 0;
+      if (useCredit) {
+        const sumCredits: any = await Payment.sum('amount', { where: { user_id: userId, source: 'credit' } as any, transaction: tx }) || 0;
+        const sumConsumed: any = await Payment.sum('amount', { where: { user_id: userId, source: 'credit_consumed' } as any, transaction: tx }) || 0; // consumed entries are negative
+        creditAvailable = Number(sumCredits || 0) + Number(sumConsumed || 0);
+      }
+
+      // fetch unpaid expectations (tournament/cash) for this user ordered by date
+      const expectations = await Payment.findAll({ where: { user_id: userId, source: ['tournament', 'cash'], paid: false } as any, order: [['payment_date', 'ASC']], transaction: tx, lock: tx.LOCK.UPDATE });
+
+      // first, if useCredit, apply credit to expectations
+      if (useCredit && creditAvailable > 0) {
+        for (const exp of expectations) {
+          if (creditAvailable <= 0) break;
+          const expPaid = Number((exp as any).paid_amount || 0) || 0;
+          const expAmount = Number((exp as any).amount || 0) || 0;
+          const expRemaining = Math.max(0, expAmount - expPaid);
+          if (expRemaining <= 0) continue;
+          const chunk = Math.min(expRemaining, creditAvailable);
+          // create settlement payment referencing expectation (paid by credit)
+          const p = await Payment.create({ user_id: userId, amount: chunk, payment_date: paymentDate, source: 'settlement', reference_id: (exp as any).id, paid: true, paid_amount: chunk, method: `${methodWithIdemp}|credit|by:${recordedByName || 'system'}`, personal_account: false, recorded_by_name: recordedByName }, { transaction: tx });
+          createdPayments.push(p);
+          // create credit_consumed entry (negative amount) to reduce available credit
+          const cons = await Payment.create({ user_id: userId, amount: -chunk, payment_date: paymentDate, source: 'credit_consumed', reference_id: p.id, paid: true, paid_amount: chunk, method: `credit_consumed|by:${recordedByName || 'system'}`, personal_account: true, recorded_by_name: recordedByName }, { transaction: tx });
+          createdPayments.push(cons);
+          // update expectation
+          (exp as any).paid_amount = (Number((exp as any).paid_amount) || 0) + chunk;
+          if (Number((exp as any).paid_amount) >= Number((exp as any).amount)) (exp as any).paid = true;
+          await exp.save({ transaction: tx });
+          creditAvailable -= chunk;
+        }
+      }
+
+      // refresh remaining expectations list if needed (some may be paid by credit)
+      const expectations2 = await Payment.findAll({ where: { user_id: userId, source: ['tournament', 'cash'], paid: false } as any, order: [['payment_date', 'ASC']], transaction: tx, lock: tx.LOCK.UPDATE });
+
+      for (const exp of expectations2) {
+        if (remaining <= 0) break;
+        const expPaid = Number((exp as any).paid_amount || 0) || 0;
+        const expAmount = Number((exp as any).amount || 0) || 0;
+        const expRemaining = Math.max(0, expAmount - expPaid);
+        if (expRemaining <= 0) continue;
+        const chunk = Math.min(expRemaining, remaining);
+        // create settlement payment referencing expectation (use positive amount)
+        const p = await Payment.create({ user_id: userId, amount: chunk, payment_date: paymentDate, source: 'settlement', reference_id: (exp as any).id, paid: true, paid_amount: chunk, method: `${methodWithIdemp}|by:${recordedByName || 'system'}`, personal_account: false, recorded_by_name: recordedByName }, { transaction: tx });
+        createdPayments.push(p);
+        // update expectation paid_amount and paid flag
+        (exp as any).paid_amount = (Number((exp as any).paid_amount) || 0) + chunk;
+        if (Number((exp as any).paid_amount) >= Number((exp as any).amount)) (exp as any).paid = true;
+        await exp.save({ transaction: tx });
+        remaining -= chunk;
+      }
+
+      // apply remaining to personal account expectations (personal_account = true and unpaid)
+      if (remaining > 0) {
+        const personalExps = await Payment.findAll({ where: { user_id: userId, personal_account: true, paid: false } as any, order: [['payment_date','ASC']], transaction: tx, lock: tx.LOCK.UPDATE });
+        for (const pexp of personalExps) {
+          if (remaining <= 0) break;
+          const pPaid = Number((pexp as any).paid_amount || 0) || 0;
+          const pAmt = Number((pexp as any).amount || 0) || 0;
+          const pRem = Math.max(0, pAmt - pPaid);
+          if (pRem <= 0) continue;
+          const chunk = Math.min(pRem, remaining);
+          const pay = await Payment.create({ user_id: userId, amount: chunk, payment_date: paymentDate, source: 'settlement_personal', reference_id: (pexp as any).id, paid: true, paid_amount: chunk, method: `${methodWithIdemp}|by:${recordedByName || 'system'}`, personal_account: true, recorded_by_name: recordedByName }, { transaction: tx });
+          createdPayments.push(pay);
+          (pexp as any).paid_amount = (Number((pexp as any).paid_amount) || 0) + chunk;
+          if (Number((pexp as any).paid_amount) >= Number((pexp as any).amount)) (pexp as any).paid = true;
+          await pexp.save({ transaction: tx });
+          remaining -= chunk;
+        }
+      }
+
+      // if still remaining, create credit payment personal_account=true
+      if (remaining > 0) {
+        const credit = await Payment.create({ user_id: userId, amount: remaining, payment_date: paymentDate, source: 'credit', reference_id: null, paid: true, paid_amount: remaining, method: `${methodWithIdemp}|by:${recordedByName || 'system'}`, personal_account: true, recorded_by_name: recordedByName }, { transaction: tx });
+        createdPayments.push(credit);
+        remaining = 0;
+      }
+    });
+
+    return res.json({ ok: true, payments: createdPayments });
+  } catch (e) {
+    console.error('Error in settle', e);
+    return res.status(500).json({ error: 'Error processing settlement' });
   }
 });
 
@@ -138,4 +261,35 @@ router.post('/unassigned/:id/assign', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /admin/payments/user/:id/movements - return movements for a user and personal balances (today by default)
+router.get('/user/:id/movements', requireAdmin, async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const q = req.query.date as string | undefined;
+    const date = q ? new Date(q) : new Date();
+    // compute start/end of day
+    const start = new Date(date); start.setHours(0,0,0,0);
+    const end = new Date(date); end.setHours(23,59,59,999);
+
+    // fetch expectations (tournament/cash) created that day
+    const dayExps = await Payment.findAll({ where: { user_id: userId, source: ['tournament','cash'], payment_date: { [Op.between]: [start, end] } as any } as any, order: [['payment_date','ASC']] });
+
+    const personalDebts = await Payment.findAll({ where: { user_id: userId, personal_account: true, paid: false } as any, order: [['payment_date','ASC']] });
+
+    const sumCredits: any = await Payment.sum('amount', { where: { user_id: userId, source: 'credit', paid: true } as any }) || 0;
+    const sumConsumed: any = await Payment.sum('amount', { where: { user_id: userId, source: 'credit_consumed' } as any }) || 0; // negative values
+    const creditAvailable = Number(sumCredits || 0) + Number(sumConsumed || 0);
+
+    // assemble response
+    const movements = (dayExps||[]).map((p:any) => ({ id: p.id, source: p.source, reference_id: p.reference_id, amount: Number(p.amount||0), paid_amount: Number(p.paid_amount||0), remaining: Math.max(0, Number(p.amount||0) - Number(p.paid_amount||0)), payment_date: p.payment_date, method: p.method }));
+    const personal = (personalDebts||[]).map((d:any) => ({ id: d.id, amount: Number(d.amount||0), paid_amount: Number(d.paid_amount||0), remaining: Math.max(0, Number(d.amount||0) - Number(d.paid_amount||0)), payment_date: d.payment_date }));
+
+    return res.json({ movements, personal, creditAvailable });
+  } catch (e) {
+    console.error('Error fetching user movements', e);
+    return res.status(500).json({ error: 'Error' });
+  }
+});
+
 export default router;
+

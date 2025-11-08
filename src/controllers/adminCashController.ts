@@ -33,12 +33,16 @@ export async function handleClosePost(req: Request, res: Response) {
     // Use the acting admin's user_id if present, otherwise fallback to 1
     const systemUserId = req.session?.userId ? Number(req.session.userId) : 1;
     if (total_commission && total_commission > 0) {
-      await Payment.create({ user_id: systemUserId, amount: Number(total_commission), payment_date: new Date(), source: 'cash_commission', reference_id: id, paid: true, paid_amount: Number(total_commission), method: 'commission', personal_account: false });
+  const methodWithActor = req.session && req.session.username ? `commission|by:${req.session.username}:${req.session.userId}` : 'commission';
+  const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+  await Payment.create({ user_id: systemUserId, amount: Number(total_commission), payment_date: new Date(), source: 'cash_commission', reference_id: id, paid: true, paid_amount: Number(total_commission), method: methodWithActor, personal_account: false, recorded_by_name: recordedByName });
     }
 
     // Create payment for dealer tips (credit to dealer)
     if (dealer_user_id && total_tips && total_tips > 0) {
-      await Payment.create({ user_id: dealer_user_id, amount: Number(total_tips), payment_date: new Date(), source: 'cash_tips', reference_id: id, paid: true, paid_amount: Number(total_tips), method: 'tips', personal_account: false });
+  const methodWithActor = req.session && req.session.username ? `tips|by:${req.session.username}:${req.session.userId}` : 'tips';
+  const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+  await Payment.create({ user_id: dealer_user_id, amount: Number(total_tips), payment_date: new Date(), source: 'cash_tips', reference_id: id, paid: true, paid_amount: Number(total_tips), method: methodWithActor, personal_account: false, recorded_by_name: recordedByName });
     }
 
     req.session!.flash = { type: 'success', message: 'Mesa cerrada y pagos registrados' };
@@ -103,7 +107,9 @@ export async function handleBulkClosePost(req: Request, res: Response) {
 
     // Register aggregated commission as a single payment
     if (totals.total_commission > 0) {
-      await Payment.create({ user_id: systemUserId, amount: Number(totals.total_commission), payment_date: new Date(), source: 'cash_commission_bulk', paid: true, paid_amount: Number(totals.total_commission), method: 'commission_bulk', personal_account: false });
+  const methodWithActor = req.session && req.session.username ? `commission_bulk|by:${req.session.username}:${req.session.userId}` : 'commission_bulk';
+  const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+  await Payment.create({ user_id: systemUserId, amount: Number(totals.total_commission), payment_date: new Date(), source: 'cash_commission_bulk', paid: true, paid_amount: Number(totals.total_commission), method: methodWithActor, personal_account: false, recorded_by_name: recordedByName });
     }
 
     // For each dealer aggregate tips and attempt to credit to matching user by username; fallback to system user but mark as unassigned
@@ -117,7 +123,9 @@ export async function handleBulkClosePost(req: Request, res: Response) {
       }
       const source = userIdToCredit === systemUserId && dealerName !== '—' ? 'cash_tips_unassigned' : 'cash_tips';
       const method = userIdToCredit === systemUserId && dealerName !== '—' ? `tips_unassigned:${dealerName}` : 'tips_bulk';
-      await Payment.create({ user_id: userIdToCredit, amount: Number(dealerTotals.total_tips), payment_date: new Date(), source, paid: true, paid_amount: Number(dealerTotals.total_tips), method, personal_account: false });
+  const methodWithActor = req.session && req.session.username ? `${method}|by:${req.session.username}:${req.session.userId}` : method;
+      const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+      await Payment.create({ user_id: userIdToCredit, amount: Number(dealerTotals.total_tips), payment_date: new Date(), source, paid: true, paid_amount: Number(dealerTotals.total_tips), method: methodWithActor, personal_account: false, recorded_by_name: recordedByName });
     }
 
     req.session!.flash = { type: 'success', message: 'Mesas cerradas y pagos agregados por repartidor' };

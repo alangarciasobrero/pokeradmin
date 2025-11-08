@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { requireAdmin } from '../middleware/requireAuth';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import { Tournament } from '../models/Tournament';
 import User from '../models/User';
@@ -6,12 +7,7 @@ import User from '../models/User';
 const router = Router();
 const registrationRepo = new RegistrationRepository();
 
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 // List registrations (admin)
 router.get('/list', requireAdmin, async (req: Request, res: Response) => {

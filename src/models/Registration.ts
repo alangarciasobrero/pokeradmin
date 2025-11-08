@@ -9,6 +9,7 @@ export class Registration extends Model {
   public tournament_id!: number;
   public registration_date!: Date;
   public punctuality!: boolean;
+  public position?: number | null;
 }
 
 /**
@@ -47,6 +48,7 @@ Registration.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },
+    position: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   },
   {
     sequelize,

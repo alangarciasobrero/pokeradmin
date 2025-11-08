@@ -1,15 +1,11 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { requireAdmin } from '../middleware/requireAuth';
 
 const router = Router();
 
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 const POINTS_FILE = path.join(process.cwd(), 'points_table.json');
 const PRIZE_FILE = path.join(process.cwd(), 'prize_override.json');

@@ -22,8 +22,10 @@ import adminCashRoutes from './routes/adminCashRoutes';
 import adminRankingRoutes from './routes/adminRankingRoutes';
 import adminRegistrationRoutes from './routes/adminRegistrationRoutes';
 import adminSettingsRoutes from './routes/adminSettingsRoutes';
+import adminImportsRoutes from './routes/adminImportsRoutes';
 import devRoutes from './routes/devRoutes';
 import adminPaymentRoutes from './routes/adminPaymentRoutes';
+import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -36,8 +38,12 @@ app.use(session({
 	saveUninitialized: false,
 	cookie: { maxAge: 1000 * 60 * 60 * 2 } // 2 horas
 }));
-// Servir archivos estáticos desde la carpeta 'public'
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Servir archivos estáticos desde la carpeta 'public' del proyecto durante desarrollo
+// (los assets están en /public — p.ej. public/css, public/js)
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+// También servir assets desde `src/public` (algunos assets están en src/public during development)
+app.use(express.static(path.join(process.cwd(), 'src', 'public')));
 
 // Configuración del motor de vistas Handlebars
 // 'engine' registra Handlebars como motor de plantillas
@@ -99,6 +105,21 @@ Handlebars.registerHelper('formatDate', function(d: any) {
 	if (isNaN(dt.getTime())) return d;
 	return dt.toISOString().slice(0,10);
 });
+// helper to extract method label (before |by:...)
+Handlebars.registerHelper('methodLabel', function(m: any) {
+	if (!m) return '';
+	const s = String(m);
+	const idx = s.indexOf('|by:');
+	return idx === -1 ? s : s.slice(0, idx);
+});
+// helper to extract recorder (after |by:)
+Handlebars.registerHelper('recordedBy', function(m: any) {
+	if (!m) return '';
+	const s = String(m);
+	const idx = s.indexOf('|by:');
+	if (idx === -1) return '';
+	return s.slice(idx + 4);
+});
 Handlebars.registerHelper('currency', function(n: any) {
 	if (n === null || n === undefined) return '';
 	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -152,11 +173,16 @@ app.use('/admin/games/ranking', adminRankingRoutes);
 // Admin game settings (points/prize editor)
 app.use('/admin/games/settings', adminSettingsRoutes);
 
+// Admin XLSX import UI
+app.use('/admin/imports', requireAdminMiddleware, adminImportsRoutes);
+
 // Admin registrations (SSR)
 app.use('/admin/registrations', adminRegistrationRoutes);
 
 // Admin payments
 app.use('/admin/payments', requireAdminMiddleware, adminPaymentRoutes);
+// Debtors page
+app.use('/admin/debtors', requireAdminMiddleware, adminDebtorsRoutes);
 
 // Dev-only routes (auto-login helpers). Registered only in development to avoid exposure.
 if (process.env.NODE_ENV === 'development') {

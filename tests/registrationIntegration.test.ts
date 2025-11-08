@@ -1,12 +1,12 @@
-let supertestReq: any;
+let supertestReqRI: any;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  supertestReq = require('supertest');
+  supertestReqRI = require('supertest');
 } catch (err) {
-  supertestReq = null;
+  supertestReqRI = null;
 }
 
-if (!supertestReq) {
+if (!supertestReqRI) {
   describe('Registration integration (skipped)', () => {
     it('skipped because supertest is not installed', () => expect(true).toBe(true));
   });
@@ -17,7 +17,7 @@ if (!supertestReq) {
 
   describe('Registration integration', () => {
     it('creates a registration via admin SSR form', async () => {
-      const agent = supertestReq.agent(app as any);
+      const agent = supertestReqRI.agent(app as any);
 
       // login as admin using dev helper
   await agent.get('/dev/login-admin');

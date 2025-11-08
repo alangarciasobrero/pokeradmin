@@ -1,0 +1,22 @@
+<div class="admin-imports container">
+  <h1>XLSX Import</h1>
+  <p>Sube un fichero XLSX para previsualizar su contenido. (Solo administradores)</p>
+
+  {{#if uploaded}}
+    <h3>Resumen de hojas</h3>
+    <ul>
+      {{#each sheets}}
+        <li>{{name}} — {{rows}} filas</li>
+      {{/each}}
+    </ul>
+    <p>Actualmente solo mostramos un resumen. Se puede mapear cada hoja a una entidad (registrations/prizes) en la siguiente iteración.</p>
+    <a href="/admin/imports" class="btn">Subir otro</a>
+  {{else}}
+    <form action="/admin/imports/upload" method="post" enctype="multipart/form-data">
+      <label for="file">Selecciona fichero XLSX:</label>
+      <input type="file" name="file" id="file" accept=".xlsx,.xls" required />
+      <button type="submit" class="btn btn-primary">Subir y previsualizar</button>
+    </form>
+  {{/if}}
+
+</div>

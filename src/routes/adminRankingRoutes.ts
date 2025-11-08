@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { requireAdmin } from '../middleware/requireAuth';
 import { UserRepository } from '../repositories/UserRepository';
 import { TournamentRepository } from '../repositories/TournamentRepository';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
@@ -14,12 +15,7 @@ const registrationRepo = new RegistrationRepository();
 const resultRepo = new ResultRepository();
 const isDev = process.env.NODE_ENV === 'development';
 
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 // Load points table from repo root if present
 function loadPointsTable(): number[] {

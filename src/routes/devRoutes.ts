@@ -26,6 +26,41 @@ router.get('/dev/login-admin', async (req: Request, res: Response) => {
   }
 });
 
+// Dev helper: create a demo tournament and several users/registrations (some unpaid)
+router.post('/dev/create-demo', async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV !== 'development') return res.status(404).send('Not found');
+  try {
+    const UserModel: any = await import('../models/User');
+    const TournamentModel: any = await import('../models/Tournament');
+    const RegistrationModel: any = await import('../models/Registration');
+    const PaymentModel: any = await import('../models/Payment');
+
+    // create tournament starting in 1 hour
+    const t = await TournamentModel.Tournament.create({ tournament_name: 'Demo Torneo', start_date: new Date(Date.now() + 3600 * 1000), buy_in: 100, re_entry: 0, knockout_bounty: 0, starting_stack: 1000, count_to_ranking: false, double_points: false, blind_levels: 10, small_blind: 10, punctuality_discount: 20 });
+
+    // create some users
+    const u1 = await UserModel.default.create({ username: 'demo_p1', password_hash: 'x', full_name: 'Jugador 1', is_player: true });
+    const u2 = await UserModel.default.create({ username: 'demo_p2', password_hash: 'x', full_name: 'Jugador 2', is_player: true });
+    const u3 = await UserModel.default.create({ username: 'demo_p3', password_hash: 'x', full_name: 'Jugador 3', is_player: true });
+
+    // register users: 1 pays, 2 doesn't pay, 3 pays partially
+    const now = new Date();
+    const r1 = await RegistrationModel.Registration.create({ user_id: u1.id, tournament_id: t.id, registration_date: now, punctuality: true });
+    await PaymentModel.default.create({ user_id: u1.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r1.id, paid: true, paid_amount: 80, method: 'cash' });
+
+    const r2 = await RegistrationModel.Registration.create({ user_id: u2.id, tournament_id: t.id, registration_date: now, punctuality: true });
+    await PaymentModel.default.create({ user_id: u2.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r2.id, paid: false, paid_amount: 0, method: null });
+
+    const r3 = await RegistrationModel.Registration.create({ user_id: u3.id, tournament_id: t.id, registration_date: now, punctuality: true });
+    await PaymentModel.default.create({ user_id: u3.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r3.id, paid: false, paid_amount: 30, method: 'card' });
+
+    return res.json({ tournament: t, users: [u1, u2, u3] });
+  } catch (e) {
+    console.error('create-demo error', e);
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
 // Dev helper: ensure a minimal players row exists for a given user id (development only)
 router.post('/dev/ensure-player/:userId', async (req: Request, res: Response) => {
   if (process.env.NODE_ENV !== 'development') return res.status(404).send('Not found');

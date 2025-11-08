@@ -1,3 +1,95 @@
+<div class="admin-dashboard container">
+  <h1>Admin Dashboard</h1>
+
+  <section class="active-screens" style="margin-bottom:1rem">
+    <h2>Pantallas activas</h2>
+    <p>Accede rápidamente a las pantallas de administración más usadas:</p>
+    <ul>
+      <li><a href="/admin/games/tournaments">Torneos (lista)</a></li>
+      <li><a href="/admin/games/tournaments">Torneo (detalle)</a> — abrir desde lista</li>
+      <li><a href="/admin/registrations">Inscripciones</a></li>
+      <li><a href="/admin/payments">Ledger / QuickPay</a></li>
+      <li><a href="/admin/debtors">Deudores (hoy)</a></li>
+      <li><a href="/admin/games/settings">Prizes / Settings</a></li>
+      <li><a href="/admin/users">Usuarios</a></li>
+      <li><a href="/admin/games/ranking">Ranking / Puntos</a></li>
+      <li><a href="/admin/imports">XLSX Import (si está activo)</a></li>
+    </ul>
+  </section>
+
+  <section class="live-summary" style="margin-bottom:1rem">
+    <h2>Resumen rápido</h2>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <div class="card" style="padding:0.75rem;border-radius:6px;border:1px solid #ddd;min-width:160px">
+        <strong>Torneos activos</strong>
+        <div style="font-size:1.25rem">{{summary.activeTournaments}}</div>
+      </div>
+      <div class="card" style="padding:0.75rem;border-radius:6px;border:1px solid #ddd;min-width:160px">
+        <strong>Mesas cash abiertas</strong>
+        <div style="font-size:1.25rem">{{summary.activeCashGames}}</div>
+      </div>
+      <div class="card" style="padding:0.75rem;border-radius:6px;border:1px solid #ddd;min-width:160px">
+        <strong>Jugadores en juego</strong>
+        <div style="font-size:1.25rem">{{summary.playersPlaying}}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tournaments" style="margin-bottom:1rem">
+    <h2>Torneos hoy</h2>
+    {{#if tournamentsActive.length}}
+      <ul>
+        {{#each tournamentsActive}}
+          <li>
+            <a href="/admin/games/tournaments/{{id}}">{{name}}</a>
+            — {{players}} jugadores — <small>{{formatDate startedAt}}</small>
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p>No hay torneos programados para hoy.</p>
+    {{/if}}
+  </section>
+
+  <section class="cashgames" style="margin-bottom:1rem">
+    <h2>Mesas cash abiertas</h2>
+    {{#if cashGamesActive.length}}
+      <ul>
+        {{#each cashGamesActive}}
+          <li>{{tableName}} — {{players}} jugadores — Dealer: {{dealer}}</li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p>No hay mesas cash abiertas.</p>
+    {{/if}}
+  </section>
+
+  <section class="debtors" style="margin-bottom:1rem">
+    <h2>Deudores (hoy)</h2>
+    {{#if debtorsToday.length}}
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th>Usuario</th><th>Monto pendiente</th><th>Acción</th></tr></thead>
+        <tbody>
+          {{#each debtorsToday}}
+            <tr>
+              <td><a href="/admin/users/{{userId}}">{{name}}</a></td>
+              <td>{{currency amountDue}}</td>
+              <td><a class="btn" href="/admin/payments?userId={{userId}}">Registrar pago</a></td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p>No hay deudores detectados para hoy.</p>
+    {{/if}}
+  </section>
+
+  <section class="financials" style="margin-bottom:1rem">
+    <h2>Totales financieros (hoy)</h2>
+    <p>Comisiones: {{currency financialTotals.totalCommission}} — Tips: {{currency financialTotals.totalTips}}</p>
+  </section>
+
+</div>
 <section class="pa-card admin-dashboard">
   <h1>Admin Dashboard</h1>
 

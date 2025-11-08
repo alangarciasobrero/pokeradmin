@@ -12,6 +12,7 @@ export interface PaymentAttributes {
   paid_amount?: number | null; // amount actually paid (in case of partial)
   method?: string | null;
   personal_account?: boolean | null;
+  recorded_by_name?: string | null;
 }
 
 export interface PaymentCreationAttributes extends Optional<PaymentAttributes, 'id' | 'source' | 'reference_id' | 'paid' | 'paid_amount' | 'method' | 'personal_account'> {}
@@ -27,6 +28,7 @@ export class Payment extends Model<PaymentAttributes, PaymentCreationAttributes>
   public paid_amount?: number | null;
   public method?: string | null;
   public personal_account?: boolean | null;
+  public recorded_by_name?: string | null;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -43,7 +45,8 @@ Payment.init(
     paid: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     paid_amount: { type: DataTypes.DECIMAL(15,2), allowNull: true, defaultValue: 0 },
     method: { type: DataTypes.STRING(50), allowNull: true },
-    personal_account: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false }
+    personal_account: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
+    recorded_by_name: { type: DataTypes.STRING(150), allowNull: true }
   },
   {
     sequelize,

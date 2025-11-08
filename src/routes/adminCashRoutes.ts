@@ -1,19 +1,16 @@
 import { Router, Request, Response } from 'express';
+import { requireAdmin } from '../middleware/requireAuth';
 import CashGameRepository from '../repositories/CashGameRepository';
 import CashParticipantRepository from '../repositories/CashParticipantRepository';
 import User from '../models/User';
+import { Payment } from '../models/Payment';
 import { renderCloseForm, handleClosePost } from '../controllers/adminCashController';
 import { renderBulkClose, handleBulkClosePost } from '../controllers/adminCashController';
 import { renderTotals, exportTotalsCSV } from '../controllers/adminCashController';
 
 const router = Router();
 
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   const page = Math.max(1, Number(req.query.page) || 1);
@@ -60,10 +57,63 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const cash = await CashGameRepository.findById(id);
     if (!cash) return res.status(404).send('No encontrado');
-    res.render('cash/detail', { cash, username: req.session.username });
+    // load participants and users so we can render an inline registration form in the detail view
+    const participants = await CashParticipantRepository.findByCashGame(id);
+    const users = await User.findAll({ where: { is_deleted: false }, order: [['username','ASC']] });
+    const umap: any = {};
+    users.forEach((u: any) => umap[u.id] = u);
+    res.render('cash/detail', { cash, participants, users, umap, username: req.session.username });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error');
+  }
+});
+
+// Admin: register a user into a cash game from the cash detail page
+router.post('/:id/register', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const data = req.body || {};
+  try {
+    const cash = await CashGameRepository.findById(id);
+    if (!cash) return res.status(404).send('Cash game no encontrado');
+
+    // handle inline user creation
+    let userId = data.user_id ? Number(data.user_id) : null;
+    if ((!userId || isNaN(userId)) && data.new_user_username) {
+      const existing = await User.findOne({ where: { username: data.new_user_username } });
+      if (existing) userId = existing.id;
+      else {
+        const nu = await User.create({ username: data.new_user_username, password_hash: 'imported', full_name: data.new_user_full_name || null, is_player: true });
+        userId = nu.id;
+      }
+    }
+    if (!userId) {
+      if (req.session) req.session.flash = { type: 'error', message: 'Debes seleccionar o crear un usuario' };
+      return res.redirect(`/admin/games/cash/${id}`);
+    }
+
+    const seatNumber = data.seat_number ? Number(data.seat_number) : null;
+    // create participant
+    const participant = await CashParticipantRepository.create({ cash_game_id: id, user_id: userId, seat_number: seatNumber });
+
+    // record payment if amount provided
+    const amountPaid = data.amount_paid !== undefined && data.amount_paid !== null && data.amount_paid !== '' ? Number(data.amount_paid) : 0;
+    const method = data.method || null;
+    const personalAccount = data.personal_account === 'on' || data.personal_account === 'true' || data.personal_account === true;
+    const now = new Date();
+  // Record a payment row even if no immediate payment happened so ledger shows the registration
+  // For cash games we don't have a canonical expected amount here; record paid=true only if amountPaid > 0
+  const paidFlag = amountPaid > 0;
+  const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : (method || null);
+  const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+  await Payment.create({ user_id: userId, amount: amountPaid, payment_date: now, source: 'cash', reference_id: participant.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
+
+    if (req.session) req.session.flash = { type: 'success', message: 'Jugador registrado en la mesa cash' };
+    return res.redirect(`/admin/games/cash/${id}`);
+  } catch (err) {
+    console.error('Error registering user in cash game', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al registrar jugador' };
+    return res.redirect(`/admin/games/cash/${id}`);
   }
 });
 
