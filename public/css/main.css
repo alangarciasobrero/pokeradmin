@@ -99,6 +99,27 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Tournament detail tweaks: prevent oversized SVG and reduce visual scale on large screens */
+.tournament-detail-container {
+  max-width: 1100px; /* give more room and center content */
+  padding: 2rem 2.4rem;
+  margin: 32px auto;
+}
+.tournament-detail-container h1 { font-size: 1.8rem; display:flex; align-items:center; gap:1rem; }
+.trophy-icon { width: 140px; height: auto; display: block; margin: 0 auto 1rem auto; }
+
+/* If the trophy SVG is still too big on very large screens, cap it */
+@media (min-width: 1400px) {
+  .trophy-icon { width: 220px; }
+}
+@media (max-width: 900px) {
+  .trophy-icon { width: 110px; }
+  .tournament-detail-container h1 { font-size: 1.4rem; }
+}
+
+/* Tone down giant decorative elements that can push content down */
+.home-card img, .pa-card img { max-width: 220px; }
+
 .home-card p, .pa-card p, .tournament-list-container p, .tournament-detail-container p, .tournament-form-container p {
   font-size: 1.15rem;
   color: #dfe6ff;
