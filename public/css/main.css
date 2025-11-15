@@ -350,7 +350,7 @@ body {
 /* Registrations table specific improvements */
 .registrations-table { width:100%; border-collapse:collapse; table-layout: auto; }
 .registrations-table th, .registrations-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.04); }
-.registrations-table th { background: rgba(0,0,0,0.35); color: #ffd884; font-weight:700; text-align:left; position: sticky; top: var(--tournament-info-height, 160px); z-index:4; }
+.registrations-table th { background: rgba(0,0,0,0.35); color: #ffd884; font-weight:700; text-align:left; z-index:4; }
 .registrations-table td { vertical-align: middle; font-size: 0.98rem; }
 .registrations-table .col-name { min-width: 240px; }
 .registrations-table .participant-username { color: #ffd884; font-weight:700; margin-right:0.4rem; }
@@ -367,6 +367,10 @@ body {
   .registrations-table th:nth-child(7), .registrations-table td.col-method { display:none; }
   .registrations-table th:nth-child(11), .registrations-table td.col-pot { display:none; }
 }
+
+/* Scrollable wrapper so the table header can stick inside it and not overlap page header */
+.registrations-wrapper { max-height: 480px; overflow: auto; border-radius: 8px; }
+.registrations-wrapper thead th { position: sticky; top: 0; }
 
 
 /* Flash messages */

@@ -289,7 +289,7 @@
         </script>
 
         <h3>Participantes</h3>
-        <div class="table-responsive">
+        <div class="registrations-wrapper table-responsive">
             <table class="registrations-table">
                                 <thead>
                                     <tr>
@@ -311,10 +311,11 @@
                                     <!-- client populated -->
                                 </tbody>
                         </table>
-                        <div style="margin-top:0.5rem">
-                            <button id="savePositionsBtn" class="btn btn-primary">Guardar posiciones</button>
-                            <span id="savePositionsMsg" style="margin-left:1rem"></span>
-                        </div>
+                </div>
+                <div style="margin-top:0.8rem">
+                    <button id="savePositionsBtn" class="btn btn-primary">Guardar posiciones</button>
+                    <span id="savePositionsMsg" style="margin-left:1rem"></span>
+                </div>
                         <script>
                             (function(){
                                 const tid = {{tournament.id}};
