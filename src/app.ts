@@ -26,6 +26,11 @@ import adminImportsRoutes from './routes/adminImportsRoutes';
 import devRoutes from './routes/devRoutes';
 import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
+// Ensure legacy models are registered so sequelize.sync() knows about them
+import './models/Player';
+import './models/TournamentPoint';
+import './models/HistoricalPoint';
+import './models/RankingHistory';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -188,6 +193,9 @@ app.use('/admin/debtors', requireAdminMiddleware, adminDebtorsRoutes);
 if (process.env.NODE_ENV === 'development') {
 	app.use(devRoutes);
 }
+
+// NOTE: Avoid running sequelize.sync() here to prevent side-effects when app is imported by tests.
+// Server startup (`src/server.ts`) handles syncing when launching the dev server.
 
 
 // Dashboard de admin

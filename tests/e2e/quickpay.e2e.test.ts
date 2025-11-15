@@ -65,34 +65,14 @@ describe('QuickPay E2E', () => {
     page.on('console', (msg) => { try { console.log('PAGE LOG>', msg.text()); } catch (e) {} });
     page.on('pageerror', (err) => { try { console.log('PAGE ERROR>', err && err.message ? err.message : String(err)); } catch (e) {} });
 
-    // 1) Dev login as admin
-    await page.goto(`${BASE_URL}/dev/login-admin`);
+  // 1) Dev login as admin (this sets a session cookie in the browser)
+  await page.goto(`${BASE_URL}/dev/login-admin`);
+  // capture cookies and prepare a Cookie header for node-side HTTP helper so API calls use same session
+  const cookies = await page.cookies();
+  const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
 
-    // 2) Create demo data (call the dev helper endpoint from Node)
-    async function httpJson(method: string, path: string, body?: string) {
-      return new Promise<any>((resolve, reject) => {
-        try {
-          const u = new URL(path, BASE_URL);
-          const isHttps = u.protocol === 'https:';
-          const opts: any = { method, hostname: u.hostname, port: u.port || (isHttps ? 443 : 80), path: u.pathname + (u.search || ''), headers: { 'Accept': 'application/json' } };
-          if (body) opts.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-          const client = isHttps ? require('https') : require('http');
-          const req = client.request(opts, (res: any) => {
-            const chunks: any[] = [];
-            res.on('data', (c: any) => chunks.push(c));
-            res.on('end', () => {
-              const text = Buffer.concat(chunks).toString('utf8');
-              try { const j = JSON.parse(text); resolve(j); } catch (e) { resolve(null); }
-            });
-          });
-          req.on('error', (err: any) => reject(err));
-          if (body) req.write(body);
-          req.end();
-        } catch (e) { reject(e); }
-      });
-    }
-
-    const demo = await httpJson('POST', '/dev/create-demo');
+    // 2) Create demo data via the browser so it runs with the admin session cookie
+    const demo = await page.evaluate(() => fetch('/dev/create-demo', { method: 'POST' }).then(r => r.json()).catch(() => null));
     const tid = demo && demo.tournament && demo.tournament.id ? demo.tournament.id : 1;
     await page.goto(`${BASE_URL}/tournaments/${tid}`);
 
@@ -130,18 +110,23 @@ describe('QuickPay E2E', () => {
     if (!hasUnpaid) {
       const newUser = `e2e_user_${Date.now()}`;
       const regBody = `new_user_username=${encodeURIComponent(newUser)}&new_user_full_name=${encodeURIComponent(newUser)}`;
-      await httpJson('POST', `/admin/games/tournaments/${tid}/register`, regBody);
+      // register via browser fetch so the server receives admin session cookie
+      await page.evaluate((body, tid) => fetch(`/admin/games/tournaments/${tid}/register`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body }).then(() => true).catch(() => null), regBody, tid);
 
       const start = Date.now(); let foundUnpaid = false;
       while (Date.now() - start < 5000) {
-        const pj = await httpJson('GET', `/admin/games/tournaments/${tid}/participants-json`);
+        const pj = await page.evaluate((tid) => fetch(`/admin/games/tournaments/${tid}/participants-json`).then(r => r.json()).catch(() => null), tid);
         lastPJ = pj;
         const parts = pj && pj.participants ? pj.participants : [];
+        // Prefer the participant we just created (by username) to avoid races with legacy rows
+        if (parts.some((p:any) => p.username === newUser && Number(p.debt || 0) > 0.001)) { foundUnpaid = true; break; }
         if (parts.some((p:any) => Number(p.debt || 0) > 0.001)) { foundUnpaid = true; break; }
         await new Promise(r => setTimeout(r, 200));
       }
       if (!foundUnpaid) { fs.writeFileSync('tmp/e2e-no-enabled-buttons.html', await page.content()); throw new Error('Could not observe unpaid participant after creating registration'); }
       try { fs.writeFileSync('tmp/e2e-pj.json', JSON.stringify(lastPJ, null, 2)); } catch (e) {}
+      // also write a debug capture with timestamp to inspect in CI/local runs
+      try { fs.writeFileSync(`tmp/e2e-pj-debug-${Date.now()}.json`, JSON.stringify(lastPJ, null, 2)); } catch (e) {}
       // inject server snapshot into DOM to make sure buttons reflect server state
       try {
         if (lastPJ && lastPJ.participants) {
@@ -150,7 +135,7 @@ describe('QuickPay E2E', () => {
             tbody.innerHTML = '';
             parts.forEach((p:any, idx:number) => {
               const tr = document.createElement('tr');
-              tr.innerHTML = `\n<td>${idx+1}</td>\n<td>${p.username}</td>\n<td>${p.action}</td>\n<td>${p.punctuality ? 'SI' : 'NO'}</td>\n<td>${new Date(p.registration_date).toLocaleString()}</td>\n<td>${(p.paid && p.paid>0)?'SI':'NO'}</td>\n<td>${p.lastMethod||''}</td>\n<td></td>\n<td>${p.personal_account ? 'SI':''}</td>\n<td>${(p.debt||0).toFixed(2)}</td>\n<td>${(p.amount_contributed_to_pot||0).toFixed(2)}</td>\n<td>${((p.debt||0) <= 0 && !p.personal_account) ? '<button class="quick-pay-btn" disabled>':'<button class="quick-pay-btn" data-user-id="'+p.user_id+'">'}Pagar rápido</button></td>\n<td><input type="number" class="reg-position" data-rid="'+p.registration_id+'" value="'+(p.position||'')+'" style="width:4rem" /></td>`;
+              tr.innerHTML = `\n<td>${idx+1}</td>\n<td>${p.username}</td>\n<td>${p.action}</td>\n<td>${p.punctuality ? 'SI' : 'NO'}</td>\n<td>${new Date(p.registration_date).toLocaleString()}</td>\n<td>${(p.paid && p.paid>0)?'SI':'NO'}</td>\n<td>${p.lastMethod||''}</td>\n<td></td>\n<td>${p.personal_account ? 'SI':''}</td>\n<td>${(p.debt||0).toFixed(2)}</td>\n<td>${(p.amount_contributed_to_pot||0).toFixed(2)}</td>\n<td>${((p.debt||0) <= 0 && !p.personal_account) ? '<button class="quick-pay-btn" disabled aria-label="Pagar rápido">':'<button class="quick-pay-btn" data-user-id="'+p.user_id+'" aria-label="Pagar rápido a '+p.username+'">'}Pagar rápido</button></td>\n<td><input type="number" class="reg-position" data-rid="'+p.registration_id+'" value="'+(p.position||'')+'" style="width:4rem" /></td>`;
               tbody.appendChild(tr);
             });
           }, lastPJ.participants);
@@ -165,13 +150,14 @@ describe('QuickPay E2E', () => {
     if (lastPJ && lastPJ.participants) {
       const unpaid = (lastPJ.participants || []).find((p:any)=>Number(p.debt||0) > 0.001);
       if (!unpaid) throw new Error('No unpaid participant found to settle');
-      const settleBody = `userId=${encodeURIComponent(unpaid.user_id)}&amount=${encodeURIComponent(Number(unpaid.debt||0).toFixed(2))}&useCredit=false&method=efectivo&idempotencyKey=e2e-${Date.now()}`;
-      const settleRes = await httpJson('POST', '/admin/payments/settle', settleBody);
+      const settleBody = { userId: unpaid.user_id, amount: Number(unpaid.debt||0).toFixed(2), useCredit: false, method: 'efectivo', idempotencyKey: `e2e-${Date.now()}` };
+      // post settle from browser so session/auth is used
+      const settleRes = await page.evaluate((payload) => fetch('/admin/payments/settle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r => r.json()).catch(() => null), settleBody);
       if (!settleRes || !settleRes.ok) throw new Error('Settle API failed: ' + JSON.stringify(settleRes));
       // poll participants-json until debt cleared
       const start2 = Date.now(); let refreshed = null;
       while (Date.now() - start2 < 10000) {
-        const pj2 = await httpJson('GET', `/admin/games/tournaments/${tid}/participants-json`);
+        const pj2 = await page.evaluate((tid) => fetch(`/admin/games/tournaments/${tid}/participants-json`).then(r => r.json()).catch(() => null), tid);
         const found = pj2 && pj2.participants && pj2.participants.find((p:any)=>Number(p.user_id) === Number(unpaid.user_id));
         if (found && Number(found.debt || 0) <= 0.001) { refreshed = pj2; break; }
         await new Promise(r=>setTimeout(r,200));

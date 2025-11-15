@@ -288,6 +288,20 @@ body {
   }
 }
 
+/* Admin dashboard customizations */
+.admin-dashboard.container { max-width: 1100px; margin: 20px auto; padding: 12px; }
+.admin-dashboard .active-screens h2, .admin-dashboard .live-summary h2, .admin-dashboard h2 { color: #FFD700; }
+.admin-dashboard .card { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); padding:1rem; border-radius:10px; color:#fff; }
+.admin-dashboard .tournament-box-link { align-items: center; gap:1rem; }
+.admin-dashboard .tournament-box-link .btn { padding:0.6rem 1rem; border-radius:8px; }
+.admin-dashboard .tournament-list .tournament-box-link { background: linear-gradient(90deg,#1f2230 0%, #252634 100%); border: 1px solid rgba(255,215,0,0.06); }
+.admin-dashboard .tournament-list .tournament-box-link strong { color: #FFD700; font-size:1.05rem; }
+
+/* table utility in admin */
+.pa-table { width:100%; border-collapse:collapse; }
+.pa-table th, .pa-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+
+
 /* Flash messages */
 .flash { padding: 0.8rem; margin: 1rem auto; max-width: 1100px; border-radius: 4px; text-align: center; }
 .flash-success { background:#e6ffed; color:#0b6623; border:1px solid #0b6623; }

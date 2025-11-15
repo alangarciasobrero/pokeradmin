@@ -5,8 +5,8 @@
     modal.className = 'qp-modal';
     modal.style = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1200';
     modal.innerHTML = `
-      <div class="qp-modal-content" style="background:#fff;padding:1rem;border-radius:6px;max-width:720px;width:100%;">
-        <h3>Pagar rápido</h3>
+      <div class="qp-modal-content" role="dialog" aria-modal="true" aria-labelledby="qp-title" style="background:#fff;padding:1rem;border-radius:6px;max-width:720px;width:100%;">
+        <h3 id="qp-title">Pagar rápido</h3>
         <div id="qp-body">Cargando...</div>
         <div style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:flex-end;">
           <button id="qp-confirm" class="btn btn-primary">Registrar pago</button>
@@ -25,6 +25,24 @@
     const body = modal.querySelector('#qp-body');
     const cancelBtn = modal.querySelector('#qp-cancel');
     const confirmBtn = modal.querySelector('#qp-confirm');
+
+    // accessibility: focus management and keyboard handling
+    const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+    let prevActive = document.activeElement;
+
+    function trapFocus(e){
+      const focusable = Array.from(modal.querySelectorAll(focusableSelector));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length -1];
+      if (e.key === 'Tab'){
+        if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+      } else if (e.key === 'Escape'){
+        e.preventDefault(); try { document.body.removeChild(modal); try { if (prevActive && typeof prevActive.focus === 'function') prevActive.focus(); } catch(e){} } catch(e){}
+      }
+    }
+    document.addEventListener('keydown', trapFocus);
 
     try {
       const res = await fetch(`/admin/payments/user/${userId}/movements`);
@@ -136,7 +154,7 @@
             alert('Pago registrado correctamente');
             // refresh participants table if function available, else reload
             if (window.loadParticipants) try { window.loadParticipants(); } catch(e){ location.reload(); }
-            document.body.removeChild(modal);
+            try { document.body.removeChild(modal); } catch(e){}
           } else {
             alert('Error registrando pago: ' + (jr && jr.error ? jr.error : JSON.stringify(jr)));
           }
@@ -145,7 +163,23 @@
         } finally { confirmBtn.disabled = false; }
       });
 
-      cancelBtn.addEventListener('click', () => { try { document.body.removeChild(modal); } catch(e){} });
+  // cancel handler
+  cancelBtn.addEventListener('click', () => { try { document.body.removeChild(modal); try { if (prevActive && typeof prevActive.focus === 'function') prevActive.focus(); } catch(e){} } catch(e){} });
+
+      // set initial focus to first interactive element
+      setTimeout(()=>{
+        const focusable = modal.querySelectorAll(focusableSelector);
+        if (focusable && focusable.length > 0) { try { const f = focusable[0]; if (typeof f.focus === 'function') f.focus(); } catch(e){} }
+      },50);
+
+      // cleanup when modal is removed
+      const observer = new MutationObserver(() => {
+        if (!document.body.contains(modal)){
+          document.removeEventListener('keydown', trapFocus);
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
 
     } catch (e) {
       body.innerHTML = '<p>Error cargando movimientos</p>';

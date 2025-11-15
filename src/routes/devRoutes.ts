@@ -35,24 +35,36 @@ router.post('/dev/create-demo', async (req: Request, res: Response) => {
     const RegistrationModel: any = await import('../models/Registration');
     const PaymentModel: any = await import('../models/Payment');
 
-    // create tournament starting in 1 hour
-    const t = await TournamentModel.Tournament.create({ tournament_name: 'Demo Torneo', start_date: new Date(Date.now() + 3600 * 1000), buy_in: 100, re_entry: 0, knockout_bounty: 0, starting_stack: 1000, count_to_ranking: false, double_points: false, blind_levels: 10, small_blind: 10, punctuality_discount: 20 });
+  // ensure models synced (development only) so helper works even on fresh DB
+  try {
+    // sync individual models to avoid relying on global sync ordering
+    const tasks: Promise<any>[] = [];
+    if (UserModel && UserModel.default && typeof UserModel.default.sync === 'function') tasks.push(UserModel.default.sync());
+    if (TournamentModel && TournamentModel.Tournament && typeof TournamentModel.Tournament.sync === 'function') tasks.push(TournamentModel.Tournament.sync());
+    if (RegistrationModel && RegistrationModel.Registration && typeof RegistrationModel.Registration.sync === 'function') tasks.push(RegistrationModel.Registration.sync());
+    if (PaymentModel && PaymentModel.default && typeof PaymentModel.default.sync === 'function') tasks.push(PaymentModel.default.sync());
+    if (tasks.length > 0) await Promise.all(tasks);
+  } catch(e) { console.warn('dev create-demo: sync warning', e); }
 
-    // create some users
-    const u1 = await UserModel.default.create({ username: 'demo_p1', password_hash: 'x', full_name: 'Jugador 1', is_player: true });
-    const u2 = await UserModel.default.create({ username: 'demo_p2', password_hash: 'x', full_name: 'Jugador 2', is_player: true });
-    const u3 = await UserModel.default.create({ username: 'demo_p3', password_hash: 'x', full_name: 'Jugador 3', is_player: true });
+  // create tournament starting in 1 hour (idempotent)
+  const [t] = await TournamentModel.Tournament.findOrCreate({ where: { tournament_name: 'Demo Torneo' }, defaults: { start_date: new Date(Date.now() + 3600 * 1000), buy_in: 100, re_entry: 0, knockout_bounty: 0, starting_stack: 1000, count_to_ranking: false, double_points: false, blind_levels: 10, small_blind: 10, punctuality_discount: 20 } });
+
+  // create some users (idempotent)
+  const [u1] = await UserModel.default.findOrCreate({ where: { username: 'demo_p1' }, defaults: { password_hash: 'x', full_name: 'Jugador 1', is_player: true } });
+  const [u2] = await UserModel.default.findOrCreate({ where: { username: 'demo_p2' }, defaults: { password_hash: 'x', full_name: 'Jugador 2', is_player: true } });
+  const [u3] = await UserModel.default.findOrCreate({ where: { username: 'demo_p3' }, defaults: { password_hash: 'x', full_name: 'Jugador 3', is_player: true } });
 
     // register users: 1 pays, 2 doesn't pay, 3 pays partially
     const now = new Date();
-    const r1 = await RegistrationModel.Registration.create({ user_id: u1.id, tournament_id: t.id, registration_date: now, punctuality: true });
-    await PaymentModel.default.create({ user_id: u1.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r1.id, paid: true, paid_amount: 80, method: 'cash' });
+  // create registrations/payments if not exist
+  const [r1] = await RegistrationModel.Registration.findOrCreate({ where: { user_id: u1.id, tournament_id: t.id }, defaults: { registration_date: now, punctuality: true } as any });
+  await PaymentModel.default.findOrCreate({ where: { reference_id: r1.id, source: 'tournament' }, defaults: { user_id: u1.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r1.id, paid: true, paid_amount: 80, method: 'cash' } });
 
-    const r2 = await RegistrationModel.Registration.create({ user_id: u2.id, tournament_id: t.id, registration_date: now, punctuality: true });
-    await PaymentModel.default.create({ user_id: u2.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r2.id, paid: false, paid_amount: 0, method: null });
+  const [r2] = await RegistrationModel.Registration.findOrCreate({ where: { user_id: u2.id, tournament_id: t.id }, defaults: { registration_date: now, punctuality: true } as any });
+  await PaymentModel.default.findOrCreate({ where: { reference_id: r2.id, source: 'tournament' }, defaults: { user_id: u2.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r2.id, paid: false, paid_amount: 0, method: null } });
 
-    const r3 = await RegistrationModel.Registration.create({ user_id: u3.id, tournament_id: t.id, registration_date: now, punctuality: true });
-    await PaymentModel.default.create({ user_id: u3.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r3.id, paid: false, paid_amount: 30, method: 'card' });
+  const [r3] = await RegistrationModel.Registration.findOrCreate({ where: { user_id: u3.id, tournament_id: t.id }, defaults: { registration_date: now, punctuality: true } as any });
+  await PaymentModel.default.findOrCreate({ where: { reference_id: r3.id, source: 'tournament' }, defaults: { user_id: u3.id, amount: 80, payment_date: now, source: 'tournament', reference_id: r3.id, paid: false, paid_amount: 30, method: 'card' } });
 
     return res.json({ tournament: t, users: [u1, u2, u3] });
   } catch (e) {
