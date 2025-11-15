@@ -288,9 +288,12 @@
             })();
         </script>
 
-        <h3>Participantes</h3>
-        <div class="registrations-wrapper table-responsive">
-            <table class="registrations-table">
+                <h3>Participantes</h3>
+                <div class="registrations-controls" style="margin-bottom:0.6rem">
+                    <label for="registrationsFilter" style="margin-right:0.6rem; font-weight:600; color:#ffd884">Filtrar:</label>
+                    <input id="registrationsFilter" placeholder="Buscar por usuario o nombre..." style="padding:6px 8px; border-radius:6px; border:1px solid #333; width:280px" />
+                </div>
+                <table class="registrations-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -311,7 +314,7 @@
                                     <!-- client populated -->
                                 </tbody>
                         </table>
-                </div>
+                
                 <div style="margin-top:0.8rem">
                     <button id="savePositionsBtn" class="btn btn-primary">Guardar posiciones</button>
                     <span id="savePositionsMsg" style="margin-left:1rem"></span>
@@ -352,7 +355,19 @@
                                             `;
                                             tbody.appendChild(tr);
                                         });
-                                        window.REGISTERED_USERS = new Set((parts||[]).map(p => String(p.user_id)));
+                                            window.REGISTERED_USERS = new Set((parts||[]).map(p => String(p.user_id)));
+                                            // attach simple client-side filter behaviour
+                                            const filterInput = document.getElementById('registrationsFilter');
+                                            if (filterInput) {
+                                                filterInput.addEventListener('input', (e) => {
+                                                    const v = (e.target && e.target.value) ? String((e.target).value).toLowerCase().trim() : '';
+                                                    const rows = Array.from(document.querySelectorAll('table.registrations-table tbody tr'));
+                                                    rows.forEach(r => {
+                                                        const txt = (r.textContent || '').toLowerCase();
+                                                        r.style.display = (!v || txt.indexOf(v) !== -1) ? '' : 'none';
+                                                    });
+                                                });
+                                            }
                                     } catch (e) { console.error('Error loading participants', e); }
                                 }
                                 window.loadParticipants = loadParticipants;
