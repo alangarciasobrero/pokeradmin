@@ -8,6 +8,14 @@ body {
   min-height: 100vh;
 }
 
+/* Theme variables for cards and muted surfaces */
+:root {
+  --card-bg: rgba(20, 20, 30, 0.78);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-glow: rgba(255, 215, 0, 0.06);
+  --muted-surface: rgba(255,255,255,0.02);
+}
+
 /* Contenedor principal de cada vista */
 .main-wrapper, .home-wrapper {
   display: flex;
@@ -20,22 +28,22 @@ body {
   z-index: 1;
 }
 
-/* Cartas animadas (puedes usar en cualquier vista) */
-.card {
+/* Cartas decorativas animadas (usa .decor-card para evitar colisiones con .card de UI) */
+.decor-card {
   position: absolute;
   width: 90px;
   height: 130px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   transform: rotate(15deg);
   animation: floatCard 12s infinite ease-in-out;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.1));
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.08));
 }
-.card::before {
+.decor-card::before {
   content: "♠";
-  font-size: 1.8rem;
-  color: rgba(255, 255, 255, 0.2);
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.18);
   position: absolute;
   top: 6px; left: 10px;
 }
@@ -62,11 +70,12 @@ body {
 
 /* Tarjetas principales */
 .home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {
-  background: rgba(30, 30, 45, 0.85);
+  /* use theme variables so we can tweak card contrast easily */
+  background: var(--card-bg);
   backdrop-filter: blur(6px);
   border-radius: 20px;
-  border: 1.2px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+  border: 1.2px solid var(--card-border);
+  box-shadow: 0 0 26px var(--card-glow);
   padding: 2.8rem 3rem;
   max-width: 650px;
   margin: 48px auto;
@@ -320,7 +329,7 @@ body {
 /* Admin dashboard customizations */
 .admin-dashboard.container { max-width: 1100px; margin: 20px auto; padding: 12px; }
 .admin-dashboard .active-screens h2, .admin-dashboard .live-summary h2, .admin-dashboard h2 { color: #FFD700; }
-.admin-dashboard .card { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); padding:1rem; border-radius:10px; color:#fff; }
+.admin-dashboard .card { background: linear-gradient(180deg, var(--muted-surface), rgba(255,255,255,0.004)); padding:1rem; border-radius:10px; color:#fff; border:1px solid var(--card-border); }
 .admin-dashboard .tournament-box-link { align-items: center; gap:1rem; }
 .admin-dashboard .tournament-box-link .btn { padding:0.6rem 1rem; border-radius:8px; }
 .admin-dashboard .tournament-list .tournament-box-link { background: linear-gradient(90deg,#1f2230 0%, #252634 100%); border: 1px solid rgba(255,215,0,0.06); }
