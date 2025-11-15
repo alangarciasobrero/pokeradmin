@@ -318,6 +318,23 @@ body {
 .text-right { text-align: right; }
 .text-left { text-align: left; }
 
+/* Form fields: use muted surfaces instead of bright white so forms fit the dark theme */
+input[type="text"], input[type="password"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="file"], input[list], input[type="email"], select, textarea {
+  background: var(--muted-surface);
+  border: 1px solid var(--card-border);
+  color: #fff;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.45); }
+select { appearance: none; -webkit-appearance: none; }
+input[type="file"] { background: transparent; border: 1px dashed rgba(255,255,255,0.04); padding: 0.45rem; }
+label { color: #ffd884; font-weight:600; display:block; margin:0.6rem 0 0.25rem; }
+
+/* Make checkboxes and radios visible on dark background */
+input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-right:0.4rem; }
+
 /* Responsive básico */
 @media (max-width: 700px) {
   .home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {

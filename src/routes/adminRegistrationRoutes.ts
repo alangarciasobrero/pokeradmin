@@ -69,7 +69,21 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
       tournament_id: Number(req.body.tournament_id),
       punctuality: req.body.punctuality === 'true' || req.body.punctuality === 'on'
     };
-    await registrationRepo.create(payload as any);
+    // Persist registration (DB model may not yet have action_type column).
+    const reg = await registrationRepo.create(payload as any);
+    // If an action_type was provided, log it to a local file for now (no DB schema changes here).
+    const actionType = req.body.action_type;
+    if (actionType) {
+      try {
+        const fs = await import('fs');
+        const logPath = 'logs/registration_actions.log';
+        const entry = { time: new Date().toISOString(), registrationId: (reg as any).id, userId: payload.user_id, tournamentId: payload.tournament_id, actionType };
+        try { fs.mkdirSync('logs', { recursive: true }); } catch (_) {}
+        fs.appendFileSync(logPath, JSON.stringify(entry) + '\n');
+      } catch (e) {
+        console.error('Failed to write registration action log', e);
+      }
+    }
     res.redirect('/admin/registrations/list');
   } catch (err) {
     console.error(err);

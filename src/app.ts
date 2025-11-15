@@ -133,6 +133,17 @@ Handlebars.registerHelper('inc', function(value: number) {
 	return Number(value) + 1;
 });
 
+// comparison helpers
+Handlebars.registerHelper('gt', function(a: any, b: any) {
+	try {
+		return Number(a) > Number(b);
+	} catch (e) { return false; }
+});
+
+Handlebars.registerHelper('lt', function(a: any, b: any) {
+	try { return Number(a) < Number(b); } catch (e) { return false; }
+});
+
 // helper to render admin-only blocks: {{#isAdmin role}}...{{/isAdmin}}
 Handlebars.registerHelper('isAdmin', function(this: any, role: any, opts: any) {
 	return role === 'admin' ? opts.fn(this) : opts.inverse(this);
