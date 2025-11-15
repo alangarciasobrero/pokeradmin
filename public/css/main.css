@@ -320,6 +320,27 @@ body {
 /* Make tables scroll horizontally on small screens */
 .table-responsive { overflow-x: auto; }
 
+/* Registrations table specific improvements */
+.registrations-table { width:100%; border-collapse:collapse; table-layout: auto; }
+.registrations-table th, .registrations-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.04); }
+.registrations-table th { background: rgba(0,0,0,0.35); color: #ffd884; font-weight:700; text-align:left; position: sticky; top: 48px; z-index:4; }
+.registrations-table td { vertical-align: middle; font-size: 0.98rem; }
+.registrations-table .col-name { min-width: 240px; }
+.registrations-table .participant-username { color: #ffd884; font-weight:700; margin-right:0.4rem; }
+.registrations-table .participant-full { color: #dfe6ff; font-weight:500; }
+.registrations-table .action-column { position: sticky; right: 0; background: linear-gradient(90deg, rgba(0,0,0,0.02), rgba(0,0,0,0.0)); padding-left:0.6rem; }
+.registrations-table .action-column .quick-pay-btn { min-width:110px; }
+.registrations-table .col-debt.debt { color: #ffcf66; font-weight:800; background: rgba(255,204,0,0.03); }
+.registrations-table .col-pot.amount { color: #fff; }
+.registrations-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+@media (max-width:900px) {
+  .registrations-table th:nth-child(1), .registrations-table td.col-index { display:none; }
+  .registrations-table th:nth-child(4), .registrations-table td.col-punctuality { display:none; }
+  .registrations-table th:nth-child(7), .registrations-table td.col-method { display:none; }
+  .registrations-table th:nth-child(11), .registrations-table td.col-pot { display:none; }
+}
+
 
 /* Flash messages */
 .flash { padding: 0.8rem; margin: 1rem auto; max-width: 1100px; border-radius: 4px; text-align: center; }

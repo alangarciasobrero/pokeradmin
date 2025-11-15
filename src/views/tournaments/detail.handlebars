@@ -267,9 +267,9 @@
             })();
         </script>
 
-                <h3>Participantes</h3>
-                <div>
-                        <table class="registrations-table">
+        <h3>Participantes</h3>
+        <div class="table-responsive">
+            <table class="registrations-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -308,25 +308,25 @@
                                         tbody.innerHTML = '';
                                         parts.forEach((p, idx) => {
                                             const tr = document.createElement('tr');
-                                            const name = p.full_name ? (p.username + ' - ' + p.full_name) : p.username;
+                                            const name = p.full_name ? (`<span class="participant-username">${p.username}</span> <span class="participant-full"> - ${p.full_name}</span>`) : `<span class="participant-username">${p.username}</span>`;
                                             const paidLabel = (p.paid && p.paid > 0) ? 'SI' : 'NO';
                                             const partial = (p.paid && p.paid > 0 && p.paid < p.expected) ? p.paid.toFixed(2) : '';
                                             tr.innerHTML = `
-                                                <td>${idx+1}</td>
-                                                <td>${name}</td>
-                                                <td>${p.action}</td>
-                                                <td>${p.punctuality ? 'SI' : 'NO'}</td>
-                                                <td>${new Date(p.registration_date).toLocaleString()}</td>
-                                                <td>${paidLabel}</td>
-                                                <td>${p.lastMethod || ''}</td>
-                                                <td>${partial}</td>
-                                                <td>${p.personal_account ? 'SI' : ''}</td>
-                                                <td>${(p.debt||0).toFixed(2)}</td>
-                                                <td>${(p.amount_contributed_to_pot||0).toFixed(2)}</td>
-                                                                                                <td>
-                                                                                                    <button class="quick-pay-btn" role="button" aria-label="Pagar rápido a ${p.username}" data-user-id="${p.user_id}" ${((p.debt||0) <= 0 && !p.personal_account) ? 'disabled' : ''}>Pagar rápido</button>
-                                                                                                </td>
-                                                <td><input type="number" class="reg-position" data-rid="${p.registration_id}" value="${p.position||''}" style="width:4rem" /></td>
+                                                <td class="col-index">${idx+1}</td>
+                                                <td class="col-name">${name}</td>
+                                                <td class="col-action">${p.action}</td>
+                                                <td class="col-punctuality">${p.punctuality ? 'SI' : 'NO'}</td>
+                                                <td class="col-time">${new Date(p.registration_date).toLocaleString()}</td>
+                                                <td class="col-paid">${paidLabel}</td>
+                                                <td class="col-method">${p.lastMethod || ''}</td>
+                                                <td class="col-partial amount">${partial}</td>
+                                                <td class="col-personal">${p.personal_account ? 'SI' : ''}</td>
+                                                <td class="col-debt debt">${(p.debt||0).toFixed(2)}</td>
+                                                <td class="col-pot amount">${(p.amount_contributed_to_pot||0).toFixed(2)}</td>
+                                                <td class="action-column"> 
+                                                    <button class="quick-pay-btn" role="button" aria-label="Pagar rápido a ${p.username}" data-user-id="${p.user_id}" ${((p.debt||0) <= 0 && !p.personal_account) ? 'disabled' : ''}>Pagar rápido</button>
+                                                </td>
+                                                <td class="col-position"><input type="number" class="reg-position" data-rid="${p.registration_id}" value="${p.position||''}" style="width:4rem" /></td>
                                             `;
                                             tbody.appendChild(tr);
                                         });
