@@ -194,6 +194,27 @@
                 })();
                 </script>
                 <script src="/js/quickpay-modal.js"></script>
+                <script>
+                    // compute the height of tournament header + info to avoid sticky table header overlap
+                    (function(){
+                        function setHeaderOffset(){
+                            try{
+                                const info = document.querySelector('.tournament-info');
+                                const header = document.querySelector('.tournament-detail-container h1');
+                                let h = 0;
+                                if (header) h += header.getBoundingClientRect().height;
+                                if (info) h += info.getBoundingClientRect().height;
+                                // add some breathing room
+                                h += 24;
+                                document.documentElement.style.setProperty('--tournament-info-height', h + 'px');
+                            }catch(e){/* ignore */}
+                        }
+                        window.addEventListener('load', setHeaderOffset);
+                        window.addEventListener('resize', setHeaderOffset);
+                        // also run after a short delay in case fonts/images resize layout
+                        setTimeout(setHeaderOffset, 300);
+                    })();
+                </script>
 </div>
 
     {{!-- Inline registration form for admins --}}
