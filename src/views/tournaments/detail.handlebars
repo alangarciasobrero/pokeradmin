@@ -195,23 +195,23 @@
                 </script>
                 <script src="/js/quickpay-modal.js"></script>
                 <script>
-                    // compute the height of tournament header + info to avoid sticky table header overlap
+                    // compute dynamic offset for sticky table header so it never overlaps tournament attributes
                     (function(){
                         function setHeaderOffset(){
                             try{
-                                const info = document.querySelector('.tournament-info');
-                                const header = document.querySelector('.tournament-detail-container h1');
-                                let h = 0;
-                                if (header) h += header.getBoundingClientRect().height;
-                                if (info) h += info.getBoundingClientRect().height;
-                                // add some breathing room
-                                h += 24;
-                                document.documentElement.style.setProperty('--tournament-info-height', h + 'px');
+                                const siteHeader = document.querySelector('.pa-header');
+                                const detail = document.querySelector('.tournament-detail-container');
+                                const headerH = siteHeader ? siteHeader.getBoundingClientRect().height : 0;
+                                const detailRect = detail ? detail.getBoundingClientRect() : { bottom: headerH };
+                                // compute top: when detail is visible below the site header, use its bottom; otherwise use site header height
+                                const top = Math.max(headerH, Math.round(detailRect.bottom));
+                                document.documentElement.style.setProperty('--tournament-info-height', top + 'px');
                             }catch(e){/* ignore */}
                         }
+                        // update on load/resize/scroll and shortly after init to catch font/image shifts
                         window.addEventListener('load', setHeaderOffset);
                         window.addEventListener('resize', setHeaderOffset);
-                        // also run after a short delay in case fonts/images resize layout
+                        window.addEventListener('scroll', setHeaderOffset, { passive: true });
                         setTimeout(setHeaderOffset, 300);
                     })();
                 </script>
