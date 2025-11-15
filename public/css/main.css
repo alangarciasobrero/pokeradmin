@@ -158,6 +158,8 @@ body {
   transition: box-shadow 0.2s, color 0.2s;
   cursor: pointer;
 }
+.tournament-list .tournament-box-link { flex-wrap: wrap; gap: 0.6rem; }
+.tournament-list .tournament-box-link .meta { color: #dfe6ff; font-weight: 500; font-size: 0.98rem; }
 .tournament-list .tournament-box-link:hover {
   box-shadow: 0 4px 16px #FFD700;
   color: #fff;
@@ -300,6 +302,23 @@ body {
 /* table utility in admin */
 .pa-table { width:100%; border-collapse:collapse; }
 .pa-table th, .pa-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+
+/* Improve table readability: sticky headers, zebra rows, wrapping cells */
+.pa-table th {
+  background: rgba(0,0,0,0.35);
+  color: #FFD700;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  text-align: left;
+}
+.pa-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.pa-table td { font-size: 0.98rem; vertical-align: middle; word-break: break-word; }
+.pa-table th, .pa-table td { white-space: normal; }
+
+/* Make tables scroll horizontally on small screens */
+.table-responsive { overflow-x: auto; }
 
 
 /* Flash messages */

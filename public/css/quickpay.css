@@ -17,14 +17,18 @@
 .quick-pay-btn:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(3,155,229,0.32); }
 
 /* emphasize table debt cell and quick-pay area */
-.registrations-table td { vertical-align: middle; }
-.registrations-table td:nth-child(10) { color: #ffcc00; font-weight:700; }
+.registrations-table td { vertical-align: middle; word-break: break-word; }
+.registrations-table td.amount { color: #ffcc00; font-weight:700; }
+.registrations-table td.debt { background: rgba(255, 204, 0, 0.04); color: #ffdd66; font-weight: 700; }
 
 /* ensure modal inputs are legible */
-.qp-modal input[type="number"], .qp-modal select { padding:0.5rem; border-radius:6px; border:1px solid #ddd; }
+.qp-modal input[type="number"], .qp-modal select { padding:0.5rem; border-radius:6px; border:1px solid #ccc; background: #fff; color: #222; }
 
 /* make the confirm button in modal more prominent */
 .qp-modal #qp-confirm { background: linear-gradient(90deg,#43a047 0%, #1b5e20 100%); color: #fff; border-radius:8px; padding:0.6rem 1rem; }
+
+/* Make the modal overlay slightly stronger so controls and text are clear */
+.qp-modal .overlay { background: rgba(0,0,0,0.6); }
 
 /* small responsive tweaks */
 @media (max-width:700px) {
