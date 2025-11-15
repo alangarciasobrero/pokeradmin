@@ -9,6 +9,7 @@ export class Registration extends Model {
   public tournament_id!: number;
   public registration_date!: Date;
   public punctuality!: boolean;
+  public position?: number | null;
 }
 
 /**
@@ -21,6 +22,7 @@ Registration.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    // Use canonical `user_id` referencing the `users` table.
     user_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
@@ -46,6 +48,7 @@ Registration.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },
+    position: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   },
   {
     sequelize,

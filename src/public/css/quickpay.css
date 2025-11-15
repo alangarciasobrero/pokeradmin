@@ -1,0 +1,11 @@
+/* Styles for quickpay modal */
+.qp-modal .qp-modal-content { max-width: 720px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+.qp-modal-content h3 { margin-top: 0; }
+.quick-pay-btn { background:#1976d2;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer }
+.quick-pay-btn[disabled] { opacity:0.5; cursor:not-allowed }
+#qp-body table { border:1px solid #eee }
+#qp-body table th, #qp-body table td { padding:6px 8px; border-bottom:1px solid #f4f4f4 }
+#qp-overpay { background:#fff0f0 }
+.flash { padding:0.5rem 1rem; border-radius:4px; margin:0.5rem 0 }
+.flash-success { background:#e6f4ea; color:#1b5e20 }
+.flash-error { background:#fff0f0; color:#900 }

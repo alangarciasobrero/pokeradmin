@@ -1,9 +1,9 @@
-{{#> layouts/main title="Admin - Torneos" }}
+ 
 <div class="admin-tournaments">
-  <header class="admin-header">
+  <div class="page-header admin-header">
     <h1>Gestión de Torneos</h1>
-    <a href="/admin/games/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
-  </header>
+     <a href="/admin/games/tournaments/new" class="btn add-tournament-btn">+ Nuevo Torneo</a>
+  </div>
 
   {{#if tournaments.length}}
     <div class="tournaments-grid">
@@ -13,7 +13,7 @@
           <div class="t-meta">Fecha: <strong>{{start_date}}</strong></div>
           <div class="t-meta">Buy-in: <strong>${{buy_in}}</strong> — Stack: <strong>{{starting_stack}}</strong></div>
           <div class="t-actions">
-            <a class="btn btn-sm" href="/admin/games/tournaments/{{id}}">Ver / Editar</a>
+              <div style="margin-top:0.6rem;"><a class="btn" href="/admin/games/tournaments/{{id}}">Ver / Editar</a></div>
             <form method="post" action="/admin/games/tournaments/{{id}}/delete" style="display:inline;">
               <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
             </form>
@@ -64,4 +64,4 @@
 @media (max-width: 900px) { .tournaments-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .tournaments-grid { grid-template-columns: 1fr; } }
 </style>
-{{/layouts/main}}
+ 

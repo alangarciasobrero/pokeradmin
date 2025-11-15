@@ -1,0 +1,33 @@
+/* QuickPay specific styles: modal and quick-pay button */
+
+.qp-modal .qp-modal-content { max-width: 720px; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+
+.quick-pay-btn {
+  background: linear-gradient(90deg,#039be5 0%, #00bcd4 100%);
+  color: white !important;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 3px 12px rgba(3,155,229,0.25);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s;
+}
+.quick-pay-btn[disabled], .quick-pay-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; transform: none; }
+.quick-pay-btn:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(3,155,229,0.32); }
+
+/* emphasize table debt cell and quick-pay area */
+.registrations-table td { vertical-align: middle; }
+.registrations-table td:nth-child(10) { color: #ffcc00; font-weight:700; }
+
+/* ensure modal inputs are legible */
+.qp-modal input[type="number"], .qp-modal select { padding:0.5rem; border-radius:6px; border:1px solid #ddd; }
+
+/* make the confirm button in modal more prominent */
+.qp-modal #qp-confirm { background: linear-gradient(90deg,#43a047 0%, #1b5e20 100%); color: #fff; border-radius:8px; padding:0.6rem 1rem; }
+
+/* small responsive tweaks */
+@media (max-width:700px) {
+  .qp-modal .qp-modal-content { margin: 0 12px; width: auto; }
+  .quick-pay-btn { padding: 0.5rem 0.6rem; font-size: 0.95rem; }
+}
