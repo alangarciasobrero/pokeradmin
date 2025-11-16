@@ -166,8 +166,12 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
     const start = new Date(tournament.start_date as any);
     const punctuality = now <= start;
 
-    // create registration
-    const registration = await Registration.create({ user_id: userId, tournament_id: id, registration_date: now, punctuality });
+  // determine action type (1=buyin,2=reentry,3=duplo)
+  const at = Number(data.action_type || 1);
+  const action_type = isNaN(at) ? 1 : at;
+
+  // create registration (persist action_type)
+  const registration = await Registration.create({ user_id: userId, tournament_id: id, registration_date: now, punctuality, action_type });
 
   // expected amount after punctuality discount
   const pct = Number(tournament.punctuality_discount || 0);
@@ -179,6 +183,17 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
   const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : (method || null);
   const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
   await Payment.create({ user_id: userId, amount: expectedAmount, payment_date: now, source: 'tournament', reference_id: registration.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
+
+    // audit: log action_type for this registration
+    try {
+      const fs = await import('fs');
+      const logPath = 'logs/registration_actions.log';
+      const entry = { time: new Date().toISOString(), registrationId: (registration as any).id, userId: userId, tournamentId: id, actionType: action_type };
+      try { fs.mkdirSync('logs', { recursive: true }); } catch (_) {}
+      fs.appendFileSync(logPath, JSON.stringify(entry) + '\n');
+    } catch (e) {
+      console.error('Failed to write registration action log', e);
+    }
 
     if (req.session) req.session.flash = { type: 'success', message: 'Inscripción realizada correctamente' };
     return res.redirect(`/admin/games/tournaments/${id}`);
