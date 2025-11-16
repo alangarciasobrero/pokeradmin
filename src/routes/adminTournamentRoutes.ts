@@ -342,12 +342,16 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
       const agg = perReg[rid] || { paid: 0, expected: 0, lastMethod: null, personal_account: false };
       const debt = +(agg.expected - agg.paid);
       const amountToPot = +(agg.paid > 0 ? agg.paid : 0);
+      // compute action label from numeric action_type when available; fall back to legacy is_reentry flag
+      const actionTypeNum = (r as any).action_type ? Number((r as any).action_type) : ((r as any).is_reentry ? 2 : 1);
+      const actionLabel = actionTypeNum === 2 ? 'Re-entry' : (actionTypeNum === 3 ? 'Duplo' : 'Buy-in');
+
       return {
         registration_id: rid,
         user_id: uid,
         username: u ? u.username : ('#'+uid),
         full_name: u ? u.full_name : null,
-        action: (r as any).is_reentry ? 'Re-entry' : 'Buy-in',
+        action: actionLabel,
         punctuality: !!(r as any).punctuality,
         registration_date: (r as any).registration_date,
         paid: +agg.paid,
