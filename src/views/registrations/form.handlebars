@@ -1,6 +1,13 @@
 <div class="registration-form-container">
   <h2>{{formTitle}}</h2>
   <form action="{{formAction}}" method="POST">
+    <label for="action_type">Tipo de acción:</label>
+    <select name="action_type" id="action_type">
+      <option value="1">Buy-in</option>
+      <option value="2">Re-entry</option>
+      <option value="3">Duplo</option>
+    </select>
+
     <label for="user_id">Jugador:</label>
     <select name="user_id" id="user_id">
       {{#each users}}
