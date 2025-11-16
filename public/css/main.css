@@ -14,6 +14,9 @@ body {
   --card-border: rgba(255, 255, 255, 0.06);
   --card-glow: rgba(255, 215, 0, 0.06);
   --muted-surface: rgba(255,255,255,0.02);
+  --input-bg: rgba(255,255,255,0.04);
+  --input-color: #ffffff;
+  --accent: #1976d2; /* primary accent for tabs/buttons */
 }
 
 /* Contenedor principal de cada vista */
@@ -224,10 +227,21 @@ body {
   border-radius: 8px;
   border: 1.5px solid #FFD700;
   font-size: 1.12rem;
-  background: #fff;
-  color: #23243a;
+  background: var(--input-bg);
+  color: var(--input-color);
   transition: border 0.2s, box-shadow 0.2s;
   box-shadow: 0 1px 6px #FFD70033;
+}
+.tournament-registrations form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; align-items: center; }
+.tournament-registrations label { color: #ffd884; font-weight:700; }
+.tournament-registrations input[type="number"], .tournament-registrations input[type="text"], .tournament-registrations input[list], .tournament-registrations select { width: 100%; box-sizing: border-box; }
+.tournament-registrations .full-row { grid-column: 1 / -1; }
+.tournament-registrations .actions-row { grid-column: 1 / -1; display:flex; gap:12px; align-items:center; }
+.tournament-registrations .btn { margin: 0; }
+
+/* When viewport is narrow, make form single-column */
+@media (max-width:900px) {
+  .tournament-registrations form { grid-template-columns: 1fr; }
 }
 .tournament-form input:focus,
 .tournament-form select:focus {
@@ -313,6 +327,46 @@ body {
   color: #fff;
 }
 
+/* Generic page header used across admin pages */
+.page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+
+/* Typeahead dropdown styles */
+.ta-dropdown { position: absolute; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); z-index: 10000; max-height: 240px; overflow: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.6); border-radius:6px; }
+.ta-item { padding: 6px 8px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.ta-item:hover { background: rgba(255,255,255,0.02); }
+
+/* Quick-create modal for typeahead */
+.ta-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); z-index: 20000; }
+.ta-modal-content { background: var(--card-bg); padding: 1rem; border-radius: 6px; width: 480px; color: inherit; }
+.ta-modal .actions { display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.5rem; }
+.ta-modal input { width: 100%; padding: 0.6rem; border-radius:6px; border:1px solid var(--card-border); background: var(--input-bg); color: var(--input-color); }
+
+/* Registrations UI improvements */
+.registrations-filters { display:flex; gap:0.6rem; align-items:center; margin:0.75rem 0; flex-wrap:wrap; }
+.registrations-filters label { display:flex; gap:0.4rem; align-items:center; color: #dfe6ff; }
+
+.registrations-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; table-layout: auto; }
+.registrations-table th, .registrations-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); text-align:left }
+.registration-row { background: transparent; transition: background 0.18s, transform 0.18s; }
+.registration-row:hover { background: rgba(255,255,255,0.02); transform: translateY(-2px); }
+.registration-row.unpaid { box-shadow: inset 0 0 0 1px rgba(255,204,0,0.06); }
+
+.punctuality-badge { display:inline-block; padding:0.18rem 0.45rem; border-radius:6px; font-weight:700; font-size:0.85rem; color:#fff; }
+.punctuality-badge.on-time { background: #43a047; }
+.punctuality-badge.late { background: #e53935; }
+.punctuality-badge.unknown { background: var(--muted-surface); color: #ffd884; }
+
+.registration-actions { display:flex; gap:0.4rem; align-items:center; }
+.registration-actions .btn { padding:0.35rem 0.6rem; border-radius:6px; }
+.quick-pay-btn { background: linear-gradient(90deg,#43a047 0%, #1b5e20 100%); color:#fff; border:none; padding:0.45rem 0.8rem; border-radius:6px; font-weight:700; cursor:pointer; }
+.quick-pay-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+
+@media (max-width:900px) {
+  .registrations-table th:nth-child(1), .registrations-table td.col-index { display:none; }
+}
+
+
+
 /* Utilidades */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
@@ -355,6 +409,24 @@ input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-rig
 /* table utility in admin */
 .pa-table { width:100%; border-collapse:collapse; }
 .pa-table th, .pa-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+
+/* QuickPay modal and helpers (replace inline styles in JS modal builder) */
+.qp-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1200; }
+.qp-modal-content { background: var(--card-bg); padding: 1rem; border-radius: 6px; max-width: 720px; width: 100%; color: inherit; }
+.qp-actions { margin-top:1rem; display:flex; gap:0.5rem; justify-content:flex-end; }
+.qp-overpay { margin-top:0.6rem; display:none; color:#900; border:1px solid #fcc; padding:0.5rem; border-radius:4px; }
+.qp-table { width:100%; border-collapse:collapse; margin-top:0.4rem; }
+.qp-table thead th { text-align:left; padding:0.25rem 0.4rem; }
+.qp-table td { padding:0.35rem 0.4rem; }
+.qp-input { width:10rem; }
+
+/* small helpers */
+.form-inline { display:inline-flex; gap:0.4rem; align-items:center; }
+.hidden { display:none !important; }
+
+/* stronger text color for meta info in tournament cards */
+.t-meta { color: #dfe6ff; }
+
 
 /* Improve table readability: sticky headers, zebra rows, wrapping cells */
 .pa-table th {
@@ -401,8 +473,27 @@ input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-rig
 /* Flash messages */
 .flash { padding: 0.8rem; margin: 1rem auto; max-width: 1100px; border-radius: 4px; text-align: center; }
 .flash-success { background:#e6ffed; color:#0b6623; border:1px solid #0b6623; }
-.flash-error { background:#ffe6e6; color:#a10000; border:1px solid #a10000; }
+.flash-error { background: rgba(255,0,0,0.04); color:#ffb3b3; border:1px solid rgba(255,0,0,0.12); }
 
 /* Logout button in header */
 .btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: #FFD700; padding: 0.4rem 0.8rem; border-radius: 6px; margin-left: 0.6rem; cursor: pointer; }
 .btn-logout:hover { background: rgba(255,255,255,0.03); }
+
+/* Users table / admin users view improvements (replace inline styles) */
+.users-container { max-width: 900px; margin: 0 auto; }
+.users-table { width: 100%; border-collapse: separate; border-spacing: 0 0.7rem; }
+.users-table thead tr { background: rgba(255,255,255,0.04); color: #FFD700; }
+.users-table th, .users-table td { padding: 0.7rem 0.5rem; }
+.users-table tbody tr.user-row { background: var(--card-bg); box-shadow: 0 2px 12px rgba(255,215,0,0.14); border-radius: 12px; }
+.users-table tbody tr.user-row td { background: transparent; }
+
+.avatar-img { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #FFD700; display:inline-block; }
+.no-avatar { color: #aaa; }
+
+.role-badge { color: #fff; padding: 0.3em 1em; border-radius: 8px; font-size: 0.98em; font-weight: 600; display:inline-block; }
+.role-badge.admin { background: #3949ab; }
+.role-badge.player { background: #43a047; }
+
+.btn.small { padding: 0.4em 1.2em; font-size: 0.98em; margin-right: 0.5em; border-radius: 6px; }
+.btn.danger { background: #23243a; color: #FFD700; border: 1.2px solid #FFD700; }
+

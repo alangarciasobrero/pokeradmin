@@ -58,9 +58,9 @@
                 </div>
             </div>
 
-            <style>
+                <style>
                 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
-                .modal-content { background: #fff; padding: 1rem; border-radius: 6px; max-width: 720px; width: 100%; }
+                .modal-content { background: var(--card-bg); padding: 1rem; border-radius: 6px; max-width: 720px; width: 100%; color: inherit; }
             </style>
 
                 <script>
@@ -251,12 +251,7 @@
                 <option value="other">Otro</option>
             </select>
 
-            <label for="action_type">Tipo de acción:</label>
-            <select id="action_type" name="action_type">
-                <option value="1">Buy-in</option>
-                <option value="2">Re-entry</option>
-                <option value="3">Duplo</option>
-            </select>
+            <!-- removed duplicate action_type select (kept the first one above) -->
 
             <button type="submit">Registrar</button>
         </form>
