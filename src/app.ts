@@ -144,6 +144,17 @@ Handlebars.registerHelper('lt', function(a: any, b: any) {
 	try { return Number(a) < Number(b); } catch (e) { return false; }
 });
 
+// map numeric action types to labels for templates
+Handlebars.registerHelper('actionLabel', function(v: any) {
+	const n = Number(v);
+	switch (n) {
+		case 1: return 'Buy-in';
+		case 2: return 'Re-entry';
+		case 3: return 'Duplo';
+		default: return 'Unknown';
+	}
+});
+
 // helper to render admin-only blocks: {{#isAdmin role}}...{{/isAdmin}}
 Handlebars.registerHelper('isAdmin', function(this: any, role: any, opts: any) {
 	return role === 'admin' ? opts.fn(this) : opts.inverse(this);

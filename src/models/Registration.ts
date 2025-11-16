@@ -10,6 +10,7 @@ export class Registration extends Model {
   public registration_date!: Date;
   public punctuality!: boolean;
   public position?: number | null;
+  public action_type?: number | null; // 1=buyin,2=reentry,3=duplo
 }
 
 /**
@@ -49,6 +50,7 @@ Registration.init(
       allowNull: false,
     },
     position: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+    action_type: { type: DataTypes.TINYINT.UNSIGNED, allowNull: false, defaultValue: 1 },
   },
   {
     sequelize,

@@ -27,7 +27,7 @@
   {{#if registrations.length}}
     <table class="registrations-table">
       <thead>
-        <tr><th>ID</th><th>Usuario</th><th>Torneo</th><th>Fecha</th><th>Puntualidad</th><th>Acciones</th></tr>
+        <tr><th>ID</th><th>Usuario</th><th>Torneo</th><th>Fecha</th><th>Acción</th><th>Puntualidad</th><th>Acciones</th></tr>
       </thead>
       <tbody>
         {{#each registrations}}
@@ -36,6 +36,7 @@
             <td>{{#with (lookup ../users this.user_id)}}{{this.full_name}} ({{this.username}}){{else}}{{this.user_id}}{{/with}}</td>
             <td>{{#with (lookup ../tournaments this.tournament_id)}}{{this.tournament_name}}{{else}}{{this.tournament_id}}{{/with}}</td>
             <td>{{registration_date}}</td>
+            <td>{{actionLabel action_type}}</td>
             <td>{{punctuality}}</td>
             <td>
               <a class="btn btn-sm" href="/admin/registrations/{{id}}">Ver</a>

@@ -64,25 +64,24 @@ router.get('/new', requireAdmin, async (req: Request, res: Response) => {
 // Create: forward to API (or repo) - accept JSON body from form
 router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const payload = {
+    const payload: any = {
       user_id: Number(req.body.user_id),
       tournament_id: Number(req.body.tournament_id),
       punctuality: req.body.punctuality === 'true' || req.body.punctuality === 'on'
     };
-    // Persist registration (DB model may not yet have action_type column).
+    // accept numeric action_type (1=buyin,2=reentry,3=duplo)
+    const at = Number(req.body.action_type || 1);
+    payload.action_type = (isNaN(at) ? 1 : at);
     const reg = await registrationRepo.create(payload as any);
-    // If an action_type was provided, log it to a local file for now (no DB schema changes here).
-    const actionType = req.body.action_type;
-    if (actionType) {
-      try {
-        const fs = await import('fs');
-        const logPath = 'logs/registration_actions.log';
-        const entry = { time: new Date().toISOString(), registrationId: (reg as any).id, userId: payload.user_id, tournamentId: payload.tournament_id, actionType };
-        try { fs.mkdirSync('logs', { recursive: true }); } catch (_) {}
-        fs.appendFileSync(logPath, JSON.stringify(entry) + '\n');
-      } catch (e) {
-        console.error('Failed to write registration action log', e);
-      }
+    // keep an audit line for reference
+    try {
+      const fs = await import('fs');
+      const logPath = 'logs/registration_actions.log';
+      const entry = { time: new Date().toISOString(), registrationId: (reg as any).id, userId: payload.user_id, tournamentId: payload.tournament_id, actionType: payload.action_type };
+      try { fs.mkdirSync('logs', { recursive: true }); } catch (_) {}
+      fs.appendFileSync(logPath, JSON.stringify(entry) + '\n');
+    } catch (e) {
+      console.error('Failed to write registration action log', e);
     }
     res.redirect('/admin/registrations/list');
   } catch (err) {
