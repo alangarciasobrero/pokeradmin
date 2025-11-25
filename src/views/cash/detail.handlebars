@@ -1,110 +1,559 @@
-<h1>Cash Game #{{cash.id}}</h1>
-<p>User ID: {{cash.user_id}}</p>
-<p>Amount: ${{cash.amount}}</p>
-<p>Date: {{cash.start_datetime}}</p>
-<p>Description: {{cash.description}}</p>
+<div class="cash-game-container">
+    <div class="cash-header">
+        <h1>
+            <svg class="cash-icon" viewBox="0 0 24 24" fill="#43a047" width="48" height="48">
+                <circle cx="12" cy="12" r="10"/>
+                <text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">$</text>
+            </svg>
+            Mesa Cash #{{cash.id}}
+        </h1>
+        <a class="back-link" href="/admin/games/cash/list">← Volver a lista</a>
+    </div>
+
+    <div class="cash-info-grid">
+        <div class="info-card">
+            <span class="info-label">Ciega pequeña</span>
+            <span class="info-value">${{cash.small_blind}}</span>
+        </div>
+        <div class="info-card">
+            <span class="info-label">Inicio</span>
+            <span class="info-value">{{formatDateTime cash.start_datetime}}</span>
+        </div>
+        <div class="info-card">
+            <span class="info-label">Estado</span>
+            <span class="info-value {{#unless cash.end_datetime}}text-success{{/unless}}">
+                {{#if cash.end_datetime}}Cerrada{{else}}🟢 Activa{{/if}}
+            </span>
+        </div>
+        {{#if cash.end_datetime}}
+        <div class="info-card">
+            <span class="info-label">Fin</span>
+            <span class="info-value">{{formatDateTime cash.end_datetime}}</span>
+        </div>
+        {{/if}}
+        {{#if cash.dealer}}
+        <div class="info-card">
+            <span class="info-label">Repartidor</span>
+            <span class="info-value">{{cash.dealer}}</span>
+        </div>
+        {{/if}}
+        <div class="info-card highlight">
+            <span class="info-label">Comisión total</span>
+            <span class="info-value">${{currency cash.total_commission}}</span>
+        </div>
+        <div class="info-card highlight">
+            <span class="info-label">Propinas totales</span>
+            <span class="info-value">${{currency cash.total_tips}}</span>
+        </div>
+    </div>
 
 {{#if username}}
-	<h3>Registro rápido (admin)</h3>
-		<form method="post" action="/admin/games/cash/{{cash.id}}/register">
-			<div>
-				<label for="user_search_input">Usuario (buscar o seleccionar)</label>
-				<input list="user_search_list" id="user_search_input" name="user_search_input" placeholder="Escribe username o nombre..." autocomplete="off" />
-				<datalist id="user_search_list"></datalist>
-				<input type="hidden" id="user_id" name="user_id" value="" />
+	<div class="cash-actions">
+		{{#unless cash.end_datetime}}
+			<button id="openShiftModal" class="btn btn-primary">🔄 Cambio de Turno</button>
+		{{/unless}}
+	</div>
+
+	<div class="registration-section">
+		<h2>Registrar jugador</h2>
+		<form method="post" action="/admin/games/cash/{{cash.id}}/register" class="cash-form">
+			<div class="form-row">
+				<div class="form-group full-width">
+					<label for="user_search_input">Usuario</label>
+					<input list="user_search_list" id="user_search_input" name="user_search_input" placeholder="Buscar por nombre o username..." autocomplete="off" />
+					<datalist id="user_search_list"></datalist>
+					<input type="hidden" id="user_id" name="user_id" value="" />
+				</div>
 			</div>
-		<div>
-			<strong>o crear rápido:</strong>
-			<label for="new_user_username">username</label>
-			<input type="text" name="new_user_username" id="new_user_username" />
-			<label for="new_user_full_name">full name</label>
-			<input type="text" name="new_user_full_name" id="new_user_full_name" />
-			<button type="button" id="quick_create_user_btn">Crear y seleccionar</button>
-		</div>
-		<div>
-			<label for="seat_number">Número de asiento (opcional)</label>
-			<input type="number" name="seat_number" id="seat_number" />
-		</div>
-		<div>
-			<label for="amount_paid">Importe pagado (ej. buy-in)</label>
-			<input type="text" name="amount_paid" id="amount_paid" />
-			<label for="requested_amount">Pedido (monto solicitado para jugar)</label>
-			<input type="text" name="requested_amount" id="requested_amount" placeholder="Opcional - monto que el jugador pide" />
-			<label for="method">Método</label>
-			<select name="method" id="method">
-				<option value="cash">Efectivo</option>
-				<option value="card">Tarjeta</option>
-				<option value="transfer">Transferencia</option>
-			</select>
-		</div>
-		<div>
-			<button type="submit">Registrar jugador</button>
-		</div>
-	</form>
-	<script src="/js/user-autocomplete.js"></script>
-	<script src="/js/typeahead-quickcreate.js"></script>
-	<script>
+
+			<div class="quick-create-section">
+				<p class="section-label">O crear usuario nuevo:</p>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="new_user_username">Username</label>
+						<input type="text" name="new_user_username" id="new_user_username" placeholder="nuevo_usuario" />
+					</div>
+					<div class="form-group">
+						<label for="new_user_full_name">Nombre completo</label>
+						<input type="text" name="new_user_full_name" id="new_user_full_name" placeholder="Nombre Apellido" />
+					</div>
+					<div class="form-group align-end">
+						<button type="button" id="quick_create_user_btn" class="btn btn-secondary">Crear y seleccionar</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-row">
+				<div class="form-group">
+					<label for="seat_number">Número de asiento</label>
+					<input type="number" name="seat_number" id="seat_number" min="1" placeholder="#" />
+				</div>
+				<div class="form-group">
+					<label for="requested_amount">Monto pedido</label>
+					<input type="number" name="requested_amount" id="requested_amount" step="0.01" min="0" placeholder="Monto solicitado" />
+				</div>
+				<div class="form-group">
+					<label for="amount_paid">Monto pagado</label>
+					<input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" placeholder="Monto entregado" required />
+				</div>
+				<div class="form-group">
+					<label for="method">Método de pago</label>
+					<select name="method" id="method">
+						<option value="cash">Efectivo</option>
+						<option value="card">Tarjeta</option>
+						<option value="transfer">Transferencia</option>
+					</select>
+				</div>
+			</div>
+
+			<input type="hidden" name="recorded_by" value="{{username}}" />
+			
+			<div class="form-actions">
+				<button type="submit" class="btn btn-primary">✓ Registrar jugador</button>
+			</div>
+		</form>
+	</div>
+<script src="/js/user-autocomplete.js"></script>
+<script src="/js/typeahead-quickcreate.js"></script>
+<script>
+	// Attach typeahead
+	if (window.TypeaheadQuickCreate) {
+		window.TypeaheadQuickCreate.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' });
+	} else if (window.UserAutocomplete) {
+		window.UserAutocomplete.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id', datalistSelector: '#user_search_list' });
+	}
+
+	// Quick create wiring
+	(function(){
+		const btn = document.getElementById('quick_create_user_btn');
+		if (!btn) return;
 		if (window.TypeaheadQuickCreate) {
-			window.TypeaheadQuickCreate.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' });
+			btn.addEventListener('click', () => window.TypeaheadQuickCreate.openQuickCreate({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' }));
 		} else if (window.UserAutocomplete) {
-			window.UserAutocomplete.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id', datalistSelector: '#user_search_list' });
+			btn.addEventListener('click', async () => {
+				const u = document.getElementById('new_user_username');
+				const f = document.getElementById('new_user_full_name');
+				const uval = u && u.value ? u.value : '';
+				const fval = f && f.value ? f.value : '';
+				if (!uval) return alert('Ingrese un username válido');
+				try {
+					const created = await window.UserAutocomplete.createUser(uval.trim(), fval.trim());
+					const hid = document.getElementById('user_id');
+					const input = document.getElementById('user_search_input');
+					if (hid) hid.value = created.id;
+					if (input) input.value = `${created.username}${created.full_name ? ' - ' + created.full_name : ''}`;
+					if (u) u.value = '';
+					if (f) f.value = '';
+					alert('Usuario creado y seleccionado');
+				} catch (err) {
+					alert('Error creando usuario: ' + (err && err.error ? err.error : err));
+				}
+			});
+		}
+	})();
+
+	// Modal de cambio de turno
+	(function(){
+		const cashId = {{cash.id}};
+		const openBtn = document.getElementById('openShiftModal');
+		const modal = document.getElementById('shiftModal');
+		const cancelBtn = document.getElementById('cancelShiftBtn');
+		const form = document.getElementById('shiftForm');
+
+		if (openBtn && modal) {
+			openBtn.addEventListener('click', () => {
+				const now = new Date();
+				const startTime = new Date('{{cash.start_datetime}}');
+				document.getElementById('shiftStartTime').textContent = startTime.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+				document.getElementById('shiftEndTime').textContent = now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+				modal.style.display = 'flex';
+			});
 		}
 
-		// quick create wiring for cash form
-		(function(){
-			const btn = document.getElementById('quick_create_user_btn');
-			if (!btn) return;
-			if (window.TypeaheadQuickCreate) {
-				btn.addEventListener('click', () => window.TypeaheadQuickCreate.openQuickCreate({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' }));
-			} else if (window.UserAutocomplete) {
-				btn.addEventListener('click', async () => {
-					const u = document.getElementById('new_user_username');
-					const f = document.getElementById('new_user_full_name');
-					const uval = u && u.value ? u.value : '';
-					const fval = f && f.value ? f.value : '';
-					if (!uval) return alert('Ingrese un username válido');
-					try {
-						const created = await window.UserAutocomplete.createUser(uval.trim(), fval.trim());
-						const hid = document.getElementById('user_id');
-						const input = document.getElementById('user_search_input');
-						if (hid) hid.value = created.id;
-						if (input) input.value = `${created.username}${created.full_name ? ' - ' + created.full_name : ''}`;
-						if (u) u.value = '';
-						if (f) f.value = '';
-						alert('Usuario creado y seleccionado');
-					} catch (err) {
-						alert('Error creando usuario: ' + (err && err.error ? err.error : err));
+		if (cancelBtn && modal) {
+			cancelBtn.addEventListener('click', () => {
+				modal.style.display = 'none';
+				form.reset();
+			});
+		}
+
+		if (form) {
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(form);
+				const data = {
+					dealer_name: formData.get('dealer_name'),
+					commission: parseFloat(formData.get('commission') || '0'),
+					tips: parseFloat(formData.get('tips') || '0'),
+					recorded_by: '{{username}}'
+				};
+
+				try {
+					const res = await fetch(`/admin/games/cash/${cashId}/shift`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(data)
+					});
+
+					if (res.ok) {
+						alert('Turno registrado exitosamente');
+						window.location.reload();
+					} else {
+						const err = await res.json();
+						alert('Error: ' + (err.error || 'No se pudo registrar el turno'));
 					}
-				});
-			}
-		})();
-	</script>
+				} catch (err) {
+					console.error('Error:', err);
+					alert('Error de red al registrar el turno');
+				}
+			});
+		}
+	})();
+</script>
+
+<style>
+.cash-game-container {
+	max-width: 1400px;
+	margin: 1.5rem auto;
+	padding: 0 1.5rem;
+}
+
+.cash-header {
+	margin-bottom: 2rem;
+}
+
+.cash-header h1 {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+	color: #FFD700;
+}
+
+.cash-icon {
+	flex-shrink: 0;
+}
+
+.back-link {
+	color: #FFD700;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.back-link:hover {
+	text-decoration: underline;
+}
+
+.cash-info-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1rem;
+	margin-bottom: 2rem;
+}
+
+.info-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 8px;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.info-card.highlight {
+	background: rgba(255, 215, 0, 0.05);
+	border-color: rgba(255, 215, 0, 0.2);
+}
+
+.info-label {
+	font-size: 0.85rem;
+	color: #ffd884;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.info-value {
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: #fff;
+}
+
+.cash-actions {
+	margin-bottom: 2rem;
+}
+
+.registration-section,
+.participants-section {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.registration-section h2,
+.participants-section h2 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.75rem;
+}
+
+.cash-form {
+	max-width: 100%;
+}
+
+.form-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.form-group {
+	display: flex;
+	flex-direction: column;
+}
+
+.form-group.full-width {
+	grid-column: 1 / -1;
+}
+
+.form-group.align-end {
+	justify-content: flex-end;
+}
+
+.form-group label {
+	margin-bottom: 0.5rem;
+	color: #ffd884;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+	padding: 0.6rem;
+	border-radius: 6px;
+	border: 1px solid rgba(255, 215, 0, 0.3);
+	background: var(--input-bg);
+	color: var(--input-color);
+	font-size: 1rem;
+}
+
+.quick-create-section {
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+}
+
+.section-label {
+	color: #dfe6ff;
+	font-weight: 600;
+	margin-top: 0;
+	margin-bottom: 1rem;
+}
+
+.form-actions {
+	margin-top: 1.5rem;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.cash-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.cash-table th,
+.cash-table td {
+	padding: 0.75rem;
+	text-align: left;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cash-table th {
+	background: rgba(0, 0, 0, 0.35);
+	color: #ffd884;
+	font-weight: 700;
+	position: sticky;
+	top: 0;
+	z-index: 5;
+}
+
+.cash-table tbody tr:hover {
+	background: rgba(255, 255, 255, 0.02);
+}
+
+.user-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.username {
+	color: #ffd884;
+	font-weight: 700;
+}
+
+.fullname {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+}
+
+.amount-cell {
+	text-align: right;
+	font-weight: 600;
+	color: #4caf50;
+}
+
+.amount-cell.highlight {
+	background: rgba(76, 175, 80, 0.05);
+}
+
+.admin-cell {
+	font-size: 0.85rem;
+	color: #ffd884;
+	font-style: italic;
+}
+
+.text-center {
+	text-align: center;
+}
+
+.text-success {
+	color: #4caf50;
+	font-weight: 600;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 3rem;
+	color: #dfe6ff;
+}
+
+.modal {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.7);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+	padding: 1rem;
+}
+
+@media (max-width: 900px) {
+	.form-row {
+		grid-template-columns: 1fr;
+	}
+	
+	.cash-table {
+		font-size: 0.85rem;
+	}
+	
+	.cash-table th,
+	.cash-table td {
+		padding: 0.5rem 0.3rem;
+	}
+}
+</style>
 {{/if}}
 
-{{#if username}}
-	<div style="margin-top:1rem">
-		<a class="btn" href="/admin/games/cash/{{cash.id}}/close">Cerrar mesa</a>
+	<!-- Modal de cambio de turno -->
+	<div id="shiftModal" class="modal" style="display:none;">
+		<div class="modal-content" style="max-width:600px">
+			<h2 style="margin-top:0;color:#43a047">🔄 Cambio de Turno</h2>
+			<p style="color:#666">Finaliza el turno actual y comienza uno nuevo</p>
+			<form id="shiftForm">
+				<div class="form-group">
+					<label>Turno actual</label>
+					<div style="background:#f5f5f5;padding:1rem;border-radius:6px;margin-bottom:1rem;">
+						<p style="margin:0.25rem 0;"><strong>Inicio:</strong> <span id="shiftStartTime"></span></p>
+						<p style="margin:0.25rem 0;"><strong>Fin:</strong> <span id="shiftEndTime"></span></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="dealer_name">Nombre del repartidor</label>
+					<input type="text" id="dealer_name" name="dealer_name" required placeholder="Nombre del dealer" />
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label for="commission">Comisión ($)</label>
+						<input type="number" id="commission" name="commission" step="0.01" min="0" value="0" required />
+					</div>
+					<div class="form-group">
+						<label for="tips">Propinas ($)</label>
+						<input type="number" id="tips" name="tips" step="0.01" min="0" value="0" required />
+					</div>
+				</div>
+				<div style="margin-top:1.5rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+					<button type="button" id="cancelShiftBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
+					<button type="submit" class="btn btn-primary" style="background:#43a047">✓ Confirmar cambio de turno</button>
+				</div>
+			</form>
+		</div>
 	</div>
+
+	{{#unless cash.end_datetime}}
+	<div style="margin-top:2rem;padding:1rem;background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.3);border-radius:8px;">
+		<a class="btn btn-danger" href="/admin/games/cash/{{cash.id}}/close" style="background:#c62828">🔴 Cerrar mesa definitivamente</a>
+	</div>
+	{{/unless}}
 {{/if}}
 
-<h3>Participantes</h3>
-{{#if participants}}
-	<table>
-		<thead>
-			<tr><th>ID</th><th>Usuario</th><th>Seat</th><th>Joined</th><th>Left</th></tr>
-		</thead>
-		<tbody>
-			{{#each participants}}
-				<tr>
-					<td>{{this.id}}</td>
-					<td>{{#if ../umap.[this.user_id]}}{{../umap.[this.user_id].username}}{{else}}User #{{this.user_id}}{{/if}}</td>
-					<td>{{this.seat_number}}</td>
-					<td>{{this.joined_at}}</td>
-					<td>{{this.left_at}}</td>
-				</tr>
-			{{/each}}
-		</tbody>
-	</table>
-{{else}}
-	<p>No hay participantes aún</p>
-{{/if}}
+<div class="participants-section">
+	<h2>Participantes</h2>
+	{{#if participants}}
+		<div class="table-responsive">
+			<table class="cash-table">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Usuario</th>
+						<th>Asiento</th>
+						<th>Pedido</th>
+						<th>Pagado</th>
+						<th>Método</th>
+						<th>Entrada</th>
+						<th>Salida</th>
+						<th>Admin</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each participants}}
+						<tr>
+							<td>{{this.id}}</td>
+							<td class="user-cell">
+								{{#if ../umap.[this.user_id]}}
+									<span class="username">{{../umap.[this.user_id].username}}</span>
+									{{#if ../umap.[this.user_id].full_name}}
+										<span class="fullname">{{../umap.[this.user_id].full_name}}</span>
+									{{/if}}
+								{{else}}
+									User #{{this.user_id}}
+								{{/if}}
+							</td>
+							<td class="text-center">{{this.seat_number}}</td>
+							<td class="amount-cell">${{currency this.requested_amount}}</td>
+							<td class="amount-cell highlight">${{currency this.amount_paid}}</td>
+							<td>{{this.method}}</td>
+							<td>{{formatDateTime this.joined_at}}</td>
+							<td>{{#if this.left_at}}{{formatDateTime this.left_at}}{{else}}<span class="text-success">En mesa</span>{{/if}}</td>
+							<td class="admin-cell">{{this.recorded_by}}</td>
+						</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		</div>
+	{{else}}
+		<div class="empty-state">
+			<p>No hay participantes registrados aún</p>
+		</div>
+	{{/if}}
+</div>
+</div>

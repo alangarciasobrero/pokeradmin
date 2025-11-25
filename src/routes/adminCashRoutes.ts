@@ -59,10 +59,31 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
     if (!cash) return res.status(404).send('No encontrado');
     // load participants and users so we can render an inline registration form in the detail view
     const participants = await CashParticipantRepository.findByCashGame(id);
+    
+    // Load payment data for each participant
+    const enrichedParticipants = await Promise.all(participants.map(async (p: any) => {
+      // Get payments for this participant (source='cash' or 'cash_request', reference_id=participant.id)
+      const payments = await Payment.findAll({ 
+        where: { reference_id: p.id, source: ['cash', 'cash_request'] },
+        order: [['payment_date', 'ASC']]
+      });
+      
+      const requestPayment = payments.find((pay: any) => pay.source === 'cash_request');
+      const cashPayment = payments.find((pay: any) => pay.source === 'cash');
+      
+      return {
+        ...p.get({ plain: true }),
+        requested_amount: requestPayment ? Number(requestPayment.amount) : 0,
+        amount_paid: cashPayment ? Number(cashPayment.paid_amount || 0) : 0,
+        method: cashPayment ? cashPayment.method : null,
+        recorded_by: cashPayment ? cashPayment.recorded_by_name : null
+      };
+    }));
+    
     const users = await User.findAll({ where: { is_deleted: false }, order: [['username','ASC']] });
     const umap: any = {};
     users.forEach((u: any) => umap[u.id] = u);
-    res.render('cash/detail', { cash, participants, users, umap, username: req.session.username });
+    res.render('cash/detail', { cash, participants: enrichedParticipants, users, umap, username: req.session.username });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error');
@@ -228,6 +249,55 @@ router.post('/:id/participants/:pid/delete', requireAdmin, async (req: Request, 
   } catch (err) {
     console.error(err);
     res.redirect(`/admin/games/cash/${id}/participants`);
+  }
+});
+
+// Shift change: record dealer, commission, and tips without closing the game
+router.post('/:id/shift', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  try {
+    const cash = await CashGameRepository.findById(id);
+    if (!cash) return res.status(404).json({ error: 'Cash game no encontrado' });
+
+    const { dealer_name, commission, tips, recorded_by } = req.body;
+    const commissionAmount = Number(commission || 0);
+    const tipsAmount = Number(tips || 0);
+
+    // Update dealer name and accumulate commission/tips
+    const newTotalCommission = Number(cash.total_commission || 0) + commissionAmount;
+    const newTotalTips = Number(cash.total_tips || 0) + tipsAmount;
+
+    await CashGameRepository.update(id, { 
+      dealer: dealer_name || cash.dealer,
+      total_commission: newTotalCommission,
+      total_tips: newTotalTips
+    } as any);
+
+    // Create payment for commission increment
+    if (commissionAmount > 0) {
+      const systemUserId = req.session?.userId ? Number(req.session.userId) : 1;
+      const methodWithActor = `shift_commission|by:${recorded_by || req.session?.username}`;
+      await Payment.create({ 
+        user_id: systemUserId, 
+        amount: commissionAmount, 
+        payment_date: new Date(), 
+        source: 'cash_commission', 
+        reference_id: id, 
+        paid: true, 
+        paid_amount: commissionAmount, 
+        method: methodWithActor, 
+        personal_account: false, 
+        recorded_by_name: recorded_by || req.session?.username || null 
+      });
+    }
+
+    // Note: Tips would need dealer_user_id to credit properly
+    // For now, just accumulate in total_tips
+
+    res.json({ success: true, message: 'Turno registrado exitosamente' });
+  } catch (err) {
+    console.error('Error recording shift', err);
+    res.status(500).json({ error: 'Error al registrar turno' });
   }
 });
 
