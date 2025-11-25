@@ -27,6 +27,7 @@ import devRoutes from './routes/devRoutes';
 import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
+import profileRoutes from './routes/profileRoutes';
 // Ensure legacy models are registered so sequelize.sync() knows about them
 import './models/Player';
 import './models/TournamentPoint';
@@ -176,6 +177,9 @@ Handlebars.registerHelper('isAdmin', function(this: any, role: any, opts: any) {
 
 // Rutas de autenticación (login/logout)
 app.use(authRoutes);
+
+// Perfil de usuario
+app.use('/profile', profileRoutes);
 
 // Simple session-based flash middleware and expose currentUser to templates
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
