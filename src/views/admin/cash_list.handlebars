@@ -1,6 +1,6 @@
  
 <div class="admin-cash">
-  <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="page-header">
     <h1>Gestión de Cash Games</h1>
     <a href="/admin/games/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
   </div>
@@ -13,7 +13,7 @@
           <div class="meta">Inicio: {{formatDate start_datetime}} — Fin: {{formatDate end_datetime}}</div>
           <div class="meta">Small blind: ${{currency small_blind}} — Comisión: ${{currency total_commission}}</div>
           <div class="meta">Propinas: ${{currency total_tips}} — Dealer: {{dealer}}</div>
-          <div style="margin-top:0.6rem;"><a class="btn btn-sm" href="/admin/games/cash/{{id}}">Ver</a></div>
+          <div class="t-actions-row"><a class="btn btn-sm" href="/admin/games/cash/{{id}}">Ver</a></div>
         </article>
       {{/each}}
     </div>
@@ -32,7 +32,7 @@
 
 <style>
 .cash-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; }
-.cash-card { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06) }
+.cash-card { background: var(--card-bg); padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06) }
 .btn-primary { background:#007bff; color:#fff }
 .btn-sm { padding:0.35rem 0.6rem; font-size:0.9rem }
 .disabled { opacity:0.45 }

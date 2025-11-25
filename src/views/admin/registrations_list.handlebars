@@ -1,10 +1,10 @@
 <div class="registrations-admin">
-  <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="page-header">
     <h2>Inscripciones</h2>
     <a class="btn btn-primary" href="/admin/registrations/new">+ Nueva Inscripción</a>
   </div>
 
-  <form method="get" action="/admin/registrations/list" style="margin:0.75rem 0; display:flex; gap:0.5rem; align-items:center;">
+  <form method="get" action="/admin/registrations/list" class="registrations-filters">
     <label>Filtrar por torneo:
       <select name="tournament_id">
         <option value="">Todos</option>
@@ -21,7 +21,9 @@
         {{/each}}
       </select>
     </label>
-    <button class="btn" type="submit">Filtrar</button>
+    <div style="margin-left:auto;">
+      <button class="btn" type="submit">Filtrar</button>
+    </div>
   </form>
 
   {{#if registrations.length}}
@@ -31,18 +33,22 @@
       </thead>
       <tbody>
         {{#each registrations}}
-          <tr>
-            <td>{{id}}</td>
-            <td>{{#with (lookup ../users this.user_id)}}{{this.full_name}} ({{this.username}}){{else}}{{this.user_id}}{{/with}}</td>
+          <tr class="registration-row {{#if (gt this.debt 0)}}unpaid{{/if}}">
+            <td class="col-index">{{id}}</td>
+            <td>{{#with (lookup ../users this.user_id)}}{{this.full_name}} <span class="participant-username">({{this.username}})</span>{{else}}{{this.user_id}}{{/with}}</td>
             <td>{{#with (lookup ../tournaments this.tournament_id)}}{{this.tournament_name}}{{else}}{{this.tournament_id}}{{/with}}</td>
             <td>{{registration_date}}</td>
             <td>{{actionLabel action_type}}</td>
-            <td>{{punctuality}}</td>
             <td>
-              <a class="btn btn-sm" href="/admin/registrations/{{id}}">Ver</a>
-              <form method="post" action="/admin/registrations/{{id}}/delete" style="display:inline-block;">
-                <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
-              </form>
+              {{#if (eq punctuality 'on-time')}}<span class="punctuality-badge on-time">A tiempo</span>{{else if (eq punctuality 'late')}}<span class="punctuality-badge late">Tarde</span>{{else}}<span class="punctuality-badge unknown">{{punctuality}}</span>{{/if}}
+            </td>
+            <td>
+              <div class="registration-actions">
+                <a class="btn btn-sm" href="/admin/registrations/{{id}}">Ver</a>
+                <form method="post" action="/admin/registrations/{{id}}/delete" class="form-inline">
+                  <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+                </form>
+              </div>
             </td>
           </tr>
         {{/each}}

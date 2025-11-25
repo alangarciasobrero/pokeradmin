@@ -16,12 +16,7 @@
     if (!dd) {
       dd = document.createElement('div');
       dd.className = 'ta-dropdown';
-      dd.style.position = 'absolute';
-      dd.style.background = '#fff';
-      dd.style.border = '1px solid #ccc';
-      dd.style.zIndex = 10000;
-      dd.style.maxHeight = '240px';
-      dd.style.overflow = 'auto';
+      // set width to match input and ensure parent positioned
       dd.style.width = (input.offsetWidth) + 'px';
       input.parentNode.style.position = 'relative';
       input.parentNode.appendChild(dd);
@@ -77,17 +72,17 @@
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'ta-quickcreate-modal';
-      modal.style.position = 'fixed'; modal.style.inset = 0; modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center'; modal.style.background = 'rgba(0,0,0,0.4)'; modal.style.zIndex = 20000;
-      const content = document.createElement('div'); content.style.background = '#fff'; content.style.padding = '1rem'; content.style.borderRadius = '6px'; content.style.width = '480px';
+      modal.className = 'ta-modal';
+      const content = document.createElement('div'); content.className = 'ta-modal-content';
       content.innerHTML = `<h3>Crear usuario rápido</h3>
-        <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <div class="ta-quickcreate-form">
           <input id="ta_qc_username" placeholder="username" />
           <input id="ta_qc_fullname" placeholder="Nombre completo (opcional)" />
-          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem">
+          <div class="actions">
             <button id="ta_qc_create" class="btn btn-primary">Crear</button>
             <button id="ta_qc_cancel" class="btn">Cancelar</button>
           </div>
-          <div id="ta_qc_msg" style="margin-top:0.5rem;color:#900"></div>
+          <div id="ta_qc_msg" class="ta-qc-msg" style="margin-top:0.5rem;color:#900"></div>
         </div>`;
       modal.appendChild(content);
       document.body.appendChild(modal);

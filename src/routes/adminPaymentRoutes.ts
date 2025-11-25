@@ -105,22 +105,32 @@ router.post('/settle', requireAdmin, async (req, res) => {
   const amount = Number(rawAmount);
   if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: 'amount must be positive' });
 
+  console.log('[admin/payments/settle] incoming', { userId, rawAmount, amount, useCredit, idempotencyKey, allocationPreference, method, ALLOW_AUTO_CREATE_USER_FROM_PLAYER: process.env.ALLOW_AUTO_CREATE_USER_FROM_PLAYER });
+
   // Ensure the referenced user exists. In some test/demo flows registrations
   // may reference players by id but `payments.user_id` has a FK to `users.id`.
   // By default we do not auto-create users. To allow automatic mapping from
   // a `players` row into a `users` row for E2E/demo convenience set
   // ALLOW_AUTO_CREATE_USER_FROM_PLAYER=true in the environment.
   const existingUser = await User.findByPk(userId);
+  console.log('[admin/payments/settle] existingUser?', !!existingUser);
   if (!existingUser) {
-    if (process.env.ALLOW_AUTO_CREATE_USER_FROM_PLAYER === 'true') {
+    // In CI/test runs we allow auto-creating a minimal `users` row from a legacy `players` row
+    // if explicitly enabled via ALLOW_AUTO_CREATE_USER_FROM_PLAYER or when running under NODE_ENV=test.
+    const allowAutoCreate = process.env.ALLOW_AUTO_CREATE_USER_FROM_PLAYER === 'true' || process.env.NODE_ENV === 'test';
+    if (allowAutoCreate) {
+      console.log('[admin/payments/settle] auto-create users allowed (allowAutoCreate=', allowAutoCreate, ')');
       try {
         const pl = await Player.findByPk(userId);
+        console.log('[admin/payments/settle] player lookup result for id', userId, pl ? pl.get() : null);
         if (pl) {
           const uname = (pl.nickname || pl.email || `player${pl.get('id')}`).toString().slice(0,50);
           // create a minimal user row with the same id so FK inserts succeed
           await User.create({ id: Number(pl.get('id')), username: uname, password_hash: 'auto-generated', full_name: `${pl.get('first_name')||''} ${pl.get('last_name')||''}`, email: pl.get('email') || null, is_player: true, role: 'user' });
           console.log('[admin/payments/settle] created user row from player for id', pl.get('id'));
         } else {
+          console.log('[admin/payments/settle] player not found and auto-create enabled -> returning user not found');
+          try { const fs = await import('fs'); fs.appendFileSync('logs/settle-errors.log', `${new Date().toISOString()} - settle early user not found for user ${userId} body=${JSON.stringify(body)} ALLOW_AUTO_CREATE=${process.env.ALLOW_AUTO_CREATE_USER_FROM_PLAYER}\n`); } catch (er) {}
           return res.status(400).json({ error: 'user not found' });
         }
       } catch (e) {
@@ -128,6 +138,8 @@ router.post('/settle', requireAdmin, async (req, res) => {
         return res.status(500).json({ error: 'user mapping failed' });
       }
     } else {
+      console.log('[admin/payments/settle] ALLOW_AUTO_CREATE_USER_FROM_PLAYER not enabled -> returning user not found');
+      try { const fs = await import('fs'); fs.appendFileSync('logs/settle-errors.log', `${new Date().toISOString()} - settle early user not found for user ${userId} body=${JSON.stringify(body)} ALLOW_AUTO_CREATE=${process.env.ALLOW_AUTO_CREATE_USER_FROM_PLAYER}\n`); } catch (er) {}
       return res.status(400).json({ error: 'user not found' });
     }
   }

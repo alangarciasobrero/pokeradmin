@@ -2,6 +2,9 @@
 <!-- Tournament Detail View (Handlebars) -->
 {{!-- Contenedor principal de la vista de detalles de torneo --}}
 <div class="tournament-detail-container">
+    {{!-- Enlace para volver a la lista de torneos --}}
+    <a class="back-link" href="/tournaments">&#8592; Volver a la lista</a>
+
     <h1>
         <svg class="trophy-icon" viewBox="0 0 24 24" fill="none"><defs><radialGradient id="gold" cx="50%" cy="50%" r="80%"><stop offset="0%" stop-color="#fffde4"/><stop offset="100%" stop-color="#FFD600"/></radialGradient></defs><path d="M7 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h1v2.09A7.001 7.001 0 0 0 5 14a7 7 0 0 0 14 0 7.001 7.001 0 0 0-3-5.91V6h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H7Zm1 2V4h8v1H8Zm4 16a5 5 0 0 1-5-5c0-2.21 1.44-4.08 3.5-4.77V6h3v2.23A5.002 5.002 0 0 1 17 13a5 5 0 0 1-5 5Z" fill="url(#gold)" stroke="#FFD600" stroke-width="1.2"/><circle cx="12" cy="19" r="1.2" fill="#FFD600"/></svg>
         {{tournament.tournament_name}}
@@ -9,164 +12,343 @@
     {{!-- Información detallada del torneo, cada campo con su icono --}}
     <div class="tournament-info">
     {{!-- Fecha del torneo --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V9h14v11Zm0-13H5V6h14v1Z"/><rect x="7" y="11" width="10" height="2" rx="1" fill="#3949ab"/></svg> Date:</span> {{tournament.start_date}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V9h14v11Zm0-13H5V6h14v1Z"/><rect x="7" y="11" width="10" height="2" rx="1" fill="#3949ab"/></svg> Fecha:</span> {{formatDateTime tournament.start_date}}</p>
     {{!-- Buy-in del torneo --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#43a047"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">$</text></svg> Buy-in:</span> ${{tournament.buy_in}}</p>
     {{!-- Re-entry permitido --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#1976d2"><rect x="4" y="4" width="16" height="16" rx="8"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">R</text></svg> Re-entry:</span> {{tournament.re_entry}}</p>
     {{!-- Premio por knockout --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">K</text></svg> Knockout Bounty:</span> ${{tournament.knockout_bounty}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">K</text></svg> Premio Knockout:</span> ${{tournament.knockout_bounty}}</p>
     {{!-- Stack inicial --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#8e24aa"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">S</text></svg> Starting Stack:</span> {{tournament.starting_stack}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#8e24aa"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">S</text></svg> Stack Inicial:</span> {{tournament.starting_stack}}</p>
     {{!-- Cuenta para ranking --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#00bcd4"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">CR</text></svg> Count to Ranking:</span> <span class="badge badge-{{tournament.count_to_ranking}}">{{tournament.count_to_ranking}}</span></p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#00bcd4"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">CR</text></svg> Cuenta para Ranking:</span> <span class="badge badge-{{tournament.count_to_ranking}}">{{#if tournament.count_to_ranking}}Sí{{else}}No{{/if}}</span></p>
     {{!-- Doble puntaje --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff7043"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">DP</text></svg> Double Points:</span> <span class="badge badge-{{tournament.double_points}}">{{tournament.double_points}}</span></p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff7043"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">DP</text></svg> Doble Puntaje:</span> <span class="badge badge-{{tournament.double_points}}">{{#if tournament.double_points}}Sí{{else}}No{{/if}}</span></p>
     {{!-- Niveles de ciegas --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">BL</text></svg> Blind Levels:</span> {{tournament.blind_levels}}</p>
-    {{!-- Small blind --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#43a047"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">SB</text></svg> Small Blind:</span> {{tournament.small_blind}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">BL</text></svg> Niveles de Ciega:</span> {{tournament.blind_levels}}</p>
     {{!-- Descuento por puntualidad --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Punctuality Discount:</span> ${{tournament.punctuality_discount}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Descuento Puntualidad:</span> ${{tournament.punctuality_discount}}</p>
     </div>
-        {{!-- Enlace para volver a la lista de torneos --}}
-        <a class="back-link" href="/tournaments">&#8592; Back to list</a>
 
-            <div class="admin-actions">
+    <div class="admin-actions">
                 {{#if tournament.registration_open}}
-                    <button id="openCloseModalBtn" class="btn btn-danger">Cerrar inscripciones (previsualizar)</button>
+                    <button id="openCloseRegistrationsBtn" class="btn btn-warning">🔒 Cerrar Inscripciones y Ver Pozo</button>
                 {{else}}
                     <form method="post" action="/admin/games/tournaments/{{tournament.id}}/open-registrations" style="display:inline">
                         <button type="submit" class="btn">Reabrir inscripciones</button>
                     </form>
+                    <button id="openFinalizeModalBtn" class="btn btn-danger" style="margin-left:0.5rem">🏁 Finalizar Torneo y Asignar Premios</button>
                 {{/if}}
-
-                <form method="post" action="/admin/games/tournaments/{{tournament.id}}/close-tournament" style="display:inline; margin-left:0.5rem;">
-                    <button type="submit" class="btn btn-warning">Cerrar torneo</button>
-                </form>
             </div>
 
-            <!-- Modal container for preview/confirm -->
-            <div id="closeModal" class="modal" style="display:none;">
-                <div class="modal-content">
-                    <h3>Previsualizar cierre de inscripciones</h3>
-                    <div id="modalBody">Cargando...</div>
-                    <div style="margin-top:1rem">
-                        <button id="confirmCloseBtn" class="btn btn-primary">Confirmar cierre y pagar premios</button>
-                        <button id="cancelCloseBtn" class="btn">Cancelar</button>
+            <!-- Modal for close registrations (preview only) -->
+            <div id="registrationsModal" class="modal" style="display:none;">
+                <div class="modal-content" style="max-width:700px">
+                    <h2 style="margin-top:0;color:#f57c00">🔒 Cerrar Inscripciones</h2>
+                    <p style="color:#666;margin-top:0">Información del pozo y cálculos del torneo</p>
+                    <div id="registrationsModalBody">Cargando...</div>
+                    <div style="margin-top:1rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+                        <button id="cancelRegistrationsBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
+                        <button id="confirmCloseRegistrationsBtn" class="btn btn-primary" style="background:#f57c00;font-weight:bold">✓ Cerrar Inscripciones</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for finalize tournament (with positions) -->
+            <div id="finalizeModal" class="modal" style="display:none;">
+                <div class="modal-content" style="max-width:900px">
+                    <h2 style="margin-top:0;color:#1976d2">🏁 Finalizar Torneo - Asignar Posiciones y Premios</h2>
+                    <p style="color:#666;margin-top:0">Asigna las posiciones finales de cada jugador y los premios correspondientes</p>
+                    <div id="finalizeModalBody">Cargando...</div>
+                    <div style="margin-top:1rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+                        <button id="cancelFinalizeBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
+                        <button id="confirmFinalizeBtn" class="btn btn-primary" style="background:#2e7d32;font-weight:bold">✓ Confirmar y Finalizar Torneo</button>
                     </div>
                 </div>
             </div>
 
                 <style>
-                .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
-                .modal-content { background: var(--card-bg); padding: 1rem; border-radius: 6px; max-width: 720px; width: 100%; color: inherit; }
+                .modal { 
+                    position: fixed; 
+                    inset: 0; 
+                    background: rgba(0,0,0,0.7); 
+                    display:flex; 
+                    align-items:center; 
+                    justify-content:center; 
+                    z-index: 1000;
+                    padding: 1rem;
+                }
+                .modal-content { 
+                    background: var(--card-bg, white); 
+                    padding: 1.5rem; 
+                    border-radius: 8px; 
+                    max-width: 900px; 
+                    width: 100%; 
+                    color: inherit;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                    max-height: 90vh;
+                    overflow-y: auto;
+                }
+                .modal-content h2 {
+                    border-bottom: 3px solid #1976d2;
+                    padding-bottom: 0.5rem;
+                }
             </style>
 
                 <script>
-                (function(){
-                    // wrap preview-close wiring in an async IIFE to avoid top-level await
-                    (async function() {
-                        const tid = {{tournament.id}};
-                        const openBtn = document.getElementById('openCloseModalBtn');
-                        const modal = document.getElementById('closeModal');
-                        const body = modal ? modal.querySelector('#modalBody') : null;
-                        const confirmBtn = document.getElementById('confirmCloseBtn');
-                        const cancelBtn = document.getElementById('cancelCloseBtn');
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('DOM loaded, initializing tournament modals...');
+                    (function(){
+                        // wrap preview-close wiring in an async IIFE to avoid top-level await
+                        (async function() {
+                            const tid = {{tournament.id}};
+                            
+                            // Registrations modal elements
+                            const openCloseRegistrationsBtn = document.getElementById('openCloseRegistrationsBtn');
+                            const registrationsModal = document.getElementById('registrationsModal');
+                            const registrationsBody = registrationsModal ? registrationsModal.querySelector('#registrationsModalBody') : null;
+                            const confirmCloseRegistrationsBtn = document.getElementById('confirmCloseRegistrationsBtn');
+                            const cancelRegistrationsBtn = document.getElementById('cancelRegistrationsBtn');
+                            
+                            console.log('Tournament modal initialization:', {
+                                tid,
+                                openCloseRegistrationsBtn,
+                                registrationsModal,
+                                registrationsBody
+                            });
+                        
+                        // Finalize modal elements
+                        const openFinalizeBtn = document.getElementById('openFinalizeModalBtn');
+                        const finalizeModal = document.getElementById('finalizeModal');
+                        const finalizeBody = finalizeModal ? finalizeModal.querySelector('#finalizeModalBody') : null;
+                        const confirmFinalizeBtn = document.getElementById('confirmFinalizeBtn');
+                        const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
 
-                        function renderPreview(j) {
+                        // Render preview for CLOSE REGISTRATIONS (no positions)
+                        function renderRegistrationsPreview(j) {
                             try {
-                                let html = `<p>Pozo total: <strong id="modalPot">${(j.pot||0).toFixed(2)}</strong></p>`;
-                                html += `<p>Comisión sugerida: <input id="commissionPct" type="number" value="${j.commissionPct||10}" step="0.1"> % — <span id="commissionAmount">${((j.pot||0)*((j.commissionPct||10)/100)).toFixed(2)}</span> EUR</p>`;
-                                html += `<p>Pozo para premios: <strong id="modalPrizePool">${(j.prizePool||0).toFixed(2)}</strong></p>`;
-                                html += '<h4>Prémios sugeridos (editable)</h4><div id="prizesList">';
-                                const parts = j.participants || [];
-                                (j.defaultPrizes||[]).forEach(p => {
-                                    html += `<div class="prizeRow">Pos ${p.position}: <input class="prizeAmt" data-pos="${p.position}" value="${(p.amount||0).toFixed(2)}" style="width:8rem"> EUR <select class="prizeUser" data-pos="${p.position}"><option value="">-- asignar --</option>`;
-                                    parts.forEach(u => { html += `<option value="${u.user_id}">${u.username}${u.full_name ? ' - ' + u.full_name : ''}</option>`; });
-                                    html += `</select> <span class="prizeWarning" style="color:#900;margin-left:0.5rem"></span></div>`;
-                                });
+                                let html = '<div style="max-height:60vh;overflow-y:auto;padding:0.5rem">';
+                                
+                                // Summary section
+                                html += '<div style="background:#f8f9fa;padding:1.5rem;border-radius:6px;margin-bottom:1rem">';
+                                html += `<h4 style="margin-top:0">💰 Resumen Financiero</h4>`;
+                                html += `<p style="font-size:1.1rem"><strong>Pozo total:</strong> <span style="font-size:1.5rem;color:#2e7d32;font-weight:bold">${(j.pot||0).toFixed(2)} EUR</span></p>`;
+                                html += `<p><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
+                                html += '<div style="background:#fff3e0;padding:1rem;border-radius:4px;margin:1rem 0">';
+                                html += '<p style="margin:0;font-weight:bold">💼 Comisiones (Total 20%):</p>';
+                                html += '<div style="margin-left:1rem;margin-top:0.5rem">';
+                                html += `<p style="margin:0.25rem 0">🏢 Casa (18%): ${(j.commissionHouse||0).toFixed(2)} EUR</p>`;
+                                html += `<p style="margin:0.25rem 0">🏆 Ranking Temporada (1%): ${(j.commissionSeason||0).toFixed(2)} EUR</p>`;
+                                html += `<p style="margin:0.25rem 0">⭐ Ranking Anual (1%): ${(j.commissionAnnual||0).toFixed(2)} EUR</p>`;
+                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid #ddd;font-weight:bold">Total comisión: ${(j.commissionAmount||0).toFixed(2)} EUR</p>`;
+                                html += '</div></div>';
+                                html += `<p style="font-size:1.1rem"><strong>Pozo para premios:</strong> <span style="font-size:1.5rem;color:#1976d2;font-weight:bold">${(j.prizePool||0).toFixed(2)} EUR</span></p>`;
                                 html += '</div>';
-                                html += '<h4>Participantes</h4><ul id="modalParticipants">';
-                                parts.forEach(p => { html += `<li>${p.username} — pagado: ${(p.paid||0).toFixed(2)} — esperado: ${(p.expected||0).toFixed(2)} <button class="assignBtn" data-user="${p.user_id}">Asignar como ganador</button></li>`; });
-                                html += '</ul>';
-                                html += '<div id="prizeTotals" style="margin-top:0.5rem;color:#900"></div>';
-                                if (body) body.innerHTML = html;
+                                
+                                // Ranking points info
+                                html += '<div style="background:#e3f2fd;padding:1.5rem;border-radius:6px;margin-bottom:1rem">';
+                                html += `<h4 style="margin-top:0">🏆 Puntos de Ranking</h4>`;
+                                html += `<p><strong>Total puntos a repartir:</strong> <span style="font-size:1.5rem;color:#1565c0;font-weight:bold">${j.boxPoints || 0} pts</span></p>`;
+                                html += '<p style="color:#666;font-size:0.9rem">Se distribuirán entre los primeros 9 lugares al finalizar el torneo</p>';
+                                html += '</div>';
+
+                                html += '</div>';
+                                if (registrationsBody) registrationsBody.innerHTML = html;
                             } catch (e) {
-                                if (body) body.innerHTML = '<p>Error cargando previsualización</p>';
+                                console.error('Error rendering registrations preview:', e);
+                                if (registrationsBody) registrationsBody.innerHTML = '<p>Error cargando información</p>';
                             }
                         }
 
-                        if (openBtn) {
-                            openBtn.addEventListener('click', async () => {
-                                if (!modal || !body) return;
-                                modal.style.display = 'flex';
-                                body.innerHTML = 'Cargando...';
+                        // Render preview for FINALIZE TOURNAMENT (with positions)
+                        function renderFinalizePreview(j) {
+                            try {
+                                let html = '<div style="max-height:70vh;overflow-y:auto;padding:0.5rem">';
+                                
+                                // Summary section
+                                html += '<div style="background:#f8f9fa;padding:1rem;border-radius:6px;margin-bottom:1rem">';
+                                html += `<h4 style="margin-top:0">💰 Resumen Financiero</h4>`;
+                                html += `<p><strong>Pozo total:</strong> <span id="modalPot" style="font-size:1.2rem;color:#2e7d32">${(j.pot||0).toFixed(2)} EUR</span></p>`;
+                                html += `<p><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
+                                html += '<div style="background:#fff3e0;padding:0.75rem;border-radius:4px;margin:0.5rem 0">';
+                                html += '<p style="margin:0"><strong>💼 Comisiones (Total 20%):</strong></p>';
+                                html += '<div style="margin-left:1rem;margin-top:0.5rem">';
+                                html += `<p style="margin:0.25rem 0">🏢 Casa: ${j.commissionHousePct || 18}% = <span id="commissionHouse">${(j.commissionHouse||0).toFixed(2)}</span> EUR</p>`;
+                                html += `<p style="margin:0.25rem 0">🏆 Ranking Temporada: ${j.commissionSeasonPct || 1}% = <span id="commissionSeason">${(j.commissionSeason||0).toFixed(2)}</span> EUR</p>`;
+                                html += `<p style="margin:0.25rem 0">⭐ Ranking Anual: ${j.commissionAnnualPct || 1}% = <span id="commissionAnnual">${(j.commissionAnnual||0).toFixed(2)}</span> EUR</p>`;
+                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid #ddd"><strong>Total comisión:</strong> <span id="commissionAmount">${(j.commissionAmount||0).toFixed(2)}</span> EUR</p>`;
+                                html += '</div></div>';
+                                html += `<p><strong>Pozo para premios:</strong> <span id="modalPrizePool" style="font-size:1.2rem;color:#1976d2">${(j.prizePool||0).toFixed(2)} EUR</span></p>`;
+                                html += '</div>';
+
+                                // Ranking points section
+                                html += '<div style="background:#e3f2fd;padding:1rem;border-radius:6px;margin-bottom:1rem">';
+                                html += `<h4 style="margin-top:0">🏆 Puntos de Ranking (Mesa Final - Top 9)</h4>`;
+                                html += `<p><strong>Total puntos a repartir:</strong> <span style="font-size:1.2rem;color:#1565c0">${j.boxPoints || 0} pts</span></p>`;
+                                html += '<table style="width:100%;border-collapse:collapse;margin-top:0.5rem">';
+                                html += '<tr style="background:#1976d2;color:white"><th style="padding:0.5rem;text-align:left">Pos</th><th style="padding:0.5rem;text-align:right">%</th><th style="padding:0.5rem;text-align:right">Puntos</th><th style="padding:0.5rem;text-align:left">Jugador</th></tr>';
+                                const parts = j.participants || [];
+                                // Create a map of position -> user_id from existing positions
+                                const positionMap = {};
+                                parts.forEach(p => {
+                                    if (p.position) positionMap[p.position] = p.user_id;
+                                });
+                                
+                                (j.rankingPointsDistribution || []).forEach(rp => {
+                                    const preselectedUser = positionMap[rp.position] || "";
+                                    html += `<tr style="border-bottom:1px solid #ddd">`;
+                                    html += `<td style="padding:0.5rem"><strong>${rp.position}º</strong></td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right">${rp.percentage}%</td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right;color:#1565c0"><strong>${rp.points}</strong></td>`;
+                                    html += `<td style="padding:0.5rem"><select class="rankingUser" data-pos="${rp.position}" style="width:100%;padding:0.25rem"><option value="">-- asignar jugador --</option>`;
+                                    parts.forEach(u => { 
+                                        const selected = (u.user_id == preselectedUser) ? " selected" : "";
+                                        html += `<option value="${u.user_id}"${selected}>${u.username}${u.full_name ? " (" + u.full_name + ")" : ""}</option>`; 
+                                    });
+                                    html += `</select></td></tr>`;
+                                });
+                                html += '</table>';
+                                html += '</div>';
+
+                                // Prizes section
+                                html += '<div style="background:#fff3e0;padding:1rem;border-radius:6px;margin-bottom:1rem">';
+                                html += '<h4 style="margin-top:0">💵 Premios en Efectivo (Top 20)</h4>';
+                                html += '<div style="max-height:300px;overflow-y:auto">';
+                                html += '<table style="width:100%;border-collapse:collapse">';
+                                html += '<tr style="background:#f57c00;color:white"><th style="padding:0.5rem;text-align:left">Pos</th><th style="padding:0.5rem;text-align:right">%</th><th style="padding:0.5rem;text-align:right">Monto (EUR)</th><th style="padding:0.5rem;text-align:left">Jugador</th></tr>';
+                                (j.defaultPrizes||[]).forEach(p => {
+                                    const preselectedUser = positionMap[p.position] || "";
+                                    html += `<tr style="border-bottom:1px solid #ddd">`;
+                                    html += `<td style="padding:0.5rem"><strong>${p.position}º</strong></td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right">${p.percentage}%</td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right"><input class="prizeAmt" data-pos="${p.position}" value="${(p.amount||0).toFixed(2)}" style="width:6rem;padding:0.25rem"></td>`;
+                                    html += `<td style="padding:0.5rem"><select class="prizeUser" data-pos="${p.position}" style="width:100%;padding:0.25rem"><option value="">-- asignar jugador --</option>`;
+                                    parts.forEach(u => { 
+                                        const selected = (u.user_id == preselectedUser) ? " selected" : "";
+                                        html += `<option value="${u.user_id}"${selected}>${u.username}${u.full_name ? " (" + u.full_name + ")" : ""}</option>`; 
+                                    });
+                                    html += `</select></td></tr>`;
+                                });
+                                html += '</table>';
+                                html += '</div>';
+                                html += '<div id="prizeTotals" style="margin-top:0.5rem;padding:0.5rem;background:white;border-radius:4px"></div>';
+                                html += '</div>';
+
+                                html += '</div>';
+                                if (finalizeBody) finalizeBody.innerHTML = html;
+                            } catch (e) {
+                                console.error('Error rendering finalize preview:', e);
+                                if (finalizeBody) finalizeBody.innerHTML = '<p>Error cargando previsualización</p>';
+                            }
+                        }
+
+                        // Handler for CLOSE REGISTRATIONS button
+                        if (openCloseRegistrationsBtn) {
+                            console.log('Adding click handler to close registrations button');
+                            openCloseRegistrationsBtn.addEventListener('click', async function() {
+                                console.log('Close registrations button clicked!');
+                                if (!registrationsModal || !registrationsBody) {
+                                    console.error('Modal or body not found:', { registrationsModal: registrationsModal, registrationsBody: registrationsBody });
+                                    return;
+                                }
+                                console.log('Opening modal...');
+                                registrationsModal.style.display = 'flex';
+                                registrationsBody.innerHTML = '<p>Cargando datos del torneo...</p>';
+                                try {
+                                    console.log('Fetching preview data...');
+                                    const res = await fetch('/admin/games/tournaments/' + tid + '/preview-close');
+                                    const j = await res.json();
+                                    console.log('Preview data received:', j);
+                                    renderRegistrationsPreview(j);
+                                } catch (e) {
+                                    console.error('Error loading preview:', e);
+                                    registrationsBody.innerHTML = '<p>Error cargando información</p>';
+                                }
+                            });
+                        } else {
+                            console.warn('openCloseRegistrationsBtn not found!');
+                        }
+
+                        // Handler for FINALIZE TOURNAMENT button
+                        if (openFinalizeBtn) {
+                            openFinalizeBtn.addEventListener('click', async () => {
+                                if (!finalizeModal || !finalizeBody) return;
+                                finalizeModal.style.display = 'flex';
+                                finalizeBody.innerHTML = 'Cargando...';
                                 try {
                                     const res = await fetch(`/admin/games/tournaments/${tid}/preview-close`);
                                     const j = await res.json();
-                                    renderPreview(j);
+                                    renderFinalizePreview(j);
 
                                     // wire recalc and assign handlers after rendering
-                                    const commissionInput = body.querySelector('#commissionPct');
-                                    const commissionAmountSpan = body.querySelector('#commissionAmount');
-                                    const prizePoolSpan = body.querySelector('#modalPrizePool');
+                                    const prizePoolSpan = finalizeBody.querySelector('#modalPrizePool');
                                     const pot = Number((j && j.pot) || 0);
+                                    const commissionPct = 20; // Fijo: 18% casa + 1% temporada + 1% anual
 
                                     function recalcTotals() {
-                                        const pct = commissionInput ? Number((commissionInput).value) : (j.commissionPct || 10);
-                                        const commissionAmt = +(pot * (pct / 100));
-                                        if (commissionAmountSpan) commissionAmountSpan.textContent = commissionAmt.toFixed(2);
+                                        const commissionAmt = +(pot * (commissionPct / 100));
                                         const prizePool = +(pot - commissionAmt);
                                         if (prizePoolSpan) prizePoolSpan.textContent = prizePool.toFixed(2);
-                                        const prizeAmtEls = Array.from(body.querySelectorAll('.prizeAmt'));
+                                        const prizeAmtEls = Array.from(finalizeBody.querySelectorAll('.prizeAmt'));
                                         let totalPrizes = 0;
                                         prizeAmtEls.forEach(e => { totalPrizes += Number(e.value) || 0; });
-                                        const totalsEl = body.querySelector('#prizeTotals');
+                                        const totalsEl = finalizeBody.querySelector('#prizeTotals');
                                         if (totalsEl) totalsEl.textContent = `Suma premios: ${totalPrizes.toFixed(2)} — Pozo disponible: ${prizePool.toFixed(2)}`;
                                         const over = totalPrizes > prizePool + 0.0001;
-                                        const prizeWarnings = Array.from(body.querySelectorAll('.prizeWarning'));
-                                        prizeWarnings.forEach(w => { w.textContent = ''; });
                                         if (over) {
                                             if (totalsEl) totalsEl.style.color = '#900';
-                                            if (confirmBtn) confirmBtn.disabled = true;
+                                            if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = true;
                                         } else {
                                             if (totalsEl) totalsEl.style.color = '';
-                                            if (confirmBtn) confirmBtn.disabled = false;
+                                            if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = false;
                                         }
                                     }
 
-                                    Array.from(body.querySelectorAll('.prizeAmt')).forEach(e => e.addEventListener('input', recalcTotals));
-                                    if (commissionInput) commissionInput.addEventListener('input', recalcTotals);
+                                    Array.from(finalizeBody.querySelectorAll('.prizeAmt')).forEach(e => e.addEventListener('input', recalcTotals));
                                     recalcTotals();
 
-                                    const assigns = body.querySelectorAll('.assignBtn');
-                                    assigns.forEach(b => {
-                                        b.addEventListener('click', () => {
-                                            const uid = b.getAttribute('data-user');
-                                            const selects = body.querySelectorAll('.prizeUser');
-                                            for (const s of selects) {
-                                                if (s.value === '') { s.value = uid; break; }
-                                            }
-                                            recalcTotals();
-                                        });
-                                    });
-
                                 } catch (e) {
-                                    body.innerHTML = '<p>Error cargando previsualización</p>';
+                                    console.error('Error loading finalize preview:', e);
+                                    finalizeBody.innerHTML = '<p>Error cargando información</p>';
                                 }
                             });
                         }
 
-                        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+                        // Cancel buttons
+                        if (cancelRegistrationsBtn) cancelRegistrationsBtn.addEventListener('click', () => { 
+                            if (registrationsModal) registrationsModal.style.display = 'none'; 
+                        });
+                        
+                        if (cancelFinalizeBtn) cancelFinalizeBtn.addEventListener('click', () => { 
+                            if (finalizeModal) finalizeModal.style.display = 'none'; 
+                        });
 
-                        if (confirmBtn) confirmBtn.addEventListener('click', async () => {
-                            if (!body) return;
-                            const pctEl = document.getElementById('commissionPct');
-                            const commissionPct = pctEl ? Number(pctEl.value) : 10;
+                        // Confirm close registrations (POST and close modal)
+                        if (confirmCloseRegistrationsBtn) confirmCloseRegistrationsBtn.addEventListener('click', async () => {
+                            try {
+                                const res = await fetch(`/admin/games/tournaments/${tid}/close-registrations`, { method: 'POST' });
+                                if (res.ok) {
+                                    window.location.reload();
+                                } else {
+                                    alert('Error cerrando inscripciones');
+                                }
+                            } catch (e) {
+                                console.error('Error closing registrations:', e);
+                                alert('Error cerrando inscripciones');
+                            }
+                        });
+
+                        // Confirm finalize tournament
+                        if (confirmFinalizeBtn) confirmFinalizeBtn.addEventListener('click', async () => {
+                            if (!finalizeBody) return;
+                            // Comisiones fijas: 18% casa + 1% temporada + 1% anual = 20% total
+                            const commissionPct = 20;
+                            
+                            // Collect prizes
                             const prizes = [];
-                            const prizeAmtEls = body.querySelectorAll('.prizeAmt');
-                            const prizeUserEls = body.querySelectorAll('.prizeUser');
+                            const prizeAmtEls = finalizeBody.querySelectorAll('.prizeAmt');
+                            const prizeUserEls = finalizeBody.querySelectorAll('.prizeUser');
                             for (let i=0;i<prizeAmtEls.length;i++) {
                                 const amt = Number(prizeAmtEls[i].value) || 0;
                                 const pos = Number(prizeAmtEls[i].getAttribute('data-pos'));
@@ -176,22 +358,41 @@
                                     prizes.push({ position: pos, user_id: userId, amount: amt });
                                 }
                             }
-                            if (confirmBtn) confirmBtn.disabled = true;
+                            
+                            // Collect ranking positions
+                            const positions = [];
+                            const rankingUserEls = finalizeBody.querySelectorAll('.rankingUser');
+                            rankingUserEls.forEach(sel => {
+                                const pos = Number(sel.getAttribute('data-pos'));
+                                const userId = Number(sel.value);
+                                if (userId) {
+                                    positions.push({ position: pos, user_id: userId });
+                                }
+                            });
+                            
+                            if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = true;
                             try {
-                                const res = await fetch(`/admin/games/tournaments/${tid}/confirm-close`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ commissionPct, prizes }) });
+                                const res = await fetch(`/admin/games/tournaments/${tid}/confirm-close`, { 
+                                    method: 'POST', 
+                                    headers: { 'Content-Type': 'application/json' }, 
+                                    body: JSON.stringify({ commissionPct, prizes, positions }) 
+                                });
                                 const j = await res.json();
                                 if (j.ok) {
-                                    if (body) body.innerHTML = `<p>Cierre completado. Pozo: ${j.pot.toFixed(2)}. Comision: ${j.commissionAmount.toFixed(2)}. Premios: ${j.prizePool.toFixed(2)}</p>`;
+                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#2e7d32;font-size:1.1rem">✓ Cierre completado exitosamente</p><p>Pozo: ${j.pot.toFixed(2)} EUR<br>Comisión: ${j.commissionAmount.toFixed(2)} EUR<br>Premios: ${j.prizePool.toFixed(2)} EUR</p><p style="margin-top:1rem">Redirigiendo...</p>`;
+                                    setTimeout(() => { window.location.href = `/admin/games/tournaments/${tid}`; }, 1500);
                                 } else {
-                                    if (body) body.innerHTML = '<p>Error al cerrar torneo</p>';
+                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#c62828">Error: ${j.error || "Error al cerrar torneo"}</p>`;
                                 }
                             } catch (e) {
-                                if (body) body.innerHTML = '<p>Error al confirmar cierre</p>';
-                            } finally { if (confirmBtn) confirmBtn.disabled = false; }
+                                console.error('Error confirming close:', e);
+                                if (finalizeBody) finalizeBody.innerHTML = '<p style="color:#c62828">Error al confirmar cierre</p>';
+                            } finally { if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = false; }
                         });
 
+                        })();
                     })();
-                })();
+                });
                 </script>
                 <script src="/js/quickpay-modal.js"></script>
                 <script>
@@ -285,7 +486,7 @@
                             const hid = document.getElementById('user_id');
                             const input = document.getElementById('user_search_input');
                             if (hid) hid.value = created.id;
-                            if (input) input.value = `${created.username}${created.full_name ? ' - ' + created.full_name : ''}`;
+                            if (input) input.value = `${created.username}${created.full_name ? " - " + created.full_name : ""}`;
                             if (u) u.value = '';
                             if (f) f.value = '';
                             alert('Usuario creado y seleccionado');
@@ -298,10 +499,34 @@
         </script>
 
                 <h3>Participantes</h3>
-                <div class="registrations-controls" style="margin-bottom:0.6rem">
-                    <label for="registrationsFilter" style="margin-right:0.6rem; font-weight:600; color:#ffd884">Filtrar:</label>
-                    <input id="registrationsFilter" placeholder="Buscar por usuario o nombre..." style="padding:6px 8px; border-radius:6px; border:1px solid #333; width:280px" />
+                <div class="registrations-controls">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <label for="registrationsFilter" style="margin-right:0.5rem; font-weight:600; color:#ffd884">Buscar:</label>
+                            <input id="registrationsFilter" placeholder="Nombre o usuario..." style="padding:6px 10px; border-radius:6px; border:1px solid rgba(255, 215, 0, 0.3); background: var(--input-bg); color: var(--input-color); width:200px" />
+                        </div>
+                        <div>
+                            <label for="actionFilter" style="margin-right:0.5rem; font-weight:600; color:#ffd884">Acción:</label>
+                            <select id="actionFilter" style="padding:6px 10px; border-radius:6px; border:1px solid rgba(255, 215, 0, 0.3); background: var(--input-bg); color: var(--input-color);">
+                                <option value="">Todas</option>
+                                <option value="Buy-in">Buy-in</option>
+                                <option value="Re-entry">Re-entry</option>
+                                <option value="Duplo">Duplo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="paymentFilter" style="margin-right:0.5rem; font-weight:600; color:#ffd884">Pago:</label>
+                            <select id="paymentFilter" style="padding:6px 10px; border-radius:6px; border:1px solid rgba(255, 215, 0, 0.3); background: var(--input-bg); color: var(--input-color);">
+                                <option value="">Todos</option>
+                                <option value="paid">Pagados</option>
+                                <option value="unpaid">Sin pagar</option>
+                                <option value="partial">Pago parcial</option>
+                            </select>
+                        </div>
+                        <button id="clearFilters" class="btn" style="padding:6px 16px; font-size:0.9rem; margin-left:auto;">Limpiar filtros</button>
+                    </div>
                 </div>
+                <div class="table-responsive">
                 <table class="registrations-table">
                                 <thead>
                                     <tr>
@@ -311,22 +536,26 @@
                                         <th>Puntualidad</th>
                                         <th>Hora</th>
                                         <th>Pagó</th>
-                                        <th>Método_pago</th>
+                                        <th>Método</th>
                                         <th>Pago Parcial</th>
-                                        <th>Cuenta Personal</th>
-                                        <th>Deuda actual</th>
-                                        <th>Importe al pozo</th>
-                                        <th>POSICION</th>
+                                        <th>Cta. Personal</th>
+                                        <th>Deuda</th>
+                                        <th>Al Pozo</th>
+                                        <th>Acciones</th>
+                                        <th>Posición</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <!-- client populated -->
                                 </tbody>
                         </table>
+                </div>
                 
-                <div style="margin-top:0.8rem">
-                    <button id="savePositionsBtn" class="btn btn-primary">Guardar posiciones</button>
-                    <span id="savePositionsMsg" style="margin-left:1rem"></span>
+                <div style="margin-top:0.8rem; padding:0.75rem; background:rgba(76,175,80,0.1); border:1px solid rgba(76,175,80,0.3); border-radius:6px;">
+                    <p style="margin:0; color:#4caf50; font-weight:600;">
+                        ℹ️ Las posiciones se guardan automáticamente al escribir
+                        <span id="savePositionsMsg" style="margin-left:1rem; font-weight:normal; color:#dfe6ff;"></span>
+                    </p>
                 </div>
                         <script>
                             (function(){
@@ -343,65 +572,190 @@
                                         parts.forEach((p, idx) => {
                                             const tr = document.createElement('tr');
                                             const name = p.full_name ? (`<span class="participant-username">${p.username}</span> <span class="participant-full"> - ${p.full_name}</span>`) : `<span class="participant-username">${p.username}</span>`;
-                                            const paidLabel = (p.paid && p.paid > 0) ? 'SI' : 'NO';
-                                            const partial = (p.paid && p.paid > 0 && p.paid < p.expected) ? p.paid.toFixed(2) : '';
+                                            const isPaid = (p.paid && p.paid > 0);
+                                            const isPartialPaid = isPaid && p.paid < p.expected;
+                                            const paidLabel = isPaid ? "✓" : "✗";
+                                            const partial = isPartialPaid ? `$${p.paid.toFixed(2)}` : "";
+                                            const paidClass = isPaid ? "text-success" : "text-danger";
+                                            const punctualityLabel = p.punctuality ? "✓" : "✗";
+                                            const punctualityClass = p.punctuality ? "text-success" : "text-danger";
+                                            const methodLabel = p.lastMethod ? (p.lastMethod === 'cash' ? 'Efectivo' : p.lastMethod === 'card' ? 'Tarjeta' : p.lastMethod === 'transfer' ? 'Transferencia' : p.lastMethod) : "";
+                                            
+                                            // Determinar estado de pago para filtro
+                                            let paymentStatus = 'unpaid';
+                                            if (isPaid) {
+                                                paymentStatus = isPartialPaid ? 'partial' : 'paid';
+                                            }
+                                            
+                                            tr.setAttribute('data-action', p.action || '');
+                                            tr.setAttribute('data-payment-status', paymentStatus);
+                                            tr.setAttribute('data-search', `${p.username} ${p.full_name || ''}`.toLowerCase());
+                                            
                                             tr.innerHTML = `
                                                 <td class="col-index">${idx+1}</td>
                                                 <td class="col-name">${name}</td>
                                                 <td class="col-action">${p.action}</td>
-                                                <td class="col-punctuality">${p.punctuality ? 'SI' : 'NO'}</td>
-                                                <td class="col-time">${new Date(p.registration_date).toLocaleString()}</td>
-                                                <td class="col-paid">${paidLabel}</td>
-                                                <td class="col-method">${p.lastMethod || ''}</td>
-                                                <td class="col-partial amount">${partial}</td>
-                                                <td class="col-personal">${p.personal_account ? 'SI' : ''}</td>
-                                                <td class="col-debt debt">${(p.debt||0).toFixed(2)}</td>
-                                                <td class="col-pot amount">${(p.amount_contributed_to_pot||0).toFixed(2)}</td>
+                                                <td class="col-punctuality ${punctualityClass}">${punctualityLabel}</td>
+                                                <td class="col-time">${new Date(p.registration_date).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', dateStyle: 'short', timeStyle: 'short' })}</td>
+                                                <td class="col-paid ${paidClass}">${paidLabel}</td>
+                                                <td class="col-method">${methodLabel}</td>
+                                                <td class="col-partial">${partial}</td>
+                                                <td class="col-personal">${p.personal_account ? "✓" : ""}</td>
+                                                <td class="col-debt">$${(p.debt||0).toFixed(2)}</td>
+                                                <td class="col-pot">$${(p.amount_contributed_to_pot||0).toFixed(2)}</td>
                                                 <td class="action-column"> 
-                                                    <button class="quick-pay-btn" role="button" aria-label="Pagar rápido a ${p.username}" data-user-id="${p.user_id}" ${((p.debt||0) <= 0 && !p.personal_account) ? 'disabled' : ''}>Pagar rápido</button>
+                                                    <button class="quick-pay-btn" role="button" aria-label="Pagar rápido a ${p.username}" data-user-id="${p.user_id}" ${((p.debt||0) <= 0 && !p.personal_account) ? "disabled" : ""}>Pagar rápido</button>
                                                 </td>
-                                                <td class="col-position"><input type="number" class="reg-position" data-rid="${p.registration_id}" value="${p.position||''}" style="width:4rem" /></td>
+                                                <td class="col-position"><input type="number" min="1" class="reg-position" data-rid="${p.registration_id}" value="${p.position||""}" placeholder="Pos" style="width:4rem;padding:0.4rem;border-radius:4px;border:1px solid rgba(255,215,0,0.3);background:var(--input-bg);color:var(--input-color)" /></td>
                                             `;
                                             tbody.appendChild(tr);
                                         });
                                             window.REGISTERED_USERS = new Set((parts||[]).map(p => String(p.user_id)));
-                                            // attach simple client-side filter behaviour
-                                            const filterInput = document.getElementById('registrationsFilter');
-                                            if (filterInput) {
-                                                filterInput.addEventListener('input', (e) => {
-                                                    const v = (e.target && e.target.value) ? String((e.target).value).toLowerCase().trim() : '';
-                                                    const rows = Array.from(document.querySelectorAll('table.registrations-table tbody tr'));
-                                                    rows.forEach(r => {
-                                                        const txt = (r.textContent || '').toLowerCase();
-                                                        r.style.display = (!v || txt.indexOf(v) !== -1) ? '' : 'none';
+                                            
+                                            // Agregar validación y guardado automático a los inputs de posición
+                                            const positionInputs = document.querySelectorAll('.reg-position');
+                                            let saveTimeout = null;
+                                            
+                                            function validatePositions() {
+                                                const inputs = Array.from(document.querySelectorAll('.reg-position'));
+                                                const usedPositions = new Map();
+                                                let hasDuplicates = false;
+                                                
+                                                inputs.forEach(input => {
+                                                    const val = input.value.trim();
+                                                    if (val !== '') {
+                                                        const pos = Number(val);
+                                                        if (usedPositions.has(pos)) {
+                                                            // Posición duplicada
+                                                            input.style.borderColor = '#f44336';
+                                                            input.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+                                                            const otherInput = usedPositions.get(pos);
+                                                            otherInput.style.borderColor = '#f44336';
+                                                            otherInput.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+                                                            hasDuplicates = true;
+                                                        } else {
+                                                            usedPositions.set(pos, input);
+                                                            input.style.borderColor = 'rgba(255, 215, 0, 0.3)';
+                                                            input.style.backgroundColor = 'var(--input-bg)';
+                                                        }
+                                                    } else {
+                                                        input.style.borderColor = 'rgba(255, 215, 0, 0.3)';
+                                                        input.style.backgroundColor = 'var(--input-bg)';
+                                                    }
+                                                });
+                                                
+                                                return !hasDuplicates;
+                                            }
+                                            
+                                            async function savePositions() {
+                                                if (!validatePositions()) {
+                                                    console.warn('No se puede guardar: posiciones duplicadas');
+                                                    return;
+                                                }
+                                                
+                                                const inputs = Array.from(document.querySelectorAll('.reg-position'));
+                                                const positions = inputs.map(i => ({ 
+                                                    registration_id: Number(i.dataset.rid), 
+                                                    position: (i.value === '') ? null : Number(i.value) 
+                                                }));
+                                                
+                                                try {
+                                                    const res = await fetch(`/admin/games/tournaments/${tid}/positions`, { 
+                                                        method: 'POST', 
+                                                        headers: { 'Content-Type': 'application/json' }, 
+                                                        body: JSON.stringify({ positions }) 
                                                     });
+                                                    const j = await res.json();
+                                                    if (res.ok && j.ok) {
+                                                        console.log('✓ Posiciones guardadas automáticamente');
+                                                    }
+                                                } catch (e) {
+                                                    console.error('Error guardando posiciones:', e);
+                                                }
+                                            }
+                                            
+                                            positionInputs.forEach(input => {
+                                                input.addEventListener('input', () => {
+                                                    validatePositions();
+                                                    
+                                                    // Cancelar el guardado anterior si existe
+                                                    if (saveTimeout) clearTimeout(saveTimeout);
+                                                    
+                                                    // Guardar después de 1 segundo de inactividad
+                                                    saveTimeout = setTimeout(() => {
+                                                        savePositions();
+                                                    }, 1000);
+                                                });
+                                                
+                                                input.addEventListener('blur', () => {
+                                                    if (saveTimeout) clearTimeout(saveTimeout);
+                                                    savePositions();
+                                                });
+                                            });
+                                            
+                                            // Sistema de filtros mejorado
+                                            const filterInput = document.getElementById('registrationsFilter');
+                                            const actionFilter = document.getElementById('actionFilter');
+                                            const paymentFilter = document.getElementById('paymentFilter');
+                                            const clearFiltersBtn = document.getElementById('clearFilters');
+                                            
+                                            function applyFilters() {
+                                                const searchTerm = (filterInput && filterInput.value) ? filterInput.value.toLowerCase().trim() : '';
+                                                const actionValue = (actionFilter && actionFilter.value) ? actionFilter.value : '';
+                                                const paymentValue = (paymentFilter && paymentFilter.value) ? paymentFilter.value : '';
+                                                
+                                                const rows = Array.from(document.querySelectorAll('table.registrations-table tbody tr'));
+                                                let visibleCount = 0;
+                                                
+                                                rows.forEach((row, idx) => {
+                                                    const searchData = row.getAttribute('data-search') || '';
+                                                    const action = row.getAttribute('data-action') || '';
+                                                    const paymentStatus = row.getAttribute('data-payment-status') || '';
+                                                    
+                                                    let show = true;
+                                                    
+                                                    // Filtro de búsqueda
+                                                    if (searchTerm && searchData.indexOf(searchTerm) === -1) {
+                                                        show = false;
+                                                    }
+                                                    
+                                                    // Filtro de acción
+                                                    if (actionValue && action !== actionValue) {
+                                                        show = false;
+                                                    }
+                                                    
+                                                    // Filtro de pago
+                                                    if (paymentValue && paymentStatus !== paymentValue) {
+                                                        show = false;
+                                                    }
+                                                    
+                                                    row.style.display = show ? '' : 'none';
+                                                    
+                                                    // Actualizar numeración
+                                                    if (show) {
+                                                        visibleCount++;
+                                                        const indexCell = row.querySelector('.col-index');
+                                                        if (indexCell) indexCell.textContent = visibleCount;
+                                                    }
+                                                });
+                                            }
+                                            
+                                            if (filterInput) filterInput.addEventListener('input', applyFilters);
+                                            if (actionFilter) actionFilter.addEventListener('change', applyFilters);
+                                            if (paymentFilter) paymentFilter.addEventListener('change', applyFilters);
+                                            
+                                            if (clearFiltersBtn) {
+                                                clearFiltersBtn.addEventListener('click', () => {
+                                                    if (filterInput) filterInput.value = '';
+                                                    if (actionFilter) actionFilter.value = '';
+                                                    if (paymentFilter) paymentFilter.value = '';
+                                                    applyFilters();
                                                 });
                                             }
                                     } catch (e) { console.error('Error loading participants', e); }
                                 }
                                 window.loadParticipants = loadParticipants;
                                 loadParticipants();
-
-                                const btn = document.getElementById('savePositionsBtn');
-                                const msg = document.getElementById('savePositionsMsg');
-                                if (btn) {
-                                    btn.addEventListener('click', async () => {
-                                        const inputs = Array.from(document.querySelectorAll('.reg-position'));
-                                        const positions = inputs.map(i => ({ registration_id: Number(i.dataset.rid), position: (i.value === '') ? null : Number(i.value) }));
-                                        btn.disabled = true; msg.textContent = 'Guardando...';
-                                        try {
-                                            const res = await fetch(`/admin/games/tournaments/${tid}/positions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions }) });
-                                            const j = await res.json();
-                                            if (res.ok && j.ok) {
-                                                msg.textContent = 'Posiciones guardadas';
-                                                setTimeout(()=> loadParticipants(), 700);
-                                            } else {
-                                                msg.textContent = 'Error guardando posiciones';
-                                            }
-                                        } catch (e) { msg.textContent = 'Error de red'; }
-                                        finally { btn.disabled = false; }
-                                    });
-                                }
                             })();
                         </script>
                 </div>

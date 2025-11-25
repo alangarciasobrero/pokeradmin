@@ -26,11 +26,14 @@ import adminImportsRoutes from './routes/adminImportsRoutes';
 import devRoutes from './routes/devRoutes';
 import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
+import adminBonusRoutes from './routes/adminBonusRoutes';
 // Ensure legacy models are registered so sequelize.sync() knows about them
 import './models/Player';
 import './models/TournamentPoint';
 import './models/HistoricalPoint';
 import './models/RankingHistory';
+import './models/Setting';
+import './models/CommissionPool';
 
 
 // Crea la aplicación Express (Una instancia de un servidor web)
@@ -108,7 +111,18 @@ Handlebars.registerHelper('formatDate', function(d: any) {
 	if (!d) return '';
 	const dt = new Date(d);
 	if (isNaN(dt.getTime())) return d;
-	return dt.toISOString().slice(0,10);
+	return dt.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' });
+});
+
+Handlebars.registerHelper('formatDateTime', function(d: any) {
+	if (!d) return '';
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return d;
+	return dt.toLocaleString('es-AR', { 
+		timeZone: 'America/Argentina/Buenos_Aires',
+		dateStyle: 'medium',
+		timeStyle: 'short'
+	});
 });
 // helper to extract method label (before |by:...)
 Handlebars.registerHelper('methodLabel', function(m: any) {
@@ -199,6 +213,9 @@ app.use('/admin/games/ranking', adminRankingRoutes);
 
 // Admin game settings (points/prize editor)
 app.use('/admin/games/settings', adminSettingsRoutes);
+
+// Admin bonus calculation
+app.use('/admin/bonus', requireAdminMiddleware, adminBonusRoutes);
 
 // Admin XLSX import UI
 app.use('/admin/imports', requireAdminMiddleware, adminImportsRoutes);

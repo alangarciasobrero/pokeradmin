@@ -5,6 +5,7 @@ import { TournamentRepository } from '../repositories/TournamentRepository';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import { ResultRepository } from '../repositories/ResultRepository';
 import rankingSvc, { DEFAULT_PRIZE_CONFIG } from '../services/rankingCalculator';
+import HistoricalPoint from '../models/HistoricalPoint';
 import fs from 'fs';
 import path from 'path';
 
@@ -75,6 +76,25 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 
   console.log('[adminRanking] leaderboard length:', Array.isArray(leaderboard) ? leaderboard.length : typeof leaderboard);
 
+  // Integrate historical_points: sum all points from historical_points table per user
+  const historicalPoints = await HistoricalPoint.findAll();
+  const historicalByUser: Record<number, number> = {};
+  for (const hp of historicalPoints) {
+    const uid = Number((hp as any).user_id);
+    const pts = Number((hp as any).points) || 0;
+    if (!historicalByUser[uid]) historicalByUser[uid] = 0;
+    historicalByUser[uid] += pts;
+  }
+
+  // Merge historical points into leaderboard
+  for (const entry of leaderboard) {
+    const historicalPts = historicalByUser[entry.user_id] || 0;
+    entry.total_points += historicalPts;
+  }
+
+  // Re-sort after adding historical points
+  leaderboard.sort((a, b) => b.total_points - a.total_points || b.total_winnings - a.total_winnings);
+
   // attach username for each entry
   const userIds = leaderboard.map(l => l.user_id);
   let users: any[] = [];
@@ -92,6 +112,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       username: userMap[l.user_id] ? userMap[l.user_id].username : `#${l.user_id}`,
       total_points: l.total_points,
       total_winnings: l.total_winnings,
+      historical_points: historicalByUser[l.user_id] || 0,
       breakdown: l.breakdown,
     }));
 

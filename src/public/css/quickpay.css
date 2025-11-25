@@ -5,7 +5,8 @@
 .quick-pay-btn[disabled] { opacity:0.5; cursor:not-allowed }
 #qp-body table { border:1px solid #eee }
 #qp-body table th, #qp-body table td { padding:6px 8px; border-bottom:1px solid #f4f4f4 }
-#qp-overpay { background:#fff0f0 }
+/* subtle overpay tint that works on dark theme */
+#qp-overpay { background: rgba(255,0,0,0.04); color: #ffd6d6; border: 1px solid rgba(255,0,0,0.12) }
 .flash { padding:0.5rem 1rem; border-radius:4px; margin:0.5rem 0 }
 .flash-success { background:#e6f4ea; color:#1b5e20 }
-.flash-error { background:#fff0f0; color:#900 }
+.flash-error { background: rgba(255,0,0,0.04); color:#ffb3b3 }

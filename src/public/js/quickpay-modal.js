@@ -3,12 +3,11 @@
   function createModal() {
     const modal = document.createElement('div');
     modal.className = 'qp-modal';
-    modal.style = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1200';
     modal.innerHTML = `
-      <div class="qp-modal-content" role="dialog" aria-modal="true" aria-labelledby="qp-title" style="background:#fff;padding:1rem;border-radius:6px;max-width:720px;width:100%;">
+      <div class="qp-modal-content" role="dialog" aria-modal="true" aria-labelledby="qp-title">
         <h3 id="qp-title">Pagar rápido</h3>
         <div id="qp-body">Cargando...</div>
-        <div style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:flex-end;">
+        <div class="qp-actions">
           <button id="qp-confirm" class="btn btn-primary">Registrar pago</button>
           <button id="qp-cancel" class="btn">Cancelar</button>
         </div>
@@ -60,12 +59,12 @@
       html += `<p>Deuda del día: <strong id="qp-debtDay">${formatMoney(debtDay)}</strong></p>`;
       html += `<p>Cuenta personal deuda: <strong id="qp-personalDebt">${formatMoney(personalDebt)}</strong> — Crédito disponible: <strong id="qp-creditAvail">${formatMoney(creditAvailable)}</strong></p>`;
 
-      html += `<label><input type="checkbox" id="qp-usePersonal" /> Usar cuenta personal (sumar deuda histórica o usar crédito si existe)</label>`;
-  html += `<div style="margin-top:0.5rem">`;
-  html += `<label>Monto a registrar ahora: <input id="qp-amount" type="number" step="0.01" value="${debtDay.toFixed(2)}" style="width:10rem" /></label>`;
+    html += `<label><input type="checkbox" id="qp-usePersonal" /> Usar cuenta personal (sumar deuda histórica o usar crédito si existe)</label>`;
+  html += `<div class="qp-amount-row">`;
+  html += `<label>Monto a registrar ahora: <input id="qp-amount" type="number" step="0.01" value="${debtDay.toFixed(2)}" class="qp-input" /></label>`;
   html += `<label style="margin-left:0.5rem">Método: <select id="qp-method"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transfer">Transferencia</option><option value="otro">Otro</option></select></label>`;
   html += `</div>`;
-  html += `<div id="qp-overpay" style="margin-top:0.6rem;display:none;color:#900;border:1px solid #fcc;padding:0.5rem;border-radius:4px">`;
+  html += `<div id="qp-overpay" class="qp-overpay">`;
   html += `<p><strong>Advertencia:</strong> El monto ingresado supera la deuda total del jugador. El exceso se registrará como crédito a favor. Por favor confirme que desea crear crédito:</p>`;
   html += `<label><input type="checkbox" id="qp-confirm-overpay" /> Confirmo crear crédito por el exceso</label>`;
   html += `</div>`;
@@ -74,10 +73,10 @@
       html += `<h4 style="margin-top:0.6rem">Movimientos del día</h4>`;
       if (movements.length === 0) html += `<p>No hay movimientos del día</p>`;
       else {
-        html += `<table style="width:100%;border-collapse:collapse;margin-top:0.4rem">`;
-        html += `<thead><tr><th style="text-align:left">Ref</th><th>Monto</th><th>Pagado</th><th>Remaining</th></tr></thead><tbody>`;
+        html += `<table class="qp-table">`;
+        html += `<thead><tr><th>Ref</th><th>Monto</th><th>Pagado</th><th>Remaining</th></tr></thead><tbody>`;
         movements.forEach(m => {
-          html += `<tr><td>${m.source}${m.reference_id ? ' #' + m.reference_id : ''}</td><td style="text-align:right">${formatMoney(m.amount)}</td><td style="text-align:right">${formatMoney(m.paid_amount)}</td><td style="text-align:right">${formatMoney(m.remaining)}</td></tr>`;
+          html += `<tr><td>${m.source}${m.reference_id ? ' #' + m.reference_id : ''}</td><td>${formatMoney(m.amount)}</td><td>${formatMoney(m.paid_amount)}</td><td>${formatMoney(m.remaining)}</td></tr>`;
         });
         html += `</tbody></table>`;
       }

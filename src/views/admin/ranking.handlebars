@@ -4,15 +4,22 @@
   {{#if leaderboard.length}}
     <table class="ranking-table">
       <thead>
-        <tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Ganancias</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Usuario</th>
+          <th>Puntos Totales</th>
+          <th>Puntos Históricos</th>
+          <th>Ganancias</th>
+        </tr>
       </thead>
       <tbody>
         {{#each leaderboard}}
           <tr>
             <td>{{this.position}}</td>
             <td>{{this.username}}</td>
-            <td>{{this.total_points}}</td>
-            <td>{{this.total_winnings}}</td>
+            <td><strong>{{this.total_points}}</strong></td>
+            <td class="historical-points">{{this.historical_points}}</td>
+            <td>${{this.total_winnings}}</td>
           </tr>
         {{/each}}
       </tbody>
@@ -25,7 +32,8 @@
 <style>
 .ranking-table { width:100%; border-collapse:collapse }
 .ranking-table th, .ranking-table td { padding:0.6rem 0.8rem; border-bottom:1px solid #eee }
-.ranking-table thead { background:#f8f9fa }
+.ranking-table thead { background: var(--muted-surface) }
+.ranking-table .historical-points { color: #6c757d; font-size: 0.9rem; }
 </style>
 <section class="ranking-rules">
   <h2>Reglas y configuración</h2>

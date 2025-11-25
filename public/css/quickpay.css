@@ -22,7 +22,7 @@
 .registrations-table td.debt { background: rgba(255, 204, 0, 0.04); color: #ffdd66; font-weight: 700; }
 
 /* ensure modal inputs are legible */
-.qp-modal input[type="number"], .qp-modal select { padding:0.5rem; border-radius:6px; border:1px solid #ccc; background: #fff; color: #222; }
+.qp-modal input[type="number"], .qp-modal select { padding:0.5rem; border-radius:6px; border:1px solid #ccc; background: var(--input-bg); color: var(--input-color); }
 
 /* make the confirm button in modal more prominent */
 .qp-modal #qp-confirm { background: linear-gradient(90deg,#43a047 0%, #1b5e20 100%); color: #fff; border-radius:8px; padding:0.6rem 1rem; }

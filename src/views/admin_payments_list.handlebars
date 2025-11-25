@@ -16,14 +16,14 @@
             <td>{{this.source}}</td>
             <td>{{#if this.paid}}Sí{{else}}No{{/if}}</td>
             <td>
-              {{#if this.paid}}
+                {{#if this.paid}}
                 —
               {{else}}
-                <form method="post" action="/admin/payments/{{this.id}}/mark-paid" style="display:inline; margin-right:0.5rem;">
+                <form method="post" action="/admin/payments/{{this.id}}/mark-paid" class="form-inline" style="margin-right:0.5rem;">
                   <button class="btn" type="submit">Marcar pago</button>
                 </form>
-                <form method="post" action="/admin/payments/{{this.id}}/update" style="display:inline;">
-                  <input name="paid_amount" value="{{this.paid_amount}}" placeholder="monto parcial" style="width:100px; margin-right:0.4rem;" />
+                <form method="post" action="/admin/payments/{{this.id}}/update" class="form-inline">
+                  <input name="paid_amount" value="{{this.paid_amount}}" placeholder="monto parcial" class="qp-input" />
                   <button class="btn" type="submit">Actualizar</button>
                 </form>
               {{/if}}
@@ -40,7 +40,7 @@
 <style>
   .pa-table { width:100%; border-collapse:collapse; }
   .pa-table th, .pa-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eee; text-align:left; }
-  .pa-table tbody tr:nth-child(odd) { background:#fbfbfb; }
+  .pa-table tbody tr:nth-child(odd) { background: var(--muted-surface); }
   .pa-table .btn { background:#007bff; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
   .pa-table input[name="paid_amount"] { padding:6px; border:1px solid #ddd; border-radius:6px; }
   form[action$="/update"] { display:inline-flex; gap:0.4rem; align-items:center; }

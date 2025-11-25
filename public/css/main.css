@@ -113,17 +113,30 @@ body {
 
 /* Tournament detail tweaks: prevent oversized SVG and reduce visual scale on large screens */
 .tournament-detail-container {
-  max-width: 1100px; /* give more room and center content */
-  padding: 1.2rem 1.6rem; /* tighter padding so attributes fit above the fold */
+  max-width: 1400px; /* give more room for the wider layout */
+  padding: 1.5rem 2rem;
   margin: 24px auto;
 }
-.tournament-detail-container h1 { font-size: 1.6rem; display:flex; align-items:center; gap:1rem; }
-.trophy-icon { width: 100px; height: auto; display: block; margin: 0 auto 0.8rem auto; }
+.tournament-detail-container h1 { font-size: 1.8rem; display:flex; align-items:center; gap:1rem; margin-bottom: 1.5rem; }
+.trophy-icon { width: 60px; height: auto; flex-shrink: 0; }
 
-/* layout the tournament info horizontally with small icons to save vertical space */
-.tournament-info { display: grid; grid-template-columns: 56px 1fr; gap: 0.6rem 1.2rem; align-items: start; }
-.tournament-info p { margin: 0.45rem 0; display:flex; align-items:center; }
-.tournament-info .icon { width: 48px; height: auto; margin-right: 0.8rem; flex-shrink: 0; }
+/* layout the tournament info in a grid to prevent overlap */
+.tournament-info { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.tournament-info p { 
+  margin: 0;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.tournament-info .icon { width: 32px; height: 32px; margin-right: 0.6rem; flex-shrink: 0; }
 
 /* If the trophy SVG is still too big on very large screens, cap it */
 @media (min-width: 1400px) {
@@ -164,6 +177,41 @@ body {
   background: linear-gradient(90deg, #b71c1c 0%, #e53935 100%);
   transform: translateY(-2px);
   box-shadow: 0 5px 20px rgba(229, 57, 53, 0.8);
+}
+
+/* Admin actions section in tournament detail */
+.admin-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 8px;
+}
+
+.admin-actions .btn-warning {
+  background: linear-gradient(90deg, #f57c00 0%, #e65100 100%);
+}
+
+.admin-actions .btn-warning:hover {
+  background: linear-gradient(90deg, #e65100 0%, #f57c00 100%);
+}
+
+.admin-actions .btn-danger {
+  background: linear-gradient(90deg, #c62828 0%, #b71c1c 100%);
+}
+
+.admin-actions .btn-danger:hover {
+  background: linear-gradient(90deg, #b71c1c 0%, #c62828 100%);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 /* Listas y cajas de torneos */
@@ -232,9 +280,59 @@ body {
   transition: border 0.2s, box-shadow 0.2s;
   box-shadow: 0 1px 6px #FFD70033;
 }
-.tournament-registrations form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; align-items: center; }
+/* Tournament registrations section */
+.tournament-registrations {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.tournament-registrations h2 {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 3px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 0.75rem;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tournament-registrations h3 {
+  color: #FFD700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+  padding-bottom: 0.5rem;
+  font-size: 1.4rem;
+}
+
+.tournament-registrations form { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 12px 20px; 
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
 .tournament-registrations label { color: #ffd884; font-weight:700; }
-.tournament-registrations input[type="number"], .tournament-registrations input[type="text"], .tournament-registrations input[list], .tournament-registrations select { width: 100%; box-sizing: border-box; }
+.tournament-registrations input[type="number"], 
+.tournament-registrations input[type="text"], 
+.tournament-registrations input[list], 
+.tournament-registrations select { 
+  width: 100%; 
+  box-sizing: border-box;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: var(--input-bg);
+  color: var(--input-color);
+}
 .tournament-registrations .full-row { grid-column: 1 / -1; }
 .tournament-registrations .actions-row { grid-column: 1 / -1; display:flex; gap:12px; align-items:center; }
 .tournament-registrations .btn { margin: 0; }
@@ -342,6 +440,14 @@ body {
 .ta-modal input { width: 100%; padding: 0.6rem; border-radius:6px; border:1px solid var(--card-border); background: var(--input-bg); color: var(--input-color); }
 
 /* Registrations UI improvements */
+.registrations-controls {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
 .registrations-filters { display:flex; gap:0.6rem; align-items:center; margin:0.75rem 0; flex-wrap:wrap; }
 .registrations-filters label { display:flex; gap:0.4rem; align-items:center; color: #dfe6ff; }
 
@@ -390,10 +496,34 @@ label { color: #ffd884; font-weight:600; display:block; margin:0.6rem 0 0.25rem;
 input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-right:0.4rem; }
 
 /* Responsive básico */
+@media (max-width: 900px) {
+  .tournament-detail-container {
+    padding: 1rem;
+  }
+  
+  .tournament-info { 
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-actions {
+    flex-direction: column;
+  }
+  
+  .admin-actions .btn {
+    width: 100%;
+  }
+}
+
 @media (max-width: 700px) {
   .home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {
     padding: 1.2rem 0.5rem;
     max-width: 98vw;
+  }
+  
+  .tournament-detail-container h1 {
+    font-size: 1.4rem;
+    flex-direction: column;
+    text-align: center;
   }
 }
 
@@ -443,27 +573,101 @@ input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-rig
 .pa-table th, .pa-table td { white-space: normal; }
 
 /* Make tables scroll horizontally on small screens */
-.table-responsive { overflow-x: auto; }
+.table-responsive { 
+  overflow-x: auto; 
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
 /* Registrations table specific improvements */
-.registrations-table { width:100%; border-collapse:collapse; table-layout: auto; }
-.registrations-table th, .registrations-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.04); }
-.registrations-table th { background: rgba(0,0,0,0.35); color: #ffd884; font-weight:700; text-align:left; position: sticky; top: var(--tournament-info-height, 120px); z-index:6; }
-.registrations-table td { vertical-align: middle; font-size: 0.98rem; }
-.registrations-table .col-name { min-width: 240px; }
-.registrations-table .participant-username { color: #ffd884; font-weight:700; margin-right:0.4rem; }
-.registrations-table .participant-full { color: #dfe6ff; font-weight:500; }
+.registrations-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  table-layout: fixed;
+}
+.registrations-table th, 
+.registrations-table td { 
+  padding: 0.6rem 0.5rem; 
+  border-bottom: 1px solid rgba(255,255,255,0.04); 
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.registrations-table th { 
+  background: rgba(0,0,0,0.35); 
+  color: #ffd884; 
+  font-weight: 700; 
+  text-align: left; 
+  position: sticky; 
+  top: 0; 
+  z-index: 6;
+  white-space: nowrap;
+}
+.registrations-table td { 
+  vertical-align: middle; 
+  font-size: 0.95rem; 
+}
+
+/* Column widths */
+.registrations-table .col-index { width: 40px; text-align: center; }
+.registrations-table .col-name { min-width: 180px; max-width: 250px; }
+.registrations-table .col-action { width: 90px; }
+.registrations-table .col-punctuality { width: 50px; text-align: center; }
+.registrations-table .col-time { width: 130px; }
+.registrations-table .col-paid { width: 50px; text-align: center; }
+.registrations-table .col-method { width: 90px; }
+.registrations-table .col-partial { width: 80px; }
+.registrations-table .col-personal { width: 50px; text-align: center; }
+.registrations-table .col-debt { width: 80px; }
+.registrations-table .col-pot { width: 80px; }
+.registrations-table .action-column { width: 120px; }
+.registrations-table .col-position { width: 80px; text-align: center; }
+
+.registrations-table .participant-username { color: #ffd884; font-weight: 700; }
+.registrations-table .participant-full { color: #dfe6ff; font-weight: 500; display: inline; }
 .registrations-table .action-column { position: sticky; right: 0; background: linear-gradient(90deg, rgba(0,0,0,0.02), rgba(0,0,0,0.0)); padding-left:0.6rem; }
 .registrations-table .action-column .quick-pay-btn { min-width:110px; }
-.registrations-table .col-debt.debt { color: #ffcf66; font-weight:800; background: rgba(255,204,0,0.03); }
-.registrations-table .col-pot.amount { color: #fff; }
+.registrations-table .col-debt { color: #ffcf66; font-weight:800; background: rgba(255,204,0,0.03); text-align: right; padding-right: 1rem !important; }
+.registrations-table .col-pot { color: #4caf50; font-weight: 700; text-align: right; padding-right: 1rem !important; }
+.registrations-table .col-partial { color: #ff9800; text-align: right; padding-right: 1rem !important; }
+.registrations-table .col-paid { text-align: center; font-size: 1.2rem; font-weight: bold; }
+.registrations-table .col-punctuality { text-align: center; font-size: 1.2rem; font-weight: bold; }
+.registrations-table .col-personal { text-align: center; font-size: 1.2rem; font-weight: bold; color: #4caf50; }
+.registrations-table .col-method { text-transform: capitalize; }
+.registrations-table .col-position { text-align: center; }
+.registrations-table .text-success { color: #4caf50; }
+.registrations-table .text-danger { color: #f44336; }
 .registrations-table tbody tr:hover { background: rgba(255,255,255,0.02); }
 
+@media (max-width:1200px) {
+  .registrations-table .col-time { display: none; }
+  .registrations-table .col-method { display: none; }
+  .registrations-table .col-personal { display: none; }
+}
+
 @media (max-width:900px) {
-  .registrations-table th:nth-child(1), .registrations-table td.col-index { display:none; }
-  .registrations-table th:nth-child(4), .registrations-table td.col-punctuality { display:none; }
-  .registrations-table th:nth-child(7), .registrations-table td.col-method { display:none; }
-  .registrations-table th:nth-child(11), .registrations-table td.col-pot { display:none; }
+  .registrations-table .col-index { display: none; }
+  .registrations-table .col-punctuality { display: none; }
+  .registrations-table .col-partial { display: none; }
+  .registrations-table .col-pot { display: none; }
+  
+  .registrations-controls {
+    padding: 0.75rem;
+  }
+  
+  .registrations-controls > div {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  
+  .registrations-controls > div > div {
+    width: 100%;
+  }
+  
+  .registrations-controls input,
+  .registrations-controls select {
+    width: 100% !important;
+  }
 }
 
 /* Scrollable wrapper so the table header can stick inside it and not overlap page header */

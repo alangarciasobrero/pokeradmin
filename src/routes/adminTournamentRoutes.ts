@@ -5,8 +5,11 @@ import { Tournament } from '../models/Tournament';
 import { Registration } from '../models/Registration';
 import { Payment } from '../models/Payment';
 import { User } from '../models/User';
+import { Result } from '../models/Result';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import sequelize from '../services/database';
+import commissionService from '../services/commissionService';
+import bonusService from '../services/bonusService';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
@@ -18,9 +21,28 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const perPage = Math.min(100, Math.max(5, Number(req.query.per_page) || 20));
   const offset = (page - 1) * perPage;
+  const showClosed = req.query.show_closed === 'true';
+  const dateFrom = req.query.date_from as string;
+  const dateTo = req.query.date_to as string;
 
   try {
+    const whereClause: any = showClosed ? {} : { registration_open: true };
+    
+    // Add date filters if provided
+    if (dateFrom || dateTo) {
+      whereClause.start_date = {};
+      if (dateFrom) {
+        whereClause.start_date[(await import('sequelize')).Op.gte] = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999); // Include entire day
+        whereClause.start_date[(await import('sequelize')).Op.lte] = endDate;
+      }
+    }
+    
     const { rows, count } = await (await import('../models/Tournament')).Tournament.findAndCountAll({
+      where: whereClause,
       limit: perPage,
       offset,
       order: [['start_date', 'DESC']]
@@ -28,16 +50,26 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
 
     const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
 
+    const queryParams = new URLSearchParams();
+    queryParams.set('per_page', perPage.toString());
+    queryParams.set('show_closed', showClosed.toString());
+    if (dateFrom) queryParams.set('date_from', dateFrom);
+    if (dateTo) queryParams.set('date_to', dateTo);
+
     const links = {
-      prev: page > 1 ? `/admin/games/tournaments/list?page=${page - 1}&per_page=${perPage}` : null,
-      next: page < totalPages ? `/admin/games/tournaments/list?page=${page + 1}&per_page=${perPage}` : null
+      prev: page > 1 ? `/admin/games/tournaments/list?page=${page - 1}&${queryParams.toString()}` : null,
+      next: page < totalPages ? `/admin/games/tournaments/list?page=${page + 1}&${queryParams.toString()}` : null
     };
 
     res.render('admin/tournaments_list', {
       tournaments: rows,
       username: req.session.username,
       meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
-      links
+      links,
+      showClosed,
+      dateFrom: dateFrom || '',
+      dateTo: dateTo || '',
+      queryString: queryParams.toString()
     });
   } catch (err) {
     console.error(err);
@@ -283,23 +315,59 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       }
     }
 
-    // default commission suggestion 10%
-    const commissionPct = 10;
+    // default commission 20% total: 18% casa + 1% temporada + 1% anual (editable)
+    const commissionPct = 20;
+    const commissionHousePct = 18;
+    const commissionSeasonPct = 1;
+    const commissionAnnualPct = 1;
     const commissionAmount = +(pot * (commissionPct / 100));
+    const commissionHouse = +(pot * (commissionHousePct / 100));
+    const commissionSeason = +(pot * (commissionSeasonPct / 100));
+    const commissionAnnual = +(pot * (commissionAnnualPct / 100));
     const prizePool = +(pot - commissionAmount);
 
-    // default prize split: top3 50/30/20 if at least 3 paid players, otherwise winner takes all
+    // Prize distribution percentages for top 20
+    const prizePercentages = [
+      23, 17, 14, 11, 9, 8, 7, 6, 5, 0, // 1-10 (10th gets 0%)
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0      // 11-20 (all get 0%)
+    ];
+    
     const paidPlayers = Object.values(perUser).filter(x => x.paid > 0).length;
-    let defaultPrizes: Array<{ position: number; amount: number }> = [];
-    if (paidPlayers >= 3) {
-      defaultPrizes = [ { position: 1, amount: +(prizePool * 0.5) }, { position: 2, amount: +(prizePool * 0.3) }, { position: 3, amount: +(prizePool * 0.2) } ];
-    } else if (paidPlayers === 2) {
-      defaultPrizes = [ { position: 1, amount: +(prizePool * 0.6) }, { position: 2, amount: +(prizePool * 0.4) } ];
-    } else if (paidPlayers === 1) {
-      defaultPrizes = [ { position: 1, amount: prizePool } ];
-    } else {
-      defaultPrizes = [];
+    const defaultPrizes: Array<{ position: number; amount: number; percentage: number }> = [];
+    
+    // Generate prizes for top 20 or number of paid players, whichever is less
+    const prizesCount = Math.min(20, paidPlayers);
+    for (let i = 0; i < prizesCount; i++) {
+      const position = i + 1;
+      const percentage = prizePercentages[i] || 0;
+      const amount = +(prizePool * (percentage / 100));
+      defaultPrizes.push({ position, amount, percentage });
     }
+
+    // Ranking points distribution for final table (top 9)
+    const rankingPointsPercentages = [
+      { position: 1, percentage: 23 },
+      { position: 2, percentage: 17 },
+      { position: 3, percentage: 14 },
+      { position: 4, percentage: 11 },
+      { position: 5, percentage: 9 },
+      { position: 6, percentage: 8 },
+      { position: 7, percentage: 7 },
+      { position: 8, percentage: 6 },
+      { position: 9, percentage: 5 }
+    ];
+
+    // Calculate total ranking points (number of boxes * points per box based on day)
+    const tournamentDate = new Date((t as any).start_date);
+    const totalBoxes = regs.length; // cada inscripción es una caja
+    const boxPoints = bonusService.calculateBoxPoints(tournamentDate, totalBoxes);
+    
+    // Calculate points per position for final table
+    const rankingPointsDistribution = rankingPointsPercentages.map(rp => ({
+      position: rp.position,
+      percentage: rp.percentage,
+      points: Math.round(boxPoints * (rp.percentage / 100))
+    }));
 
     // participant summary
     const users = await User.findAll({ where: { id: regs.map(r => (r as any).user_id) } as any });
@@ -308,10 +376,35 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
 
     const participants = regs.map(r => {
       const uid = (r as any).user_id;
-      return { registration_id: (r as any).id, user_id: uid, username: umap[uid] ? umap[uid].username : ('#'+uid), paid: perUser[uid] ? perUser[uid].paid : 0, expected: perUser[uid] ? perUser[uid].expected : 0 };
+      const user = umap[uid];
+      return { 
+        registration_id: (r as any).id, 
+        user_id: uid, 
+        username: user ? user.username : ('#'+uid),
+        full_name: user ? (user as any).full_name : null,
+        paid: perUser[uid] ? perUser[uid].paid : 0, 
+        expected: perUser[uid] ? perUser[uid].expected : 0,
+        position: (r as any).position || null
+      };
     });
 
-    return res.json({ pot, commissionPct, commissionAmount, prizePool, defaultPrizes, participants });
+    return res.json({ 
+      pot, 
+      commissionPct, 
+      commissionHousePct,
+      commissionSeasonPct,
+      commissionAnnualPct,
+      commissionAmount,
+      commissionHouse,
+      commissionSeason,
+      commissionAnnual,
+      prizePool, 
+      defaultPrizes, 
+      participants,
+      totalBoxes,
+      boxPoints,
+      rankingPointsDistribution
+    });
   } catch (e) {
     console.error('Error preview-close', e);
     return res.status(500).json({ error: 'Error computing preview' });
@@ -386,11 +479,11 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
   }
 });
 
-// POST confirm-close: accept commission/prizes, create payouts and finalize
+// POST confirm-close: accept commission/prizes/positions, create payouts and finalize
 router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   try {
-    const { commissionPct, prizes } = req.body as any;
+    const { commissionPct, prizes, positions } = req.body as any;
     const t = await tournamentRepo.getById(id);
     if (!t) return res.status(404).json({ error: 'No encontrado' });
 
@@ -445,12 +538,91 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
       await Payment.create({ user_id: userId, amount: -Math.abs(amount), payment_date: new Date(), source: 'tournament_payout', reference_id: null, paid: true, paid_amount: Math.abs(amount), method: 'payout', personal_account: false, recorded_by_name: req.session ? req.session.username : null });
     }
 
+    // ✨ NUEVO: Guardar posiciones en tabla Result
+    if (positions && Array.isArray(positions)) {
+      try {
+        // Load points table for ranking points calculation
+        const fs = await import('fs');
+        let pointsTable: Record<string, number> = {};
+        try {
+          const pointsRaw = fs.readFileSync('points_table.json', 'utf-8');
+          const pointsData = JSON.parse(pointsRaw);
+          if (pointsData.points && Array.isArray(pointsData.points)) {
+            pointsData.points.forEach((pts: number, idx: number) => {
+              pointsTable[(idx + 1).toString()] = pts;
+            });
+          }
+        } catch (err) {
+          console.error('[adminTournament] Error loading points_table.json:', err);
+        }
+
+        // Create Result records for each position
+        for (const pos of positions) {
+          const userId = Number(pos.user_id);
+          const position = Number(pos.position);
+          if (!userId || !position) continue;
+
+          // Calculate ranking points based on position
+          const rankingPoints = pointsTable[position.toString()] || 0;
+          
+          // Determine if final table (positions 1-9)
+          const finalTable = position <= 9;
+          
+          // Find prize amount for this user
+          const userPrize = (prizes || []).find((p: any) => Number(p.user_id) === userId);
+          const prizeAmount = userPrize ? Number(userPrize.amount) : 0;
+
+          // Create or update Result record
+          await Result.create({
+            tournament_id: id,
+            user_id: userId,
+            position: position,
+            points: rankingPoints,
+            final_table: finalTable,
+            prize_amount: prizeAmount,
+            bounty_count: 0 // TODO: collect bounties if applicable
+          } as any);
+        }
+      } catch (err) {
+        console.error('[adminTournament] Error creating Result records:', err);
+      }
+    }
+
     // finalize tournament: set registration_open false and end_date
     const tt = await Tournament.findByPk(id);
     if (tt) {
       (tt as any).registration_open = false;
       (tt as any).end_date = new Date();
       await tt.save();
+    }
+
+    // ✨ Distribuir comisión a pozos automáticamente
+    try {
+      const tournamentDate = new Date((t as any).start_date);
+      await commissionService.distributeCommission(pot, tournamentDate);
+    } catch (err) {
+      console.error('[adminTournament] Error distributing commission:', err);
+      // No fallar el cierre si la distribución falla
+    }
+
+    // ✨ Calcular y distribuir puntos por cajas a mesa final
+    try {
+      const tournamentDate = new Date((t as any).start_date);
+      const totalBoxes = regs.length; // cada inscripción es una caja
+      const boxPoints = bonusService.calculateBoxPoints(tournamentDate, totalBoxes);
+      
+      // Obtener usuarios de mesa final desde los Results recién creados
+      const results = await Result.findAll({ 
+        where: { tournament_id: id, final_table: true } as any,
+        order: [['position', 'ASC']]
+      });
+      const finalTableUserIds = results.map(r => Number((r as any).user_id));
+      
+      if (finalTableUserIds.length > 0) {
+        await bonusService.distributeBoxPointsToFinalTable(id, boxPoints, finalTableUserIds);
+      }
+    } catch (err) {
+      console.error('[adminTournament] Error distributing box points:', err);
     }
 
     return res.json({ ok: true, pot, commissionAmount, prizePool });

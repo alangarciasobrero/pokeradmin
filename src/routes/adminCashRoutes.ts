@@ -98,15 +98,32 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
 
     // record payment if amount provided
     const amountPaid = data.amount_paid !== undefined && data.amount_paid !== null && data.amount_paid !== '' ? Number(data.amount_paid) : 0;
+    // requested amount (pedido) is a distinct concept for cash games: the amount the player asks to play with
+    const requestedAmount = data.requested_amount !== undefined && data.requested_amount !== null && data.requested_amount !== '' ? Number(data.requested_amount) : 0;
     const method = data.method || null;
     const personalAccount = data.personal_account === 'on' || data.personal_account === 'true' || data.personal_account === true;
     const now = new Date();
-  // Record a payment row even if no immediate payment happened so ledger shows the registration
-  // For cash games we don't have a canonical expected amount here; record paid=true only if amountPaid > 0
-  const paidFlag = amountPaid > 0;
-  const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : (method || null);
-  const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
-  await Payment.create({ user_id: userId, amount: amountPaid, payment_date: now, source: 'cash', reference_id: participant.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
+    // If the admin entered a requested amount, record it as a separate ledger entry with paid=false
+    if (requestedAmount > 0) {
+      try {
+        await Payment.create({ user_id: userId, amount: requestedAmount, payment_date: now, source: 'cash_request', reference_id: participant.id, paid: false, paid_amount: 0, method: null, personal_account: personalAccount, recorded_by_name: req.session && req.session.username ? String(req.session.username) : null });
+      } catch (err) {
+        console.error('Error recording requested amount for cash registration', err);
+        // continue: do not block registration if ledger write fails; show flash
+        if (req.session) req.session.flash = { type: 'warning', message: 'Jugador registrado pero falló el registro del pedido en ledger' };
+      }
+    }
+
+    // Record a payment row for any immediate payment (paid=true only if amountPaid > 0)
+    const paidFlag = amountPaid > 0;
+    const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : (method || null);
+    const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+    try {
+      await Payment.create({ user_id: userId, amount: amountPaid, payment_date: now, source: 'cash', reference_id: participant.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
+    } catch (err) {
+      console.error('Error recording payment for cash registration', err);
+      if (req.session) req.session.flash = { type: 'warning', message: 'Jugador registrado pero falló el registro de pago en ledger' };
+    }
 
     if (req.session) req.session.flash = { type: 'success', message: 'Jugador registrado en la mesa cash' };
     return res.redirect(`/admin/games/cash/${id}`);
