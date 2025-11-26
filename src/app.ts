@@ -29,6 +29,8 @@ import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
 import profileRoutes from './routes/profileRoutes';
 import statsRoutes from './routes/statsRoutes';
+import publicProfileRoutes from './routes/publicProfileRoutes';
+import playerDashboardRoutes from './routes/playerDashboardRoutes';
 // Ensure legacy models are registered so sequelize.sync() knows about them
 import './models/Player';
 import './models/TournamentPoint';
@@ -256,13 +258,11 @@ if (process.env.NODE_ENV === 'development') {
 // Dashboard de admin
 app.get('/admin/dashboard', requireAdminMiddleware, getAdminDashboard);
 
-// Home principal: protegida (puede redirigir a dashboard si es admin)
-app.get('/', requireAuthMiddleware, (req, res) => {
-	if (req.session?.role === 'admin') {
-		return res.redirect('/admin/dashboard');
-	}
-	res.render('home');
-});
+// Perfil público de jugadores
+app.use('/player', publicProfileRoutes);
+
+// Home principal: protegida (dashboard dinámico según rol)
+app.use('/', playerDashboardRoutes);
 
 // Rutas API REST: protegidas
 app.use('/api/tournaments', requireAuthMiddleware, tournamentRoutes);

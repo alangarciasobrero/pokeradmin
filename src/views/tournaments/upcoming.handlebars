@@ -1,0 +1,438 @@
+<div class="upcoming-tournaments-page">
+	<div class="page-header">
+		<h1>📅 Próximos Torneos</h1>
+		<p class="subtitle">Todos los eventos programados del circuito</p>
+	</div>
+
+	{{#if tournaments.length}}
+		<div class="tournaments-container">
+			{{#each tournaments}}
+				<div class="tournament-card-full">
+					<div class="card-left">
+						<div class="tournament-date-block">
+							<div class="date-day">{{#expr}}new Date('{{this.start_date}}').getDate(){{/expr}}</div>
+							<div class="date-month">
+								{{#expr}}new Date('{{this.start_date}}').toLocaleString('es-AR', { month: 'short' }){{/expr}}
+							</div>
+							<div class="date-time">{{formatDateTime this.start_date}}</div>
+						</div>
+						{{#if this.registration_open}}
+							<span class="status-badge open">✅ Abierto</span>
+						{{else}}
+							<span class="status-badge closed">🔒 Cerrado</span>
+						{{/if}}
+					</div>
+
+					<div class="card-main">
+						<div class="tournament-title-section">
+							<h2>{{this.tournament_name}}</h2>
+							<div class="tournament-badges">
+								{{#if this.count_to_ranking}}
+									<span class="badge ranking">⭐ Ranking</span>
+								{{/if}}
+								{{#if this.double_points}}
+									<span class="badge double-points">⚡ Doble Puntos</span>
+								{{/if}}
+								{{#if this.knockout_bounty}}
+									<span class="badge knockout">💀 Knockout</span>
+								{{/if}}
+							</div>
+						</div>
+
+						<div class="tournament-details-grid">
+							<div class="detail-item">
+								<span class="detail-icon">💰</span>
+								<div class="detail-content">
+									<span class="detail-label">Buy-in</span>
+									<span class="detail-value">${{currency this.buy_in}}</span>
+								</div>
+							</div>
+
+							{{#if this.re_entry}}
+								<div class="detail-item">
+									<span class="detail-icon">🔄</span>
+									<div class="detail-content">
+										<span class="detail-label">Re-entry</span>
+										<span class="detail-value">${{currency this.re_entry}}</span>
+									</div>
+								</div>
+							{{/if}}
+
+							<div class="detail-item">
+								<span class="detail-icon">🎲</span>
+								<div class="detail-content">
+									<span class="detail-label">Stack Inicial</span>
+									<span class="detail-value">{{this.starting_stack}}</span>
+								</div>
+							</div>
+
+							<div class="detail-item">
+								<span class="detail-icon">⏱️</span>
+								<div class="detail-content">
+									<span class="detail-label">Niveles</span>
+									<span class="detail-value">{{this.blind_levels}} min</span>
+								</div>
+							</div>
+
+							<div class="detail-item">
+								<span class="detail-icon">🎯</span>
+								<div class="detail-content">
+									<span class="detail-label">Small Blind</span>
+									<span class="detail-value">{{this.small_blind}}</span>
+								</div>
+							</div>
+
+							{{#if this.knockout_bounty}}
+								<div class="detail-item">
+									<span class="detail-icon">💀</span>
+									<div class="detail-content">
+										<span class="detail-label">Bounty</span>
+										<span class="detail-value">${{currency this.knockout_bounty}}</span>
+									</div>
+								</div>
+							{{/if}}
+
+							{{#if this.punctuality_discount}}
+								<div class="detail-item special">
+									<span class="detail-icon">⏰</span>
+									<div class="detail-content">
+										<span class="detail-label">Descuento Puntualidad</span>
+										<span class="detail-value">${{currency this.punctuality_discount}}</span>
+									</div>
+								</div>
+							{{/if}}
+						</div>
+					</div>
+
+					<div class="card-actions">
+						<a href="/tournaments/{{this.id}}" class="btn-details">
+							<span>👁️</span>
+							Ver detalles
+						</a>
+						{{#if this.registration_open}}
+							<a href="/tournaments/{{this.id}}/register" class="btn-register">
+								<span>📝</span>
+								Inscribirse
+							</a>
+						{{/if}}
+					</div>
+				</div>
+			{{/each}}
+		</div>
+	{{else}}
+		<div class="empty-state">
+			<div class="empty-icon">🎰</div>
+			<h2>No hay torneos programados</h2>
+			<p>Vuelve pronto para ver los próximos eventos</p>
+		</div>
+	{{/if}}
+</div>
+
+<style>
+.upcoming-tournaments-page {
+	max-width: 1200px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+.page-header {
+	text-align: center;
+	margin-bottom: 3rem;
+}
+
+.page-header h1 {
+	color: #FFD700;
+	font-size: 2.5rem;
+	margin: 0 0 0.5rem 0;
+}
+
+.page-header .subtitle {
+	color: #dfe6ff;
+	font-size: 1.1rem;
+	opacity: 0.8;
+	margin: 0;
+}
+
+.tournaments-container {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.tournament-card-full {
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid rgba(255, 255, 255, 0.08);
+	border-radius: 16px;
+	padding: 2rem;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 2rem;
+	align-items: center;
+	transition: all 0.3s ease;
+}
+
+.tournament-card-full:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	border-color: rgba(255, 215, 0, 0.3);
+}
+
+.card-left {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	min-width: 120px;
+}
+
+.tournament-date-block {
+	background: linear-gradient(135deg, rgba(57, 73, 171, 0.3) 0%, rgba(229, 57, 53, 0.3) 100%);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	border-radius: 12px;
+	padding: 1rem;
+	text-align: center;
+	min-width: 100px;
+}
+
+.date-day {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: #FFD700;
+	line-height: 1;
+}
+
+.date-month {
+	font-size: 1rem;
+	font-weight: 600;
+	color: #ffd884;
+	text-transform: uppercase;
+	margin-top: 0.25rem;
+}
+
+.date-time {
+	font-size: 0.75rem;
+	color: #dfe6ff;
+	opacity: 0.7;
+	margin-top: 0.5rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.status-badge {
+	padding: 0.5rem 1rem;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.status-badge.open {
+	background: rgba(76, 175, 80, 0.9);
+	color: #fff;
+}
+
+.status-badge.closed {
+	background: rgba(158, 158, 158, 0.9);
+	color: #fff;
+}
+
+.card-main {
+	flex: 1;
+}
+
+.tournament-title-section {
+	margin-bottom: 1.5rem;
+}
+
+.tournament-title-section h2 {
+	color: #fff;
+	font-size: 1.75rem;
+	margin: 0 0 0.75rem 0;
+}
+
+.tournament-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.badge {
+	padding: 0.4rem 0.875rem;
+	border-radius: 12px;
+	font-size: 0.8rem;
+	font-weight: 700;
+}
+
+.badge.ranking {
+	background: rgba(57, 73, 171, 0.3);
+	border: 1px solid rgba(57, 73, 171, 0.5);
+	color: #7B93FF;
+}
+
+.badge.double-points {
+	background: rgba(255, 215, 0, 0.2);
+	border: 1px solid rgba(255, 215, 0, 0.4);
+	color: #FFD700;
+}
+
+.badge.knockout {
+	background: rgba(229, 57, 53, 0.2);
+	border: 1px solid rgba(229, 57, 53, 0.4);
+	color: #e53935;
+}
+
+.tournament-details-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1rem;
+}
+
+.detail-item {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+}
+
+.detail-item.special {
+	background: rgba(255, 215, 0, 0.05);
+	border-color: rgba(255, 215, 0, 0.2);
+}
+
+.detail-icon {
+	font-size: 1.5rem;
+}
+
+.detail-content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.detail-label {
+	color: #ffd884;
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.detail-value {
+	color: #fff;
+	font-size: 1.05rem;
+	font-weight: 700;
+}
+
+.card-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	min-width: 140px;
+}
+
+.btn-details,
+.btn-register {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.875rem 1.25rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 700;
+	font-size: 0.9rem;
+	transition: all 0.3s ease;
+	text-align: center;
+}
+
+.btn-details {
+	background: rgba(57, 73, 171, 0.2);
+	border: 2px solid rgba(57, 73, 171, 0.4);
+	color: #7B93FF;
+}
+
+.btn-details:hover {
+	background: rgba(57, 73, 171, 0.3);
+	border-color: #7B93FF;
+	transform: scale(1.05);
+}
+
+.btn-register {
+	background: rgba(76, 175, 80, 0.2);
+	border: 2px solid rgba(76, 175, 80, 0.4);
+	color: #4CAF50;
+}
+
+.btn-register:hover {
+	background: rgba(76, 175, 80, 0.3);
+	border-color: #4CAF50;
+	transform: scale(1.05);
+}
+
+.empty-state {
+	text-align: center;
+	padding: 5rem 2rem;
+	color: #dfe6ff;
+	opacity: 0.6;
+}
+
+.empty-icon {
+	font-size: 5rem;
+	margin-bottom: 1.5rem;
+}
+
+.empty-state h2 {
+	color: #FFD700;
+	margin-bottom: 1rem;
+}
+
+.empty-state p {
+	font-size: 1.1rem;
+}
+
+@media (max-width: 1024px) {
+	.tournament-card-full {
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+	}
+
+	.card-left {
+		flex-direction: row;
+		justify-content: space-between;
+		width: 100%;
+	}
+
+	.card-actions {
+		flex-direction: row;
+		width: 100%;
+	}
+
+	.btn-details,
+	.btn-register {
+		flex: 1;
+	}
+
+	.tournament-details-grid {
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	}
+}
+
+@media (max-width: 768px) {
+	.page-header h1 {
+		font-size: 2rem;
+	}
+
+	.tournament-card-full {
+		padding: 1.5rem;
+	}
+
+	.tournament-title-section h2 {
+		font-size: 1.4rem;
+	}
+
+	.tournament-details-grid {
+		grid-template-columns: 1fr;
+	}
+}
+</style>

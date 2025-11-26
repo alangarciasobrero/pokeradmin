@@ -9,9 +9,36 @@ const tournamentRepo = new TournamentRepository();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const tournaments = await tournamentRepo.getAll();
-    res.render('tournaments/list', { tournaments });
+    res.render('tournaments/list', { 
+      tournaments,
+      username: req.session!.username 
+    });
   } catch (error) {
     res.status(500).send('Error al obtener torneos');
+  }
+});
+
+// Próximos torneos (vista pública mejorada)
+router.get('/upcoming', async (req: Request, res: Response) => {
+  try {
+    const { Tournament } = await import('../models/Tournament');
+    const { Op } = await import('sequelize');
+    const now = new Date();
+    
+    const upcomingTournaments = await Tournament.findAll({
+      where: {
+        start_date: { [Op.gte]: now }
+      },
+      order: [['start_date', 'ASC']]
+    });
+
+    res.render('tournaments/upcoming', {
+      tournaments: upcomingTournaments.map((t: any) => t.get({ plain: true })),
+      username: req.session!.username
+    });
+  } catch (error) {
+    console.error('Error loading upcoming tournaments:', error);
+    res.status(500).send('Error al cargar próximos torneos');
   }
 });
 

@@ -17,6 +17,7 @@ export class Tournament extends Model {
   public punctuality_discount!: number;
   public registration_open!: boolean;
   public end_date?: Date | null;
+  public pinned!: boolean;
 }
 
 Tournament.init(
@@ -89,6 +90,7 @@ Tournament.init(
     },
     registration_open: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     end_date: { type: DataTypes.DATE, allowNull: true },
+    pinned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   {
     sequelize,

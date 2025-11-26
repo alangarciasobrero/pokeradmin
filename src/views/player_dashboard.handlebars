@@ -1,0 +1,857 @@
+<div class="player-dashboard">
+	<!-- Sección de bienvenida y estadísticas rápidas -->
+	<div class="welcome-section">
+		<div class="welcome-card">
+			<h1>¡Bienvenido, <span class="highlight">{{username}}</span>!</h1>
+			<div class="quick-stats">
+				<div class="quick-stat">
+					<span class="stat-icon">🏆</span>
+					<span class="stat-value">{{userStats.wins}}</span>
+					<span class="stat-label">Victorias</span>
+				</div>
+				<div class="quick-stat">
+					<span class="stat-icon">🥇</span>
+					<span class="stat-value">{{userStats.podiums}}</span>
+					<span class="stat-label">Podios</span>
+				</div>
+				<div class="quick-stat">
+					<span class="stat-icon">🎯</span>
+					<span class="stat-value">{{userStats.total_tournaments}}</span>
+					<span class="stat-label">Torneos</span>
+				</div>
+				<div class="quick-stat">
+					<span class="stat-icon">📊</span>
+					<span class="stat-value">#{{rankingPosition}}</span>
+					<span class="stat-label">Ranking</span>
+				</div>
+			</div>
+			<div class="quick-actions">
+				<a href="/stats/user/{{currentUser.id}}" class="btn-primary">📈 Ver mis estadísticas</a>
+				<a href="/stats/leaderboard" class="btn-secondary">🏆 Ver clasificación</a>
+			</div>
+		</div>
+	</div>
+
+	<!-- Torneos destacados / pinned -->
+	{{#if pinnedTournaments.length}}
+		<div class="section">
+			<div class="section-header">
+				<h2>⭐ Torneos Destacados</h2>
+				<span class="featured-indicator">📌 IMPORTANTE</span>
+			</div>
+			<div class="tournaments-grid featured">
+				{{#each pinnedTournaments}}
+					<div class="tournament-card featured-card">
+						<div class="card-badge featured-badge">⭐ DESTACADO</div>
+						<div class="tournament-info">
+							<h3>{{this.tournament_name}}</h3>
+							<div class="tournament-meta">
+								<span class="meta-item">📅 {{formatDateTime this.start_date}}</span>
+								<span class="meta-item">💰 Buy-in: ${{currency this.buy_in}}</span>
+								<span class="meta-item">🎲 Stack: {{this.starting_stack}}</span>
+							</div>
+							{{#if this.double_points}}
+								<span class="badge-special">⚡ DOBLE PUNTOS</span>
+							{{/if}}
+							{{#if this.knockout_bounty}}
+								<span class="badge-knockout">💀 Knockout (${{currency this.knockout_bounty}})</span>
+							{{/if}}
+						</div>
+						<div class="tournament-actions">
+							<a href="/tournaments/{{this.id}}" class="btn-view">Ver detalles</a>
+							{{#if this.registration_open}}
+								<a href="/tournaments/{{this.id}}/register" class="btn-register-featured">📝 Inscribirse</a>
+							{{/if}}
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{/if}}
+
+	<!-- Torneos activos EN VIVO -->
+	{{#if activeTournaments.length}}
+		<div class="section">
+			<div class="section-header">
+				<h2>🔴 EN VIVO - Torneos Activos</h2>
+				<span class="live-indicator">● EN JUEGO</span>
+			</div>
+			<div class="tournaments-grid live">
+				{{#each activeTournaments}}
+					<div class="tournament-card active">
+						<div class="card-badge live-badge">🔴 EN VIVO</div>
+						<div class="tournament-info">
+							<h3>{{this.tournament_name}}</h3>
+							<div class="tournament-meta">
+								<span class="meta-item">📅 {{formatDateTime this.start_date}}</span>
+								<span class="meta-item">💰 Buy-in: ${{currency this.buy_in}}</span>
+								<span class="meta-item">🎲 Stack: {{this.starting_stack}}</span>
+							</div>
+							{{#if this.double_points}}
+								<span class="badge-special">⚡ DOBLE PUNTOS</span>
+							{{/if}}
+							{{#if this.knockout_bounty}}
+								<span class="badge-knockout">💀 Knockout (${{currency this.knockout_bounty}})</span>
+							{{/if}}
+						</div>
+						<div class="tournament-actions">
+							<a href="/tournaments/{{this.id}}" class="btn-view-live">👁️ Ver torneo</a>
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{/if}}
+
+	<!-- Próximos torneos -->
+	{{#if upcomingTournaments.length}}
+		<div class="section">
+			<div class="section-header">
+				<h2>📅 Próximos Torneos</h2>
+				<a href="/tournaments/upcoming" class="btn-link">Ver todos →</a>
+			</div>
+			<div class="tournaments-grid">
+				{{#each upcomingTournaments}}
+					<div class="tournament-card upcoming">
+						{{#if this.registration_open}}
+							<div class="card-badge open-badge">✅ Inscripción abierta</div>
+						{{else}}
+							<div class="card-badge closed-badge">🔒 Cerrado</div>
+						{{/if}}
+						<div class="tournament-info">
+							<h3>{{this.tournament_name}}</h3>
+							<div class="tournament-meta">
+								<span class="meta-item">📅 {{formatDateTime this.start_date}}</span>
+								<span class="meta-item">💰 Buy-in: ${{currency this.buy_in}}</span>
+								{{#if this.re_entry}}
+									<span class="meta-item">🔄 Re-entry: ${{currency this.re_entry}}</span>
+								{{/if}}
+							</div>
+							<div class="tournament-features">
+								{{#if this.count_to_ranking}}
+									<span class="feature-badge">⭐ Cuenta para ranking</span>
+								{{/if}}
+								{{#if this.double_points}}
+									<span class="feature-badge special">⚡ Doble puntos</span>
+								{{/if}}
+								{{#if this.knockout_bounty}}
+									<span class="feature-badge knockout">💀 Knockout</span>
+								{{/if}}
+							</div>
+						</div>
+						<div class="tournament-actions">
+							<a href="/tournaments/{{this.id}}" class="btn-view">Ver detalles</a>
+							{{#if this.registration_open}}
+								<a href="/tournaments/{{this.id}}/register" class="btn-register">📝 Inscribirse</a>
+							{{/if}}
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{else}}
+		<div class="empty-state">
+			<div class="empty-icon">📅</div>
+			<p>No hay torneos programados próximamente</p>
+		</div>
+	{{/if}}
+
+	<!-- Sección de 2 columnas: Mesas cash y Top ranking -->
+	<div class="two-column-section">
+		<!-- Mesas cash activas -->
+		<div class="panel">
+			<div class="panel-header">
+				<h2>💵 Mesas Cash Activas</h2>
+				{{#if activeCashGames.length}}
+					<span class="count-badge">{{activeCashGames.length}}</span>
+				{{/if}}
+			</div>
+			{{#if activeCashGames.length}}
+				<div class="cash-list">
+					{{#each activeCashGames}}
+						<div class="cash-item">
+							<div class="cash-icon">🎲</div>
+							<div class="cash-info">
+								<h4>Mesa Cash - SB ${{currency this.small_blind}}</h4>
+								<p class="cash-meta">Inicio: {{formatDateTime this.start_datetime}}</p>
+								{{#if this.dealer}}
+									<p class="cash-dealer">Dealer: {{this.dealer}}</p>
+								{{/if}}
+							</div>
+							<div class="cash-status">
+								<span class="status-badge active">● Activa</span>
+							</div>
+						</div>
+					{{/each}}
+				</div>
+			{{else}}
+				<p class="empty-message">No hay mesas cash activas</p>
+			{{/if}}
+		</div>
+
+		<!-- Top 5 del ranking -->
+		<div class="panel">
+			<div class="panel-header">
+				<h2>🏆 Top Ranking</h2>
+				<a href="/stats/leaderboard" class="btn-link-small">Ver todo →</a>
+			</div>
+			{{#if topPlayers.length}}
+				<div class="ranking-list">
+					{{#each topPlayers}}
+						<div class="ranking-item rank-{{add @index 1}}">
+							<span class="rank-position">
+								{{#if (eq @index 0)}}🥇{{/if}}
+								{{#if (eq @index 1)}}🥈{{/if}}
+								{{#if (eq @index 2)}}🥉{{/if}}
+								{{#if (gt @index 2)}}#{{add @index 1}}{{/if}}
+							</span>
+							<a href="/player/{{this.username}}" class="player-link">
+								{{#if this.avatar}}
+									<img src="{{this.avatar}}" alt="{{this.username}}" class="player-avatar-sm" />
+								{{else}}
+									<div class="avatar-placeholder-sm">👤</div>
+								{{/if}}
+								<span class="player-name">@{{this.username}}</span>
+							</a>
+							<span class="player-points">{{this.current_points}} pts</span>
+						</div>
+					{{/each}}
+				</div>
+			{{else}}
+				<p class="empty-message">No hay datos de ranking</p>
+			{{/if}}
+		</div>
+	</div>
+</div>
+
+<style>
+.player-dashboard {
+	max-width: 1400px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+.welcome-section {
+	margin-bottom: 2.5rem;
+}
+
+.welcome-card {
+	background: linear-gradient(135deg, rgba(57, 73, 171, 0.2) 0%, rgba(229, 57, 53, 0.2) 100%);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	border-radius: 16px;
+	padding: 2.5rem;
+	text-align: center;
+}
+
+.welcome-card h1 {
+	color: #fff;
+	font-size: 2rem;
+	margin: 0 0 2rem 0;
+}
+
+.welcome-card h1 .highlight {
+	color: #FFD700;
+	font-weight: 700;
+}
+
+.quick-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.quick-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 1.5rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+}
+
+.quick-stat .stat-icon {
+	font-size: 2.5rem;
+}
+
+.quick-stat .stat-value {
+	font-size: 2rem;
+	font-weight: 700;
+	color: #FFD700;
+}
+
+.quick-stat .stat-label {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	opacity: 0.8;
+}
+
+.quick-actions {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+	padding: 0.875rem 2rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	display: inline-block;
+}
+
+.btn-primary {
+	background: rgba(255, 215, 0, 0.2);
+	border: 2px solid #FFD700;
+	color: #FFD700;
+}
+
+.btn-primary:hover {
+	background: rgba(255, 215, 0, 0.3);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.btn-secondary {
+	background: rgba(57, 73, 171, 0.2);
+	border: 2px solid rgba(57, 73, 171, 0.5);
+	color: #7B93FF;
+}
+
+.btn-secondary:hover {
+	background: rgba(57, 73, 171, 0.3);
+	border-color: #7B93FF;
+	transform: translateY(-2px);
+}
+
+.section {
+	margin-bottom: 2.5rem;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+	color: #FFD700;
+	font-size: 1.5rem;
+	margin: 0;
+}
+
+.featured-indicator {
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 0.9rem;
+	animation: shine 2s infinite;
+}
+
+.live-indicator {
+	color: #ff4444;
+	font-weight: 700;
+	font-size: 0.9rem;
+	animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+
+@keyframes shine {
+	0%, 100% { opacity: 1; transform: scale(1); }
+	50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.tournaments-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+	gap: 1.5rem;
+}
+
+.tournaments-grid.live {
+	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+}
+
+.tournaments-grid.featured {
+	grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+}
+
+.tournament-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid rgba(255, 255, 255, 0.08);
+	border-radius: 12px;
+	padding: 1.5rem;
+	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+}
+
+.tournament-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+	border-color: rgba(255, 215, 0, 0.3);
+}
+
+.tournament-card.featured-card {
+	border-color: rgba(255, 215, 0, 0.5);
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
+	box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.tournament-card.active {
+	border-color: rgba(255, 68, 68, 0.5);
+	background: linear-gradient(135deg, rgba(255, 68, 68, 0.05) 0%, transparent 100%);
+}
+
+.tournament-card.upcoming {
+	border-color: rgba(57, 73, 171, 0.3);
+}
+
+.card-badge {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	padding: 0.4rem 0.875rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.featured-badge {
+	background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+	color: #1a1d2e;
+	box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+	animation: glow-gold 2s infinite;
+	font-weight: 900;
+}
+
+@keyframes glow-gold {
+	0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+	50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.9); }
+}
+
+.live-badge {
+	background: rgba(255, 68, 68, 0.9);
+	color: #fff;
+	box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+	animation: glow 2s infinite;
+}
+
+@keyframes glow {
+	0%, 100% { box-shadow: 0 0 20px rgba(255, 68, 68, 0.6); }
+	50% { box-shadow: 0 0 30px rgba(255, 68, 68, 0.8); }
+}
+
+.open-badge {
+	background: rgba(76, 175, 80, 0.9);
+	color: #fff;
+}
+
+.closed-badge {
+	background: rgba(158, 158, 158, 0.9);
+	color: #fff;
+}
+
+.tournament-info {
+	margin-top: 0.5rem;
+}
+
+.tournament-info h3 {
+	color: #fff;
+	font-size: 1.25rem;
+	margin: 0 0 1rem 0;
+}
+
+.tournament-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+.meta-item {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	opacity: 0.9;
+}
+
+.tournament-features {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+.feature-badge {
+	padding: 0.3rem 0.75rem;
+	background: rgba(57, 73, 171, 0.2);
+	border: 1px solid rgba(57, 73, 171, 0.4);
+	border-radius: 12px;
+	color: #7B93FF;
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.feature-badge.special {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: rgba(255, 215, 0, 0.4);
+	color: #FFD700;
+}
+
+.feature-badge.knockout {
+	background: rgba(229, 57, 53, 0.2);
+	border-color: rgba(229, 57, 53, 0.4);
+	color: #e53935;
+}
+
+.badge-special,
+.badge-knockout {
+	display: inline-block;
+	padding: 0.3rem 0.75rem;
+	border-radius: 12px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	margin-top: 0.5rem;
+}
+
+.badge-special {
+	background: rgba(255, 215, 0, 0.2);
+	border: 1px solid rgba(255, 215, 0, 0.4);
+	color: #FFD700;
+}
+
+.badge-knockout {
+	background: rgba(229, 57, 53, 0.2);
+	border: 1px solid rgba(229, 57, 53, 0.4);
+	color: #e53935;
+}
+
+.tournament-actions {
+	display: flex;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+}
+
+.btn-view,
+.btn-view-live,
+.btn-register {
+	flex: 1;
+	padding: 0.75rem;
+	border-radius: 8px;
+	text-decoration: none;
+	text-align: center;
+	font-weight: 600;
+	font-size: 0.9rem;
+	transition: all 0.2s ease;
+}
+
+.btn-view {
+	background: rgba(57, 73, 171, 0.2);
+	border: 1px solid rgba(57, 73, 171, 0.4);
+	color: #7B93FF;
+}
+
+.btn-view:hover {
+	background: rgba(57, 73, 171, 0.3);
+	border-color: #7B93FF;
+}
+
+.btn-view-live {
+	background: rgba(255, 68, 68, 0.2);
+	border: 2px solid rgba(255, 68, 68, 0.5);
+	color: #ff4444;
+	font-weight: 700;
+}
+
+.btn-view-live:hover {
+	background: rgba(255, 68, 68, 0.3);
+	border-color: #ff4444;
+	transform: scale(1.05);
+}
+
+.btn-register {
+	background: rgba(76, 175, 80, 0.2);
+	border: 1px solid rgba(76, 175, 80, 0.4);
+	color: #4CAF50;
+}
+
+.btn-register:hover {
+	background: rgba(76, 175, 80, 0.3);
+	border-color: #4CAF50;
+}
+
+.btn-register-featured {
+	flex: 1;
+	padding: 0.75rem;
+	border-radius: 8px;
+	text-decoration: none;
+	text-align: center;
+	font-weight: 700;
+	font-size: 0.9rem;
+	transition: all 0.2s ease;
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(76, 175, 80, 0.3) 100%);
+	border: 2px solid #FFD700;
+	color: #FFD700;
+}
+
+.btn-register-featured:hover {
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.5) 0%, rgba(76, 175, 80, 0.5) 100%);
+	border-color: #FFE44D;
+	transform: scale(1.05);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.two-column-section {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+	gap: 2rem;
+	margin-bottom: 2rem;
+}
+
+.panel {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+}
+
+.panel-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+	padding-bottom: 1rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+.panel-header h2 {
+	color: #FFD700;
+	font-size: 1.3rem;
+	margin: 0;
+}
+
+.count-badge {
+	background: rgba(255, 215, 0, 0.2);
+	color: #FFD700;
+	padding: 0.3rem 0.75rem;
+	border-radius: 12px;
+	font-weight: 700;
+	font-size: 0.9rem;
+}
+
+.cash-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.cash-item {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+}
+
+.cash-icon {
+	font-size: 2rem;
+}
+
+.cash-info {
+	flex: 1;
+}
+
+.cash-info h4 {
+	color: #fff;
+	margin: 0 0 0.5rem 0;
+	font-size: 1.05rem;
+}
+
+.cash-meta,
+.cash-dealer {
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.85rem;
+	margin: 0.25rem 0;
+}
+
+.cash-dealer {
+	font-style: italic;
+	color: #ffd884;
+}
+
+.status-badge {
+	padding: 0.4rem 0.875rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 700;
+}
+
+.status-badge.active {
+	background: rgba(76, 175, 80, 0.9);
+	color: #fff;
+}
+
+.ranking-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.ranking-item {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.875rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+	transition: all 0.2s ease;
+}
+
+.ranking-item:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 215, 0, 0.2);
+}
+
+.ranking-item.rank-1 {
+	background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
+}
+
+.ranking-item.rank-2 {
+	background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, transparent 100%);
+}
+
+.ranking-item.rank-3 {
+	background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, transparent 100%);
+}
+
+.rank-position {
+	font-size: 1.5rem;
+	font-weight: 700;
+	min-width: 40px;
+	text-align: center;
+}
+
+.player-link {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex: 1;
+	text-decoration: none;
+	color: #fff;
+	transition: color 0.2s ease;
+}
+
+.player-link:hover {
+	color: #FFD700;
+}
+
+.player-avatar-sm {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	object-fit: cover;
+}
+
+.avatar-placeholder-sm {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.2rem;
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.player-name {
+	font-weight: 600;
+}
+
+.player-points {
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 1.05rem;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 3rem;
+	color: #dfe6ff;
+	opacity: 0.6;
+}
+
+.empty-icon {
+	font-size: 4rem;
+	margin-bottom: 1rem;
+}
+
+.empty-message {
+	text-align: center;
+	padding: 2rem;
+	color: #dfe6ff;
+	opacity: 0.5;
+}
+
+.btn-link,
+.btn-link-small {
+	color: #7B93FF;
+	text-decoration: none;
+	font-weight: 600;
+	transition: color 0.2s ease;
+}
+
+.btn-link:hover,
+.btn-link-small:hover {
+	color: #adc4ff;
+}
+
+.btn-link-small {
+	font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+	.tournaments-grid,
+	.tournaments-grid.live {
+		grid-template-columns: 1fr;
+	}
+
+	.two-column-section {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.welcome-card {
+		padding: 1.5rem;
+	}
+
+	.quick-stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.quick-actions {
+		flex-direction: column;
+	}
+
+	.btn-primary,
+	.btn-secondary {
+		width: 100%;
+	}
+}
+</style>
