@@ -2,8 +2,8 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 import { User } from '../models/User';
 import { Payment } from '../models/Payment';
-import Registration from '../models/Registration';
-import Tournament from '../models/Tournament';
+import { Registration } from '../models/Registration';
+import { Tournament } from '../models/Tournament';
 import CashParticipant from '../models/CashParticipant';
 
 const router = Router();
@@ -61,9 +61,9 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 		res.render('profile', {
 			user: user.get({ plain: true }),
 			stats,
-			registrations: registrations.map(r => r.get({ plain: true })),
-			payments: payments.map(p => p.get({ plain: true })),
-			cashGames: cashGames.map(c => c.get({ plain: true })),
+			registrations: registrations.map((r: any) => r.get({ plain: true })),
+			payments: payments.map((p: any) => p.get({ plain: true })),
+			cashGames: cashGames.map((c: any) => c.get({ plain: true })),
 			isAdmin,
 			username: req.session!.username
 		});

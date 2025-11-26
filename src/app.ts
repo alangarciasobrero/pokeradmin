@@ -28,6 +28,7 @@ import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
 import profileRoutes from './routes/profileRoutes';
+import statsRoutes from './routes/statsRoutes';
 // Ensure legacy models are registered so sequelize.sync() knows about them
 import './models/Player';
 import './models/TournamentPoint';
@@ -148,6 +149,14 @@ Handlebars.registerHelper('inc', function(value: number) {
 	return Number(value) + 1;
 });
 
+Handlebars.registerHelper('add', function(a: number, b: number) {
+	return Number(a) + Number(b);
+});
+
+Handlebars.registerHelper('lte', function(a: any, b: any) {
+	try { return Number(a) <= Number(b); } catch (e) { return false; }
+});
+
 // comparison helpers
 Handlebars.registerHelper('gt', function(a: any, b: any) {
 	try {
@@ -180,6 +189,9 @@ app.use(authRoutes);
 
 // Perfil de usuario
 app.use('/profile', profileRoutes);
+
+// Estadísticas
+app.use('/stats', statsRoutes);
 
 // Simple session-based flash middleware and expose currentUser to templates
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {

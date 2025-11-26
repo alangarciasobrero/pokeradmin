@@ -1,0 +1,443 @@
+<div class="stats-container">
+	<div class="stats-header">
+		<div class="user-info">
+			{{#if targetUser.avatar}}
+				<img src="{{targetUser.avatar}}" alt="{{targetUser.username}}" class="user-avatar-large" />
+			{{else}}
+				<div class="avatar-placeholder-large">👤</div>
+			{{/if}}
+			<div>
+				<h1>{{#if targetUser.full_name}}{{targetUser.full_name}}{{else}}{{targetUser.username}}{{/if}}</h1>
+				<p class="username">@{{targetUser.username}}</p>
+				{{#if isAdmin}}
+					<a href="/admin/users/{{targetUser.id}}/edit" class="btn-link">✏️ Editar usuario</a>
+				{{/if}}
+			</div>
+		</div>
+		<div class="quick-stats">
+			<div class="stat-card">
+				<span class="stat-value">{{stats.user.current_points}}</span>
+				<span class="stat-label">Puntos</span>
+			</div>
+			<div class="stat-card">
+				<span class="stat-value">{{stats.tournaments.total_tournaments}}</span>
+				<span class="stat-label">Torneos</span>
+			</div>
+			<div class="stat-card">
+				<span class="stat-value">{{stats.cash.total_sessions}}</span>
+				<span class="stat-label">Sesiones Cash</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="stats-grid">
+		<!-- Estadísticas de Torneos -->
+		<div class="stats-section">
+			<h2>🏆 Estadísticas de Torneos</h2>
+			<div class="stats-list">
+				<div class="stat-item">
+					<span class="label">Total de torneos:</span>
+					<span class="value">{{stats.tournaments.total_tournaments}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">Buy-ins:</span>
+					<span class="value">{{stats.tournaments.buy_ins}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">Re-entries:</span>
+					<span class="value">{{stats.tournaments.reentries}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">Duplos:</span>
+					<span class="value">{{stats.tournaments.duplos}}</span>
+				</div>
+				<div class="stat-item highlight">
+					<span class="label">Torneos finalizados:</span>
+					<span class="value">{{stats.tournaments.tournaments_finished}}</span>
+				</div>
+				<div class="stat-item highlight">
+					<span class="label">Mejor posición:</span>
+					<span class="value">{{#if stats.tournaments.best_position}}#{{stats.tournaments.best_position}}{{else}}-{{/if}}</span>
+				</div>
+				<div class="stat-item highlight">
+					<span class="label">Posición promedio:</span>
+					<span class="value">{{#if stats.tournaments.avg_position}}{{stats.tournaments.avg_position}}{{else}}-{{/if}}</span>
+				</div>
+				<div class="stat-item success">
+					<span class="label">Podios (Top 3):</span>
+					<span class="value">{{stats.tournaments.podium_finishes}}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Estadísticas de Cash Games -->
+		<div class="stats-section">
+			<h2>💵 Estadísticas de Cash Games</h2>
+			<div class="stats-list">
+				<div class="stat-item">
+					<span class="label">Sesiones totales:</span>
+					<span class="value">{{stats.cash.total_sessions}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">Tiempo total jugado:</span>
+					<span class="value">
+						{{#if stats.cash.total_minutes}}
+							{{#if (gt stats.cash.total_minutes 60)}}
+								~{{#expr}}Math.floor({{stats.cash.total_minutes}} / 60){{/expr}} horas
+							{{else}}
+								{{stats.cash.total_minutes}} minutos
+							{{/if}}
+						{{else}}
+							0 minutos
+						{{/if}}
+					</span>
+				</div>
+				<div class="stat-item warning">
+					<span class="label">Sesiones activas:</span>
+					<span class="value">{{stats.cash.active_sessions}}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Estadísticas de Pagos -->
+		<div class="stats-section">
+			<h2>💳 Estadísticas Financieras</h2>
+			<div class="stats-list">
+				<div class="stat-item success">
+					<span class="label">Total pagado:</span>
+					<span class="value">${{currency stats.payments.total_paid}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">En torneos:</span>
+					<span class="value">${{currency stats.payments.paid_tournaments}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">En cash games:</span>
+					<span class="value">${{currency stats.payments.paid_cash}}</span>
+				</div>
+				<div class="stat-item">
+					<span class="label">Pagos realizados:</span>
+					<span class="value">{{stats.payments.paid_count}}</span>
+				</div>
+				{{#if (gt stats.payments.total_debt 0)}}
+					<div class="stat-item error">
+						<span class="label">Deuda pendiente:</span>
+						<span class="value">${{currency stats.payments.total_debt}}</span>
+					</div>
+					<div class="stat-item">
+						<span class="label">Pagos pendientes:</span>
+						<span class="value">{{stats.payments.unpaid_count}}</span>
+					</div>
+				{{/if}}
+			</div>
+		</div>
+	</div>
+
+	<!-- Historial reciente -->
+	<div class="stats-history">
+		<div class="history-section">
+			<h2>📅 Últimos Torneos</h2>
+			{{#if stats.recentTournaments.length}}
+				<div class="history-list">
+					{{#each stats.recentTournaments}}
+						<div class="history-item">
+							<div class="history-info">
+								<h3>{{this.tournament.tournament_name}}</h3>
+								<p>{{formatDateTime this.tournament.start_date}}</p>
+							</div>
+							<div class="history-details">
+								<span class="badge badge-action-{{this.action_type}}">{{actionLabel this.action_type}}</span>
+								{{#if this.position}}
+									<span class="position">Puesto #{{this.position}}</span>
+								{{/if}}
+							</div>
+						</div>
+					{{/each}}
+				</div>
+			{{else}}
+				<p class="empty-message">No hay torneos registrados</p>
+			{{/if}}
+		</div>
+
+		<div class="history-section">
+			<h2>💰 Últimas Sesiones Cash</h2>
+			{{#if stats.recentCashSessions.length}}
+				<div class="history-list">
+					{{#each stats.recentCashSessions}}
+						<div class="history-item">
+							<div class="history-info">
+								<h3>Mesa Cash - SB ${{currency this.cashGame.small_blind}}</h3>
+								<p>{{formatDateTime this.joined_at}}</p>
+								{{#if this.cashGame.dealer}}
+									<p class="dealer">Dealer: {{this.cashGame.dealer}}</p>
+								{{/if}}
+							</div>
+							<div class="history-details">
+								{{#if this.left_at}}
+									<span class="badge badge-success">Finalizado</span>
+								{{else}}
+									<span class="badge badge-warning">En juego</span>
+								{{/if}}
+							</div>
+						</div>
+					{{/each}}
+				</div>
+			{{else}}
+				<p class="empty-message">No hay sesiones cash registradas</p>
+			{{/if}}
+		</div>
+	</div>
+</div>
+
+<style>
+.stats-container {
+	max-width: 1400px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+.stats-header {
+	background: linear-gradient(135deg, rgba(57, 73, 171, 0.1) 0%, rgba(229, 57, 53, 0.1) 100%);
+	border: 1px solid rgba(255, 215, 0, 0.2);
+	border-radius: 16px;
+	padding: 2rem;
+	margin-bottom: 2rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 2rem;
+}
+
+.user-info {
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+}
+
+.user-avatar-large {
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	border: 3px solid #FFD700;
+	object-fit: cover;
+}
+
+.avatar-placeholder-large {
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	border: 3px solid #FFD700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 3rem;
+	background: rgba(255, 215, 0, 0.1);
+}
+
+.user-info h1 {
+	margin: 0;
+	color: #FFD700;
+	font-size: 2rem;
+}
+
+.user-info .username {
+	color: #dfe6ff;
+	margin: 0.5rem 0;
+	opacity: 0.8;
+}
+
+.quick-stats {
+	display: flex;
+	gap: 2rem;
+}
+
+.stat-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 1rem 2rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 215, 0, 0.3);
+	border-radius: 12px;
+}
+
+.stat-card .stat-value {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: #FFD700;
+	line-height: 1;
+}
+
+.stat-card .stat-label {
+	color: #dfe6ff;
+	margin-top: 0.5rem;
+	font-size: 0.9rem;
+	opacity: 0.8;
+}
+
+.stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+	gap: 2rem;
+	margin-bottom: 2rem;
+}
+
+.stats-section {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+}
+
+.stats-section h2 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.75rem;
+	font-size: 1.3rem;
+}
+
+.stats-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.stat-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.75rem;
+	background: rgba(255, 255, 255, 0.02);
+	border-radius: 6px;
+}
+
+.stat-item.highlight {
+	background: rgba(255, 215, 0, 0.05);
+	border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.stat-item.success {
+	background: rgba(76, 175, 80, 0.05);
+	border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.stat-item.warning {
+	background: rgba(255, 152, 0, 0.05);
+	border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.stat-item.error {
+	background: rgba(244, 67, 54, 0.05);
+	border: 1px solid rgba(244, 67, 54, 0.2);
+}
+
+.stat-item .label {
+	color: #ffd884;
+	font-weight: 600;
+}
+
+.stat-item .value {
+	color: #fff;
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+
+.stats-history {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+	gap: 2rem;
+}
+
+.history-section {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+}
+
+.history-section h2 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.75rem;
+}
+
+.history-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.history-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+}
+
+.history-info h3 {
+	margin: 0 0 0.5rem 0;
+	color: #fff;
+	font-size: 1.05rem;
+}
+
+.history-info p {
+	margin: 0.25rem 0;
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.9rem;
+}
+
+.history-info .dealer {
+	font-style: italic;
+	color: #ffd884;
+}
+
+.history-details {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.position {
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+
+.empty-message {
+	text-align: center;
+	color: #dfe6ff;
+	opacity: 0.5;
+	padding: 2rem;
+}
+
+@media (max-width: 1024px) {
+	.stats-grid,
+	.stats-history {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.stats-header {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.user-info {
+		flex-direction: column;
+	}
+
+	.quick-stats {
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+}
+</style>

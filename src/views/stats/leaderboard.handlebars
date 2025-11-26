@@ -1,0 +1,322 @@
+<div class="leaderboard-container">
+	<div class="leaderboard-header">
+		<h1>🏆 Clasificación General</h1>
+		<p class="subtitle">Los mejores jugadores del circuito</p>
+	</div>
+
+	<div class="metric-selector">
+		<a href="/stats/leaderboard?metric=points" class="metric-btn {{#ifEquals currentMetric 'points'}}active{{/ifEquals}}">
+			⭐ Puntos
+		</a>
+		<a href="/stats/leaderboard?metric=tournaments" class="metric-btn {{#ifEquals currentMetric 'tournaments'}}active{{/ifEquals}}">
+			🎯 Torneos
+		</a>
+		<a href="/stats/leaderboard?metric=winrate" class="metric-btn {{#ifEquals currentMetric 'winrate'}}active{{/ifEquals}}">
+			🔥 Win Rate
+		</a>
+		<a href="/stats/leaderboard?metric=cash_sessions" class="metric-btn {{#ifEquals currentMetric 'cash_sessions'}}active{{/ifEquals}}">
+			💵 Cash Games
+		</a>
+	</div>
+
+	<div class="leaderboard-table">
+		{{#if leaderboard.length}}
+			<table>
+				<thead>
+					<tr>
+						<th class="rank-col">#</th>
+						<th class="player-col">Jugador</th>
+						<th class="center">Puntos</th>
+						<th class="center">Torneos</th>
+						<th class="center">Primeros</th>
+						<th class="center">Podios</th>
+						<th class="center">Win Rate</th>
+						<th class="center">Sesiones Cash</th>
+						<th class="center">Total Pagado</th>
+						<th class="center">Acciones</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each leaderboard}}
+						<tr class="leaderboard-row {{#if (lte @index 2)}}top-{{@index}}{{/if}}">
+							<td class="rank-col">
+								{{#if (eq @index 0)}}🥇{{/if}}
+								{{#if (eq @index 1)}}🥈{{/if}}
+								{{#if (eq @index 2)}}🥉{{/if}}
+								{{#if (gt @index 2)}}{{add @index 1}}{{/if}}
+							</td>
+							<td class="player-col">
+								<div class="player-info">
+									{{#if this.avatar}}
+										<img src="{{this.avatar}}" alt="{{this.username}}" class="player-avatar" />
+									{{else}}
+										<div class="avatar-placeholder">👤</div>
+									{{/if}}
+									<div class="player-details">
+										<span class="player-name">{{#if this.full_name}}{{this.full_name}}{{else}}{{this.username}}{{/if}}</span>
+										<span class="player-username">@{{this.username}}</span>
+									</div>
+								</div>
+							</td>
+							<td class="center points-col">{{this.current_points}}</td>
+							<td class="center">{{this.tournament_count}}</td>
+							<td class="center wins-col">{{this.first_places}}</td>
+							<td class="center">{{this.podium_finishes}}</td>
+							<td class="center winrate-col">{{this.win_rate}}%</td>
+							<td class="center">{{this.cash_sessions}}</td>
+							<td class="center">${{currency this.total_paid}}</td>
+							<td class="center">
+								<a href="/stats/user/{{this.id}}" class="btn-view">Ver stats</a>
+							</td>
+						</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		{{else}}
+			<p class="empty-message">No hay datos de clasificación disponibles</p>
+		{{/if}}
+	</div>
+</div>
+
+<style>
+.leaderboard-container {
+	max-width: 1400px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+.leaderboard-header {
+	text-align: center;
+	margin-bottom: 2rem;
+}
+
+.leaderboard-header h1 {
+	color: #FFD700;
+	font-size: 2.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.leaderboard-header .subtitle {
+	color: #dfe6ff;
+	opacity: 0.8;
+	font-size: 1.1rem;
+}
+
+.metric-selector {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	margin-bottom: 2rem;
+	flex-wrap: wrap;
+}
+
+.metric-btn {
+	padding: 0.75rem 1.5rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
+	color: #dfe6ff;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	font-weight: 600;
+}
+
+.metric-btn:hover {
+	background: rgba(255, 215, 0, 0.1);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.metric-btn.active {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: #FFD700;
+	color: #FFD700;
+	box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-table {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.leaderboard-table table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.leaderboard-table thead {
+	background: rgba(255, 215, 0, 0.1);
+	border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-table th {
+	padding: 1rem;
+	color: #FFD700;
+	font-weight: 700;
+	text-align: left;
+	font-size: 0.95rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.leaderboard-table th.center {
+	text-align: center;
+}
+
+.leaderboard-row {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	transition: all 0.2s ease;
+}
+
+.leaderboard-row:hover {
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-row.top-0 {
+	background: linear-gradient(90deg, rgba(255, 215, 0, 0.15) 0%, transparent 100%);
+}
+
+.leaderboard-row.top-1 {
+	background: linear-gradient(90deg, rgba(192, 192, 192, 0.15) 0%, transparent 100%);
+}
+
+.leaderboard-row.top-2 {
+	background: linear-gradient(90deg, rgba(205, 127, 50, 0.15) 0%, transparent 100%);
+}
+
+.leaderboard-table td {
+	padding: 1rem;
+	color: #fff;
+}
+
+.leaderboard-table td.center {
+	text-align: center;
+}
+
+.rank-col {
+	font-size: 1.5rem;
+	font-weight: 700;
+	width: 80px;
+	text-align: center;
+}
+
+.player-col {
+	min-width: 250px;
+}
+
+.player-info {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.player-avatar {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	object-fit: cover;
+}
+
+.avatar-placeholder {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.5rem;
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.player-details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.player-name {
+	font-weight: 700;
+	color: #fff;
+	font-size: 1.05rem;
+}
+
+.player-username {
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.85rem;
+}
+
+.points-col {
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 1.2rem;
+}
+
+.wins-col {
+	color: #4CAF50;
+	font-weight: 700;
+}
+
+.winrate-col {
+	color: #FF9800;
+	font-weight: 700;
+}
+
+.btn-view {
+	padding: 0.5rem 1rem;
+	background: rgba(57, 73, 171, 0.2);
+	border: 1px solid rgba(57, 73, 171, 0.4);
+	border-radius: 6px;
+	color: #7B93FF;
+	text-decoration: none;
+	font-size: 0.9rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+	display: inline-block;
+}
+
+.btn-view:hover {
+	background: rgba(57, 73, 171, 0.3);
+	border-color: #7B93FF;
+	color: #adc4ff;
+	transform: translateY(-2px);
+}
+
+.empty-message {
+	text-align: center;
+	color: #dfe6ff;
+	opacity: 0.5;
+	padding: 3rem;
+	font-size: 1.1rem;
+}
+
+@media (max-width: 1200px) {
+	.leaderboard-table {
+		overflow-x: auto;
+	}
+
+	.leaderboard-table table {
+		min-width: 1000px;
+	}
+}
+
+@media (max-width: 768px) {
+	.leaderboard-header h1 {
+		font-size: 2rem;
+	}
+
+	.metric-selector {
+		gap: 0.5rem;
+	}
+
+	.metric-btn {
+		padding: 0.5rem 1rem;
+		font-size: 0.9rem;
+	}
+}
+</style>
