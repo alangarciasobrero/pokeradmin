@@ -1,59 +1,97 @@
-<div class="registrations-admin">
-  <div class="page-header">
-    <h2>Inscripciones</h2>
-    <a class="btn btn-primary" href="/admin/registrations/new">+ Nueva Inscripción</a>
+<div class="registrations-modern">
+  <div class="page-header-modern">
+    <h1>📝 Gestión de Inscripciones</h1>
+    <a class="btn-create" href="/admin/registrations/new">+ Nueva Inscripción</a>
   </div>
 
-  <form method="get" action="/admin/registrations/list" class="registrations-filters">
-    <label>Filtrar por torneo:
-      <select name="tournament_id">
-        <option value="">Todos</option>
-        {{#each tournaments}}
-          <option value="{{this.id}}" {{#if (eq ../selected_tournament_id this.id)}}selected{{/if}}>{{this.tournament_name}}</option>
-        {{/each}}
-      </select>
-    </label>
-    <label>Filtrar por usuario:
-      <select name="user_id">
-        <option value="">Todos</option>
-        {{#each users}}
-          <option value="{{@key}}" {{#if (eq ../selected_user_id @key)}}selected{{/if}}>{{this.full_name}} ({{this.username}})</option>
-        {{/each}}
-      </select>
-    </label>
-    <div style="margin-left:auto;">
-      <button class="btn" type="submit">Filtrar</button>
-    </div>
-  </form>
+  <div class="filters-section">
+    <form method="get" action="/admin/registrations/list">
+      <div class="filter-group-modern">
+        <label for="tournament_id">🏆 Torneo:</label>
+        <select name="tournament_id" id="tournament_id" class="select-modern">
+          <option value="">Todos los torneos</option>
+          {{#each tournaments}}
+            <option value="{{this.id}}" {{#if (eq ../selected_tournament_id this.id)}}selected{{/if}}>{{this.tournament_name}}</option>
+          {{/each}}
+        </select>
+      </div>
+      
+      <div class="filter-group-modern">
+        <label for="user_id">👤 Usuario:</label>
+        <select name="user_id" id="user_id" class="select-modern">
+          <option value="">Todos los usuarios</option>
+          {{#each users}}
+            <option value="{{@key}}" {{#if (eq ../selected_user_id @key)}}selected{{/if}}>{{this.full_name}} ({{this.username}})</option>
+          {{/each}}
+        </select>
+      </div>
+      
+      <button class="btn-filter" type="submit">🔍 Filtrar</button>
+      <a href="/admin/registrations/list" class="btn-clear">✕ Limpiar</a>
+    </form>
+  </div>
 
   {{#if registrations.length}}
-    <table class="registrations-table">
-      <thead>
-        <tr><th>ID</th><th>Usuario</th><th>Torneo</th><th>Fecha</th><th>Acción</th><th>Puntualidad</th><th>Acciones</th></tr>
-      </thead>
-      <tbody>
-        {{#each registrations}}
-          <tr class="registration-row {{#if (gt this.debt 0)}}unpaid{{/if}}">
-            <td class="col-index">{{id}}</td>
-            <td>{{#with (lookup ../users this.user_id)}}{{this.full_name}} <span class="participant-username">({{this.username}})</span>{{else}}{{this.user_id}}{{/with}}</td>
-            <td>{{#with (lookup ../tournaments this.tournament_id)}}{{this.tournament_name}}{{else}}{{this.tournament_id}}{{/with}}</td>
-            <td>{{registration_date}}</td>
-            <td>{{actionLabel action_type}}</td>
-            <td>
-              {{#if (eq punctuality 'on-time')}}<span class="punctuality-badge on-time">A tiempo</span>{{else if (eq punctuality 'late')}}<span class="punctuality-badge late">Tarde</span>{{else}}<span class="punctuality-badge unknown">{{punctuality}}</span>{{/if}}
-            </td>
-            <td>
-              <div class="registration-actions">
-                <a class="btn btn-sm" href="/admin/registrations/{{id}}">Ver</a>
-                <form method="post" action="/admin/registrations/{{id}}/delete" class="form-inline">
-                  <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
-                </form>
-              </div>
-            </td>
+    <div class="table-container">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Torneo</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Puntualidad</th>
+            <th>Acciones</th>
           </tr>
-        {{/each}}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {{#each registrations}}
+            <tr class="table-row {{#if (gt this.debt 0)}}unpaid-row{{/if}}">
+              <td class="col-id">#{{id}}</td>
+              <td class="col-user">
+                {{#with (lookup ../users this.user_id)}}
+                  <div class="user-cell">
+                    <span class="user-name">{{this.full_name}}</span>
+                    <span class="user-username">({{this.username}})</span>
+                  </div>
+                {{else}}
+                  <span class="user-id">Usuario #{{this.user_id}}</span>
+                {{/with}}
+              </td>
+              <td class="col-tournament">
+                {{#with (lookup ../tournaments this.tournament_id)}}
+                  {{this.tournament_name}}
+                {{else}}
+                  Torneo #{{this.tournament_id}}
+                {{/with}}
+              </td>
+              <td class="col-date">{{registration_date}}</td>
+              <td class="col-action">
+                <span class="action-badge">{{actionLabel action_type}}</span>
+              </td>
+              <td class="col-punctuality">
+                {{#if (eq punctuality 'on-time')}}
+                  <span class="punctuality-badge on-time">✅ A tiempo</span>
+                {{else if (eq punctuality 'late')}}
+                  <span class="punctuality-badge late">⏰ Tarde</span>
+                {{else}}
+                  <span class="punctuality-badge unknown">❓ {{punctuality}}</span>
+                {{/if}}
+              </td>
+              <td class="col-actions">
+                <div class="actions-group">
+                  <a class="btn-view-sm" href="/admin/registrations/{{id}}">👁️ Ver</a>
+                  <form method="post" action="/admin/registrations/{{id}}/delete" class="inline-form">
+                    <button class="btn-delete-sm" type="submit" onclick="return confirm('¿Eliminar inscripción #{{id}}?')">🗑️</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
 
     {{#if meta}}
       <nav class="pagination" aria-label="Paginación de inscripciones">
@@ -69,11 +107,392 @@
 </div>
 
 <style>
-.registrations-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem }
-.registrations-table th, .registrations-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eaeaea; text-align:left }
-.btn { padding: 0.35rem 0.6rem; border-radius:6px; text-decoration:none }
-.btn-primary { background:#007bff; color:#fff }
-.btn-danger { background:#dc3545; color:#fff }
-.btn-sm { font-size:0.85rem }
-.disabled { opacity:0.45 }
+.registrations-modern {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 2rem;
+}
+
+.page-header-modern {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 2rem;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.page-header-modern h1 {
+	color: #FFD700;
+	font-size: 2rem;
+	margin: 0;
+	font-weight: 700;
+}
+
+.btn-create {
+	padding: 0.875rem 2rem;
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+	border: 2px solid #FFD700;
+	border-radius: 8px;
+	color: #FFD700;
+	text-decoration: none;
+	font-weight: 700;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.btn-create:hover {
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.filters-section {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+	padding: 1.5rem;
+	margin-bottom: 2rem;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.filters-section form {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-end;
+	flex-wrap: wrap;
+}
+
+.filter-group-modern {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	flex: 1;
+	min-width: 200px;
+}
+
+.filter-group-modern label {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.select-modern {
+	padding: 0.625rem 0.875rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
+	color: #fff;
+	font-size: 0.95rem;
+	transition: all 0.3s ease;
+	cursor: pointer;
+}
+
+.select-modern:focus {
+	outline: none;
+	border-color: rgba(255, 215, 0, 0.4);
+	box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.btn-filter,
+.btn-clear {
+	padding: 0.625rem 1.5rem;
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 0.95rem;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	border: 2px solid;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.btn-filter {
+	background: rgba(255, 215, 0, 0.15);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.btn-filter:hover {
+	background: rgba(255, 215, 0, 0.25);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.btn-clear {
+	background: rgba(158, 158, 158, 0.1);
+	border-color: rgba(158, 158, 158, 0.3);
+	color: #9e9e9e;
+	display: inline-block;
+}
+
+.btn-clear:hover {
+	background: rgba(158, 158, 158, 0.2);
+	border-color: #9e9e9e;
+	transform: translateY(-2px);
+}
+
+.table-container {
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modern-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.modern-table thead {
+	background: rgba(255, 215, 0, 0.1);
+	border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.modern-table th {
+	padding: 1rem 1.25rem;
+	text-align: left;
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.modern-table tbody tr {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	transition: all 0.3s ease;
+}
+
+.modern-table tbody tr:hover {
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.modern-table tbody tr.unpaid-row {
+	background: rgba(255, 152, 0, 0.05);
+	border-left: 3px solid #ff9800;
+}
+
+.modern-table tbody tr.unpaid-row:hover {
+	background: rgba(255, 152, 0, 0.08);
+}
+
+.modern-table td {
+	padding: 1rem 1.25rem;
+	color: #dfe6ff;
+	font-size: 0.95rem;
+}
+
+.col-id {
+	color: #9e9e9e;
+	font-weight: 600;
+	font-family: monospace;
+}
+
+.user-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.user-name {
+	color: #fff;
+	font-weight: 600;
+}
+
+.user-username {
+	color: #9e9e9e;
+	font-size: 0.85rem;
+}
+
+.user-id {
+	color: #9e9e9e;
+	font-style: italic;
+}
+
+.col-tournament {
+	color: #fff;
+	font-weight: 500;
+}
+
+.col-date {
+	font-family: monospace;
+	color: #dfe6ff;
+}
+
+.action-badge {
+	padding: 0.3rem 0.75rem;
+	background: rgba(57, 73, 171, 0.2);
+	border: 1px solid rgba(57, 73, 171, 0.4);
+	border-radius: 12px;
+	color: #7B93FF;
+	font-size: 0.85rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.punctuality-badge {
+	padding: 0.3rem 0.75rem;
+	border-radius: 12px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	border: 1px solid;
+	white-space: nowrap;
+}
+
+.punctuality-badge.on-time {
+	background: rgba(76, 175, 80, 0.15);
+	border-color: rgba(76, 175, 80, 0.4);
+	color: #4CAF50;
+}
+
+.punctuality-badge.late {
+	background: rgba(255, 152, 0, 0.15);
+	border-color: rgba(255, 152, 0, 0.4);
+	color: #ff9800;
+}
+
+.punctuality-badge.unknown {
+	background: rgba(158, 158, 158, 0.15);
+	border-color: rgba(158, 158, 158, 0.4);
+	color: #9e9e9e;
+}
+
+.actions-group {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.inline-form {
+	margin: 0;
+	display: inline;
+}
+
+.btn-view-sm,
+.btn-delete-sm {
+	padding: 0.5rem 0.875rem;
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	border: 2px solid;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.btn-view-sm {
+	background: rgba(255, 215, 0, 0.1);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.btn-view-sm:hover {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.btn-delete-sm {
+	background: rgba(244, 67, 54, 0.1);
+	border-color: rgba(244, 67, 54, 0.3);
+	color: #f44336;
+	padding: 0.5rem 0.75rem;
+}
+
+.btn-delete-sm:hover {
+	background: rgba(244, 67, 54, 0.2);
+	border-color: #f44336;
+	transform: translateY(-2px);
+}
+
+.pagination {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: center;
+	margin-top: 2rem;
+}
+
+.pagination .btn {
+	padding: 0.625rem 1.25rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	background: rgba(255, 215, 0, 0.1);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.pagination .btn:hover {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.pagination .disabled {
+	opacity: 0.3;
+	color: #9e9e9e;
+}
+
+.page-info {
+	color: #dfe6ff;
+	font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+	.modern-table {
+		font-size: 0.9rem;
+	}
+
+	.modern-table th,
+	.modern-table td {
+		padding: 0.75rem 0.875rem;
+	}
+}
+
+@media (max-width: 768px) {
+	.registrations-modern {
+		padding: 1rem;
+	}
+
+	.page-header-modern {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.btn-create {
+		width: 100%;
+		text-align: center;
+	}
+
+	.filters-section form {
+		flex-direction: column;
+	}
+
+	.filter-group-modern {
+		width: 100%;
+	}
+
+	.btn-filter,
+	.btn-clear {
+		width: 100%;
+	}
+
+	.table-container {
+		overflow-x: auto;
+	}
+
+	.modern-table {
+		min-width: 800px;
+	}
+}
+
+.disabled {
+	opacity: 0.45;
+}
 </style>

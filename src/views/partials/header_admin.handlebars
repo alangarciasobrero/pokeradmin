@@ -1,12 +1,9 @@
 <header class="pa-header pa-header-admin">
-    <a href="/admin/dashboard" class="brand" style="text-decoration:none; color:inherit; display:inline-flex; align-items:center; gap:0.5rem;">
-        <span class="logo">
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-                <polygon points="19,5 33,19 19,33 5,19" fill="#e53935" stroke="#3949ab" stroke-width="2.2"/>
-                <polygon points="19,8 30,19 19,30 8,19" fill="#FFD6D6" opacity="0.5"/>
-            </svg>
+    <a href="/admin/dashboard" class="brand logo-enhanced" style="text-decoration:none; color:inherit; display:inline-flex; align-items:center; gap:0.8rem;">
+        <span class="logo-wrapper">
+            <img src="/images/ramos-poker-logo.svg" alt="Ramos Poker" class="logo-img" width="48" height="48" />
         </span>
-        <span class="brand-title">PokerAdmin</span>
+        <span class="brand-title-enhanced">Ramos Poker</span>
     </a>
     <nav class="nav">
         <a href="/admin/dashboard">Dashboard</a>
@@ -30,3 +27,41 @@
         {{/if}}
     </div>
 </header>
+
+<style>
+.logo-enhanced {
+    transition: all 0.3s ease;
+}
+.logo-enhanced:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.4));
+}
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: logoFloat 3s ease-in-out infinite;
+}
+.logo-img {
+    filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3));
+    transition: all 0.3s ease;
+}
+.logo-enhanced:hover .logo-img {
+    filter: drop-shadow(0 4px 16px rgba(255, 215, 0, 0.6));
+    transform: scale(1.05);
+}
+.brand-title-enhanced {
+    font-weight: 700;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    letter-spacing: 1px;
+}
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+</style>

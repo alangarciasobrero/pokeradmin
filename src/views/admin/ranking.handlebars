@@ -1,6 +1,19 @@
  
 <div class="admin-ranking">
-  <h1>Ranking</h1>
+  <div class="ranking-header">
+    <h1>🏆 Ranking</h1>
+    <div class="ranking-filters">
+      <label for="seasonFilter">Temporada:</label>
+      <select id="seasonFilter" onchange="window.location.href='/admin/ranking?season='+this.value">
+        <option value="">Todas las temporadas</option>
+        {{#each seasons}}
+        <option value="{{this.id}}" {{#ifEquals this.id ../selectedSeason}}selected{{/ifEquals}}>
+          {{this.nombre}} ({{formatDate this.fecha_inicio}} - {{formatDate this.fecha_fin}})
+        </option>
+        {{/each}}
+      </select>
+    </div>
+  </div>
   {{#if leaderboard.length}}
     <table class="ranking-table">
       <thead>
@@ -16,7 +29,9 @@
         {{#each leaderboard}}
           <tr>
             <td>{{this.position}}</td>
-            <td>{{this.username}}</td>
+            <td>
+              <a href="/player/{{this.username}}" class="player-link">{{this.username}}</a>
+            </td>
             <td><strong>{{this.total_points}}</strong></td>
             <td class="historical-points">{{this.historical_points}}</td>
             <td>${{this.total_winnings}}</td>
@@ -30,10 +45,51 @@
 </div>
 
 <style>
+.ranking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.ranking-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ranking-filters label {
+  font-weight: 600;
+  color: #FFD700;
+}
+.ranking-filters select {
+  padding: 0.5rem 1rem;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.ranking-filters select:hover {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.1);
+}
 .ranking-table { width:100%; border-collapse:collapse }
 .ranking-table th, .ranking-table td { padding:0.6rem 0.8rem; border-bottom:1px solid #eee }
 .ranking-table thead { background: var(--muted-surface) }
 .ranking-table .historical-points { color: #6c757d; font-size: 0.9rem; }
+.ranking-table .player-link {
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.ranking-table .player-link:hover {
+  color: #FFF;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
 </style>
 <section class="ranking-rules">
   <h2>Reglas y configuración</h2>

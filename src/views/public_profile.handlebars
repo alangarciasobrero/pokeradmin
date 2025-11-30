@@ -103,32 +103,9 @@
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<!-- Estadísticas de Cash -->
-		<div class="stats-panel">
-			<h2>💵 Cash Games</h2>
-			<div class="stats-list">
-				<div class="stat-row">
-					<span class="label">Sesiones jugadas:</span>
-					<span class="value">{{stats.cash.total_sessions}}</span>
-				</div>
-				<div class="stat-row">
-					<span class="label">Tiempo total:</span>
-					<span class="value">
-						{{#if stats.cash.total_minutes}}
-							{{#if (gt stats.cash.total_minutes 60)}}
-								~{{#expr}}Math.floor({{stats.cash.total_minutes}} / 60){{/expr}} horas
-							{{else}}
-								{{stats.cash.total_minutes}} minutos
-							{{/if}}
-						{{else}}
-							0 minutos
-						{{/if}}
-					</span>
-				</div>
-			</div>
-
-			<!-- Mejores resultados -->
+	<!-- Mejores resultados -->
 			{{#if stats.topFinishes.length}}
 				<div class="top-finishes">
 					<h3>🌟 Mejores Resultados</h3>

@@ -3,7 +3,6 @@ import { requireAuth } from '../middleware/requireAuth';
 import { User } from '../models/User';
 import { Registration } from '../models/Registration';
 import { Tournament } from '../models/Tournament';
-import CashParticipant from '../models/CashParticipant';
 import sequelize from '../services/database';
 
 const router = Router();
@@ -15,7 +14,7 @@ router.get('/:username', requireAuth, async (req: Request, res: Response) => {
 		
 		const user = await User.findOne({ 
 			where: { username, is_deleted: false },
-			attributes: ['id', 'username', 'avatar', 'current_points', 'created_at']
+			attributes: ['id', 'username', 'avatar', 'current_points']
 		});
 
 		if (!user) {
@@ -44,18 +43,6 @@ router.get('/:username', requireAuth, async (req: Request, res: Response) => {
 				COUNT(CASE WHEN r.action_type = 3 THEN 1 END) as duplos
 			FROM registrations r
 			WHERE r.user_id = :userId
-		`, {
-			replacements: { userId },
-			type: (sequelize as any).QueryTypes.SELECT
-		});
-
-		// Estadísticas de cash games (solo públicas)
-		const cashStats = await sequelize.query(`
-			SELECT 
-				COUNT(DISTINCT cp.cash_game_id) as total_sessions,
-				SUM(TIMESTAMPDIFF(MINUTE, cp.joined_at, COALESCE(cp.left_at, NOW()))) as total_minutes
-			FROM cash_participants cp
-			WHERE cp.user_id = :userId
 		`, {
 			replacements: { userId },
 			type: (sequelize as any).QueryTypes.SELECT
@@ -97,7 +84,6 @@ router.get('/:username', requireAuth, async (req: Request, res: Response) => {
 		const stats = {
 			user: (user as any).get({ plain: true }),
 			tournaments: (tournamentStats as any)[0],
-			cash: (cashStats as any)[0],
 			recentTournaments,
 			topFinishes
 		};

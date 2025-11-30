@@ -29,7 +29,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 				start_date: { [Op.gte]: now }
 			},
 			order: [['start_date', 'ASC']],
-			limit: 3
+			limit: 5
 		});
 
 		// Otros torneos próximos (máximo 6, excluyendo los pinned)

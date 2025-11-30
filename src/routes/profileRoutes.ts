@@ -21,8 +21,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 		// Cargar estadísticas del usuario
 		const registrations = await Registration.findAll({
 			where: { user_id: userId },
-			include: [{ model: Tournament, as: 'tournament' }],
-			order: [['createdAt', 'DESC']],
+			order: [['registration_date', 'DESC']],
 			limit: 10
 		});
 

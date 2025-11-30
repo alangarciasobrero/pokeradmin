@@ -18,6 +18,7 @@ export class Tournament extends Model {
   public registration_open!: boolean;
   public end_date?: Date | null;
   public pinned!: boolean;
+  public season_id?: number | null;
 }
 
 Tournament.init(
@@ -91,6 +92,7 @@ Tournament.init(
     registration_open: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     end_date: { type: DataTypes.DATE, allowNull: true },
     pinned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    season_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   },
   {
     sequelize,
@@ -99,3 +101,7 @@ Tournament.init(
     timestamps: false,
   }
 );
+
+// Import Season after model initialization to avoid circular dependencies
+import { Season } from './Season';
+Tournament.belongsTo(Season, { foreignKey: 'season_id', as: 'season' });

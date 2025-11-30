@@ -6,6 +6,7 @@ import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import { ResultRepository } from '../repositories/ResultRepository';
 import rankingSvc, { DEFAULT_PRIZE_CONFIG } from '../services/rankingCalculator';
 import HistoricalPoint from '../models/HistoricalPoint';
+import { Season } from '../models/Season';
 import fs from 'fs';
 import path from 'path';
 
@@ -51,8 +52,12 @@ function loadPrizeOverride() {
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
   try {
     const includeAll = req.query.includeAll === '1';
+    const seasonId = req.query.season ? Number(req.query.season) : null;
 
-    const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll);
+    // Cargar todas las temporadas para el selector
+    const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
+
+    const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll, seasonId);
 
     console.log('[adminRanking] tournaments loaded:', Array.isArray(tournaments) ? tournaments.length : typeof tournaments);
 
@@ -116,7 +121,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       breakdown: l.breakdown,
     }));
 
-  res.render('admin/ranking', { leaderboard: enriched, username: req.session.username, rules: { pointsTable, prizeOverride } });
+  res.render('admin/ranking', { 
+    leaderboard: enriched, 
+    username: req.session.username, 
+    rules: { pointsTable, prizeOverride },
+    seasons,
+    selectedSeason: seasonId 
+  });
   } catch (err) {
     const e: any = err;
     const stack = String(e && (e.stack || e));
@@ -137,7 +148,8 @@ if (isDev) {
   router.post('/debug', requireAdmin, async (req: Request, res: Response) => {
     try {
       const includeAll = req.query.includeAll === '1';
-      const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll);
+      const seasonId = req.query.season ? Number(req.query.season) : null;
+      const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll, seasonId);
       const regsAll = await registrationRepo.getAll();
       const registrationsByTournament: Record<number, any[]> = {};
       for (const r of regsAll) {

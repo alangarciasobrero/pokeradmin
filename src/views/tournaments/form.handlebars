@@ -36,6 +36,18 @@
                     <option value="true" {{#if tournament.count_to_ranking}}selected{{/if}}>Sí</option>
                     <option value="false" {{#unless tournament.count_to_ranking}}selected{{/unless}}>No</option>
                 </select>
+                <label for="pinned" class="checkbox-inline">
+                    <input type="checkbox" id="pinned" name="pinned" {{#if tournament.pinned}}checked{{/if}}> ⭐ Destacar en dashboard (máximo 5)
+                </label>
+                <label for="season_id">Temporada / Ranking:</label>
+                <select id="season_id" name="season_id">
+                    <option value="">Sin temporada</option>
+                    {{#each seasons}}
+                    <option value="{{this.id}}" {{#ifEquals this.id ../tournament.season_id}}selected{{/ifEquals}}>
+                        {{this.nombre}} ({{formatDate this.fecha_inicio}} - {{formatDate this.fecha_fin}})
+                    </option>
+                    {{/each}}
+                </select>
             </div>
         </div>
         <button type="submit">Guardar</button>

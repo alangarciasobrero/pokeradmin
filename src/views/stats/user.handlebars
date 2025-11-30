@@ -1,4 +1,15 @@
 <div class="stats-container">
+	<div class="season-filter-bar">
+		<label for="seasonFilter">📅 Temporada:</label>
+		<select id="seasonFilter" onchange="window.location.href='/stats/user/{{targetUser.id}}?season='+this.value">
+			<option value="">Todas las temporadas</option>
+			{{#each seasons}}
+			<option value="{{this.id}}" {{#ifEquals this.id ../selectedSeason}}selected{{/ifEquals}}>
+				{{this.nombre}} ({{formatDate this.fecha_inicio}} - {{formatDate this.fecha_fin}})
+			</option>
+			{{/each}}
+		</select>
+	</div>
 	<div class="stats-header">
 		<div class="user-info">
 			{{#if targetUser.avatar}}
@@ -66,6 +77,21 @@
 				<div class="stat-item success">
 					<span class="label">Podios (Top 3):</span>
 					<span class="value">{{stats.tournaments.podium_finishes}}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Gráficos Interactivos -->
+		<div class="stats-section chart-section">
+			<h2>📊 Análisis Visual</h2>
+			<div class="charts-grid">
+				<div class="chart-container">
+					<h3>Distribución de Posiciones</h3>
+					<canvas id="positionChart"></canvas>
+				</div>
+				<div class="chart-container">
+					<h3>Evolución Reciente (Últimos 10 Torneos)</h3>
+					<canvas id="evolutionChart"></canvas>
 				</div>
 			</div>
 		</div>
@@ -194,6 +220,41 @@
 	max-width: 1400px;
 	margin: 2rem auto;
 	padding: 0 1.5rem;
+}
+
+.season-filter-bar {
+	background: rgba(255, 215, 0, 0.1);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	border-radius: 12px;
+	padding: 1rem 1.5rem;
+	margin-bottom: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.season-filter-bar label {
+	font-weight: 600;
+	color: #FFD700;
+	font-size: 1rem;
+}
+
+.season-filter-bar select {
+	padding: 0.6rem 1.2rem;
+	border: 2px solid rgba(255, 215, 0, 0.4);
+	background: rgba(255, 255, 255, 0.05);
+	color: white;
+	border-radius: 8px;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	flex: 1;
+	max-width: 400px;
+}
+
+.season-filter-bar select:hover {
+	border-color: #FFD700;
+	background: rgba(255, 215, 0, 0.15);
 }
 
 .stats-header {
@@ -418,9 +479,42 @@
 	padding: 2rem;
 }
 
+.chart-section {
+	grid-column: 1 / -1;
+}
+
+.charts-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+	gap: 2rem;
+	margin-top: 1.5rem;
+}
+
+.chart-container {
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 215, 0, 0.2);
+	border-radius: 12px;
+	padding: 1.5rem;
+}
+
+.chart-container h3 {
+	color: #FFD700;
+	font-size: 1.1rem;
+	margin: 0 0 1rem 0;
+	text-align: center;
+}
+
+.chart-container canvas {
+	max-height: 300px;
+}
+
 @media (max-width: 1024px) {
 	.stats-grid,
 	.stats-history {
+		grid-template-columns: 1fr;
+	}
+
+	.charts-grid {
 		grid-template-columns: 1fr;
 	}
 }
@@ -441,3 +535,159 @@
 	}
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	// Configuración de tema oscuro para Chart.js
+	Chart.defaults.color = '#dfe6ff';
+	Chart.defaults.borderColor = 'rgba(255, 215, 0, 0.2)';
+	
+	// Gráfico de distribución de posiciones
+	const positionData = {{{json stats.charts.positionDist}}};
+	const positionLabels = {
+		'1st': '🥇 1er Lugar',
+		'2nd-3rd': '🥈 2do-3er',
+		'4th-9th': '📍 4to-9no',
+		'10th+': '❌ 10+' 
+	};
+	
+	if (positionData && positionData.length > 0) {
+		const ctx1 = document.getElementById('positionChart').getContext('2d');
+		new Chart(ctx1, {
+			type: 'doughnut',
+			data: {
+				labels: positionData.map(d => positionLabels[d.position_range] || d.position_range),
+				datasets: [{
+					data: positionData.map(d => d.count),
+					backgroundColor: [
+						'rgba(255, 215, 0, 0.8)',   // Gold
+						'rgba(192, 192, 192, 0.8)', // Silver
+						'rgba(205, 127, 50, 0.8)',  // Bronze
+						'rgba(229, 57, 53, 0.6)'    // Red
+					],
+					borderColor: [
+						'rgba(255, 215, 0, 1)',
+						'rgba(192, 192, 192, 1)',
+						'rgba(205, 127, 50, 1)',
+						'rgba(229, 57, 53, 1)'
+					],
+					borderWidth: 2
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: true,
+				plugins: {
+					legend: {
+						position: 'bottom',
+						labels: {
+							padding: 15,
+							font: { size: 13 }
+						}
+					},
+					tooltip: {
+						backgroundColor: 'rgba(0, 0, 0, 0.8)',
+						padding: 12,
+						titleFont: { size: 14 },
+						bodyFont: { size: 13 }
+					}
+				}
+			}
+		});
+	}
+
+	// Gráfico de evolución
+	const evolutionData = {{{json stats.charts.evolution}}};
+	
+	if (evolutionData && evolutionData.length > 0) {
+		const ctx2 = document.getElementById('evolutionChart').getContext('2d');
+		new Chart(ctx2, {
+			type: 'line',
+			data: {
+				labels: evolutionData.map((d, i) => `T${i + 1}`),
+				datasets: [
+					{
+						label: 'Posición Final',
+						data: evolutionData.map(d => d.position),
+						borderColor: 'rgba(229, 57, 53, 0.8)',
+						backgroundColor: 'rgba(229, 57, 53, 0.1)',
+						borderWidth: 3,
+						tension: 0.4,
+						yAxisID: 'y',
+						pointRadius: 5,
+						pointHoverRadius: 7
+					},
+					{
+						label: 'Puntos Obtenidos',
+						data: evolutionData.map(d => d.points),
+						borderColor: 'rgba(255, 215, 0, 0.8)',
+						backgroundColor: 'rgba(255, 215, 0, 0.1)',
+						borderWidth: 3,
+						tension: 0.4,
+						yAxisID: 'y1',
+						pointRadius: 5,
+						pointHoverRadius: 7
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: true,
+				interaction: {
+					mode: 'index',
+					intersect: false
+				},
+				plugins: {
+					legend: {
+						position: 'top',
+						labels: {
+							padding: 15,
+							font: { size: 13 }
+						}
+					},
+					tooltip: {
+						backgroundColor: 'rgba(0, 0, 0, 0.8)',
+						padding: 12,
+						titleFont: { size: 14 },
+						bodyFont: { size: 13 },
+						callbacks: {
+							title: function(context) {
+								const idx = context[0].dataIndex;
+								const tournament = evolutionData[idx];
+								return tournament.tournament_name;
+							}
+						}
+					}
+				},
+				scales: {
+					y: {
+						type: 'linear',
+						position: 'left',
+						reverse: true,
+						title: {
+							display: true,
+							text: 'Posición',
+							color: '#e53935'
+						},
+						grid: {
+							color: 'rgba(255, 215, 0, 0.1)'
+						}
+					},
+					y1: {
+						type: 'linear',
+						position: 'right',
+						title: {
+							display: true,
+							text: 'Puntos',
+							color: '#FFD700'
+						},
+						grid: {
+							drawOnChartArea: false
+						}
+					}
+				}
+			}
+		});
+	}
+});
+</script>

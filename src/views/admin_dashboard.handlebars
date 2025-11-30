@@ -1,79 +1,547 @@
-<section class="pa-card admin-dashboard">
-  <h1>Admin Dashboard</h1>
+<div class="admin-dashboard-modern">
+	<!-- Sección de bienvenida y estadísticas del día -->
+	<div class="welcome-section">
+		<div class="welcome-card">
+			<h1>🎯 Panel de Administración</h1>
+			<div class="quick-stats">
+				<div class="quick-stat">
+					<span class="stat-icon">🏆</span>
+					<span class="stat-value">{{summary.activeTournaments}}</span>
+					<span class="stat-label">Torneos Activos</span>
+				</div>
+				<div class="quick-stat">
+					<span class="stat-icon">🎰</span>
+					<span class="stat-value">{{summary.activeCashGames}}</span>
+					<span class="stat-label">Mesas Cash</span>
+				</div>
+				<div class="quick-stat">
+					<span class="stat-icon">👥</span>
+					<span class="stat-value">{{summary.playersPlaying}}</span>
+					<span class="stat-label">Jugadores Activos</span>
+				</div>
+				{{#if financialTotals}}
+				<div class="quick-stat">
+					<span class="stat-icon">💰</span>
+					<span class="stat-value">{{currency financialTotals.totalCommission}}</span>
+					<span class="stat-label">Comisión del Día</span>
+				</div>
+				{{/if}}
+			</div>
+			<div class="quick-actions">
+				<a href="/admin/games/tournaments/new" class="btn-primary">🏆 Crear Torneo</a>
+				<a href="/admin/games/cash/new" class="btn-secondary">🎰 Nueva Mesa Cash</a>
+				<a href="/admin/ranking" class="btn-secondary">📊 Ver Ranking</a>
+			</div>
+		</div>
+	</div>
 
-  {{!-- Compact live summary partial (expects `summary`) --}}
-  {{> admin/live_summary summary=summary}}
+	<!-- Torneos activos -->
+	{{#if tournamentsActive.length}}
+		<div class="section">
+			<div class="section-header">
+				<h2>🔴 Torneos Activos HOY</h2>
+				<span class="live-indicator">● EN JUEGO</span>
+			</div>
+			<div class="content-grid">
+				{{#each tournamentsActive}}
+					<div class="content-card tournament-card">
+						<div class="card-badge live-badge">🔴 EN VIVO</div>
+						<div class="content-body">
+							<h3>{{this.name}}</h3>
+							<div class="info-row">
+								<span class="info-item">👥 {{this.players}} jugadores</span>
+								<span class="info-item">⏰ {{formatDateTime this.startedAt}}</span>
+							</div>
+						</div>
+						<div class="content-actions">
+							<a href="/admin/games/tournaments/{{this.id}}/registrations" class="btn-action">📋 Inscripciones</a>
+							<a href="/tournaments/{{this.id}}" class="btn-view">👁️ Ver detalles</a>
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{else}}
+		<div class="section">
+			<div class="section-header">
+				<h2>🏆 Torneos Activos</h2>
+			</div>
+			<div class="empty-state">
+				<span class="empty-icon">🏆</span>
+				<p>No hay torneos activos en este momento</p>
+			</div>
+		</div>
+	{{/if}}
 
-  {{#if financialTotals}}
-    <section class="financial-totals" style="margin-top:1rem;">
-      <h3>Totales financieros del día</h3>
-      <div class="financial-cards" style="display:flex; gap:1.2rem; flex-wrap:wrap;">
-        <div class="card"><strong>Comisión (casa):</strong> {{currency financialTotals.totalCommission}}</div>
-        <div class="card"><strong>Propinas (total):</strong> {{currency financialTotals.totalTips}}</div>
-      </div>
-    </section>
-  {{/if}}
+	<!-- Mesas cash activas -->
+	{{#if cashGamesActive.length}}
+		<div class="section">
+			<div class="section-header">
+				<h2>🎰 Mesas Cash Activas</h2>
+				<a href="/admin/games/cash" class="btn-link">Ver todas →</a>
+			</div>
+			<div class="content-grid">
+				{{#each cashGamesActive}}
+					<div class="content-card cash-card">
+						<div class="card-badge cash-badge">🟢 ABIERTA</div>
+						<div class="content-body">
+							<h3>{{this.tableName}}</h3>
+							<div class="info-row">
+								<span class="info-item">👥 {{this.players}} jugadores</span>
+								<span class="info-item">🎲 Dealer: {{this.dealer}}</span>
+							</div>
+						</div>
+						<div class="content-actions">
+							<a href="/admin/games/cash/{{this.id}}" class="btn-action">📊 Gestionar mesa</a>
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{else}}
+		<div class="section">
+			<div class="section-header">
+				<h2>🎰 Mesas Cash Activas</h2>
+			</div>
+			<div class="empty-state">
+				<span class="empty-icon">🎰</span>
+				<p>No hay mesas cash activas</p>
+			</div>
+		</div>
+	{{/if}}
 
-  <section style="margin-top:1rem;">
-    <h2>Torneos activos</h2>
-    {{#if tournamentsActive}}
-      <ul class="tournament-list">
-        {{#each tournamentsActive}}
-          <li>
-            <div class="tournament-box-link">
-              <div>
-                <strong>{{this.name}}</strong>
-                <div class="tournament-date">Jugadores: {{this.players}}</div>
-              </div>
-              <div>
-                <a class="btn" href="/admin/games/tournaments/{{this.id}}/registrations">Ver inscripciones</a>
-              </div>
-            </div>
-          </li>
-        {{/each}}
-      </ul>
-    {{else}}
-      <p>No hay torneos activos</p>
-    {{/if}}
-  </section>
+	<!-- Deudores del día -->
+	{{#if debtorsToday.length}}
+		<div class="section">
+			<div class="section-header">
+				<h2>⚠️ Deudores del Día</h2>
+				<span class="debtors-count">{{debtorsToday.length}} pendientes</span>
+			</div>
+			<div class="debtors-grid">
+				{{#each debtorsToday}}
+					<div class="debtor-card">
+						<div class="debtor-info">
+							<span class="debtor-name">{{this.name}}</span>
+							<span class="debtor-amount">💰 {{currency this.amountDue}}</span>
+						</div>
+						<a href="/admin/users/{{this.userId}}" class="btn-debtor">Ver perfil</a>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{else}}
+		<div class="section">
+			<div class="section-header">
+				<h2>✅ Deudores del Día</h2>
+			</div>
+			<div class="empty-state success">
+				<span class="empty-icon">✅</span>
+				<p>¡Sin deudas pendientes hoy!</p>
+			</div>
+		</div>
+	{{/if}}
+</div>
 
-  <section style="margin-top:1rem;">
-    <h2>Mesas cash activas</h2>
-    {{#if cashGamesActive}}
-      <ul>
-        {{#each cashGamesActive}}
-          <li>
-            <strong>{{this.tableName}}</strong> — Jugadores: {{this.players}} — Repartidor: {{this.dealer}}
-            <a href="/admin/games/cash/{{this.id}}" class="btn">Ver mesa</a>
-          </li>
-        {{/each}}
-      </ul>
-    {{else}}
-      <p>No hay mesas cash activas</p>
-    {{/if}}
-  </section>
+<style>
+.admin-dashboard-modern {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 2rem;
+}
 
-  <section style="margin-top:1rem;">
-    <h2>Deudores del día</h2>
-    {{#if debtorsToday}}
-      <table class="pa-table">
-        <thead>
-          <tr><th>Usuario</th><th>Deuda</th><th>Acciones</th></tr>
-        </thead>
-        <tbody>
-          {{#each debtorsToday}}
-            <tr>
-              <td>{{this.name}}</td>
-              <td>{{this.amountDue}}</td>
-              <td><a href="/admin/users/{{this.userId}}" class="btn">Ver</a></td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
-    {{else}}
-      <p>No hay deudores hoy</p>
-    {{/if}}
-  </section>
+.welcome-section {
+	margin-bottom: 2.5rem;
+}
 
-</section>
+.welcome-card {
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, transparent 100%);
+	border: 2px solid rgba(255, 215, 0, 0.2);
+	border-radius: 16px;
+	padding: 2rem;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.welcome-card h1 {
+	color: #FFD700;
+	font-size: 2rem;
+	margin: 0 0 2rem 0;
+	text-align: center;
+}
+
+.quick-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.quick-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 1.5rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+	transition: all 0.3s ease;
+}
+
+.quick-stat:hover {
+	transform: translateY(-4px);
+	border-color: rgba(255, 215, 0, 0.3);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.quick-stat .stat-icon {
+	font-size: 2.5rem;
+}
+
+.quick-stat .stat-value {
+	font-size: 2rem;
+	font-weight: 700;
+	color: #FFD700;
+}
+
+.quick-stat .stat-label {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	opacity: 0.8;
+	text-align: center;
+}
+
+.quick-actions {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+	padding: 0.875rem 2rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	display: inline-block;
+}
+
+.btn-primary {
+	background: rgba(255, 215, 0, 0.2);
+	border: 2px solid #FFD700;
+	color: #FFD700;
+}
+
+.btn-primary:hover {
+	background: rgba(255, 215, 0, 0.3);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.btn-secondary {
+	background: rgba(57, 73, 171, 0.2);
+	border: 2px solid rgba(57, 73, 171, 0.5);
+	color: #7B93FF;
+}
+
+.btn-secondary:hover {
+	background: rgba(57, 73, 171, 0.3);
+	border-color: #7B93FF;
+	transform: translateY(-2px);
+}
+
+.section {
+	margin-bottom: 2.5rem;
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+	color: #FFD700;
+	font-size: 1.5rem;
+	margin: 0;
+}
+
+.live-indicator {
+	color: #ff4444;
+	font-weight: 700;
+	font-size: 0.9rem;
+	animation: pulse 2s infinite;
+}
+
+.debtors-count {
+	color: #ff9800;
+	font-weight: 700;
+	font-size: 0.9rem;
+	padding: 0.4rem 0.875rem;
+	background: rgba(255, 152, 0, 0.1);
+	border: 1px solid rgba(255, 152, 0, 0.3);
+	border-radius: 20px;
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+
+.btn-link {
+	color: #7B93FF;
+	text-decoration: none;
+	font-weight: 600;
+	transition: color 0.3s ease;
+}
+
+.btn-link:hover {
+	color: #FFD700;
+}
+
+.content-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+	gap: 1.5rem;
+}
+
+.content-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid rgba(255, 255, 255, 0.08);
+	border-radius: 12px;
+	padding: 1.5rem;
+	transition: all 0.3s ease;
+	position: relative;
+	overflow: hidden;
+}
+
+.content-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tournament-card {
+	border-color: rgba(255, 68, 68, 0.5);
+	background: linear-gradient(135deg, rgba(255, 68, 68, 0.05) 0%, transparent 100%);
+}
+
+.tournament-card:hover {
+	border-color: rgba(255, 68, 68, 0.7);
+}
+
+.cash-card {
+	border-color: rgba(76, 175, 80, 0.3);
+	background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, transparent 100%);
+}
+
+.cash-card:hover {
+	border-color: rgba(76, 175, 80, 0.5);
+}
+
+.card-badge {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	padding: 0.4rem 0.875rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.live-badge {
+	background: rgba(255, 68, 68, 0.9);
+	color: #fff;
+	box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+	animation: glow 2s infinite;
+}
+
+@keyframes glow {
+	0%, 100% { box-shadow: 0 0 20px rgba(255, 68, 68, 0.6); }
+	50% { box-shadow: 0 0 30px rgba(255, 68, 68, 0.8); }
+}
+
+.cash-badge {
+	background: rgba(76, 175, 80, 0.9);
+	color: #fff;
+}
+
+.content-body {
+	margin-top: 0.5rem;
+	margin-bottom: 1.5rem;
+}
+
+.content-body h3 {
+	color: #fff;
+	font-size: 1.25rem;
+	margin: 0 0 1rem 0;
+}
+
+.info-row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.info-item {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	opacity: 0.9;
+}
+
+.content-actions {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.btn-action,
+.btn-view {
+	padding: 0.625rem 1.25rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.9rem;
+	transition: all 0.3s ease;
+	text-align: center;
+	flex: 1;
+}
+
+.btn-action {
+	background: rgba(255, 215, 0, 0.15);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.btn-action:hover {
+	background: rgba(255, 215, 0, 0.25);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.btn-view {
+	background: rgba(57, 73, 171, 0.15);
+	border: 2px solid rgba(57, 73, 171, 0.3);
+	color: #7B93FF;
+}
+
+.btn-view:hover {
+	background: rgba(57, 73, 171, 0.25);
+	border-color: #7B93FF;
+	transform: translateY(-2px);
+}
+
+.empty-state {
+	text-align: center;
+	padding: 3rem 2rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 2px dashed rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+}
+
+.empty-state.success {
+	border-color: rgba(76, 175, 80, 0.3);
+	background: rgba(76, 175, 80, 0.05);
+}
+
+.empty-icon {
+	font-size: 4rem;
+	display: block;
+	margin-bottom: 1rem;
+	opacity: 0.5;
+}
+
+.empty-state p {
+	color: #dfe6ff;
+	opacity: 0.7;
+	margin: 0;
+}
+
+.debtors-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 1rem;
+}
+
+.debtor-card {
+	background: rgba(255, 152, 0, 0.05);
+	border: 2px solid rgba(255, 152, 0, 0.2);
+	border-radius: 12px;
+	padding: 1.25rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transition: all 0.3s ease;
+}
+
+.debtor-card:hover {
+	transform: translateY(-2px);
+	border-color: rgba(255, 152, 0, 0.4);
+	box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+}
+
+.debtor-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.debtor-name {
+	color: #fff;
+	font-weight: 600;
+	font-size: 1rem;
+}
+
+.debtor-amount {
+	color: #ff9800;
+	font-weight: 700;
+	font-size: 0.9rem;
+}
+
+.btn-debtor {
+	padding: 0.5rem 1rem;
+	background: rgba(255, 152, 0, 0.15);
+	border: 2px solid rgba(255, 152, 0, 0.3);
+	border-radius: 8px;
+	color: #ff9800;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.9rem;
+	transition: all 0.3s ease;
+	white-space: nowrap;
+}
+
+.btn-debtor:hover {
+	background: rgba(255, 152, 0, 0.25);
+	border-color: #ff9800;
+	transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+	.admin-dashboard-modern {
+		padding: 1rem;
+	}
+
+	.quick-stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.content-grid,
+	.debtors-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.quick-actions {
+		flex-direction: column;
+	}
+
+	.btn-primary,
+	.btn-secondary {
+		width: 100%;
+	}
+}
+</style>
 

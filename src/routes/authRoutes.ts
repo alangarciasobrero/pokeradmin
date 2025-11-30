@@ -6,22 +6,22 @@ const router = Router();
 
 // GET /login - muestra el formulario de login
 router.get('/login', (req: Request, res: Response) => {
-  res.render('login', { layout: 'main' });
+  res.render('login', { layout: 'auth' });
 });
 
 // POST /login - procesa el login
 router.post('/login', async (req: Request, res: Response) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.render('login', { error: 'Usuario y contraseña requeridos', layout: 'main' });
+    return res.render('login', { error: 'Usuario y contraseña requeridos', layout: 'auth' });
   }
   const user = await UserRepository.findByUsername(username);
   if (!user) {
-    return res.render('login', { error: 'Usuario o contraseña incorrectos', layout: 'main' });
+    return res.render('login', { error: 'Usuario o contraseña incorrectos', layout: 'auth' });
   }
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
-    return res.render('login', { error: 'Usuario o contraseña incorrectos', layout: 'main' });
+    return res.render('login', { error: 'Usuario o contraseña incorrectos', layout: 'auth' });
   }
   // Guardar usuario en sesión
   req.session.userId = user.id;

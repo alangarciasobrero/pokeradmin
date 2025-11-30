@@ -6,6 +6,7 @@ import { Registration } from '../models/Registration';
 import { Payment } from '../models/Payment';
 import { User } from '../models/User';
 import { Result } from '../models/Result';
+import { Season } from '../models/Season';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import sequelize from '../services/database';
 import commissionService from '../services/commissionService';
@@ -78,9 +79,14 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
 });
 
 // New form (render admin form that POSTS back to this SSR route so we can redirect after create)
-router.get('/new', requireAdmin, (req: Request, res: Response) => {
+router.get('/new', requireAdmin, async (req: Request, res: Response) => {
   // Post to the admin POST handler so the browser receives a redirect instead of raw JSON
-  res.render('tournaments/form', { formTitle: 'Nuevo Torneo (Admin)', formAction: '/admin/games/tournaments/new' });
+  const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
+  res.render('tournaments/form', { 
+    formTitle: 'Nuevo Torneo (Admin)', 
+    formAction: '/admin/games/tournaments/new',
+    seasons 
+  });
 });
 
 // Backwards-compatible alias: some links use '/create'
@@ -95,8 +101,8 @@ router.get('/create', requireAdmin, (req: Request, res: Response) => {
 function normalizeTournamentInput(data: any) {
   if (!data || typeof data !== 'object') return data;
   const out: any = { ...data };
-  const numFields = ['buy_in', 're_entry', 'knockout_bounty', 'starting_stack', 'blind_levels', 'small_blind', 'punctuality_discount'];
-  const boolFields = ['count_to_ranking', 'double_points'];
+  const numFields = ['buy_in', 're_entry', 'knockout_bounty', 'starting_stack', 'blind_levels', 'small_blind', 'punctuality_discount', 'season_id'];
+  const boolFields = ['count_to_ranking', 'double_points', 'pinned'];
   const dateFields = ['start_date'];
 
   for (const f of numFields) {
@@ -122,6 +128,10 @@ function normalizeTournamentInput(data: any) {
       const d = new Date(out[f]);
       out[f] = isNaN(d.getTime()) ? out[f] : d;
     }
+  }
+  // season_id: convert empty string to null
+  if (out.season_id === '') {
+    out.season_id = null;
   }
   return out;
 }

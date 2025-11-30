@@ -186,6 +186,10 @@ Handlebars.registerHelper('isAdmin', function(this: any, role: any, opts: any) {
 	return role === 'admin' ? opts.fn(this) : opts.inverse(this);
 });
 
+Handlebars.registerHelper('json', function(context: any) {
+	return JSON.stringify(context);
+});
+
 // Rutas de autenticación (login/logout)
 app.use(authRoutes);
 

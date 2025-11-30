@@ -1,4 +1,5 @@
 import { Tournament } from '../models/Tournament';
+import { Season } from '../models/Season';
 
 /**
  * Repositorio para la entidad Tournament
@@ -40,7 +41,9 @@ export class TournamentRepository {
      * @returns Promise<Tournament | null>
      */
     async getById(id: number): Promise<Tournament | null> {
-        return Tournament.findByPk(id);
+        return Tournament.findByPk(id, {
+            include: [{ model: Season, as: 'season' }]
+        });
     }
 
     /**
@@ -80,9 +83,13 @@ export class TournamentRepository {
 
         /**
          * Obtiene torneos que cuentan para ranking (o todos si includeAll=true)
+         * Opcionalmente filtra por temporada
          */
-        async getTournamentsForRanking(includeAll = false): Promise<Tournament[]> {
-            if (includeAll) return Tournament.findAll();
-            return Tournament.findAll({ where: { count_to_ranking: true } });
+        async getTournamentsForRanking(includeAll = false, seasonId: number | null = null): Promise<Tournament[]> {
+            const where: any = includeAll ? {} : { count_to_ranking: true };
+            if (seasonId !== null) {
+                where.season_id = seasonId;
+            }
+            return Tournament.findAll({ where });
         }
 }

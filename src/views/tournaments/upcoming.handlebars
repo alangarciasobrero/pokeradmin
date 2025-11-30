@@ -4,9 +4,119 @@
 		<p class="subtitle">Todos los eventos programados del circuito</p>
 	</div>
 
+	{{#if pinnedTournaments.length}}
+		<div class="featured-section">
+			<h2 class="section-title">⭐ Torneos Destacados</h2>
+			<div class="tournaments-container featured">
+				{{#each pinnedTournaments}}
+					<div class="tournament-card-full featured-card">
+						<div class="featured-badge">DESTACADO</div>
+						<div class="card-left">
+							<div class="tournament-date-block">
+								<div class="date-day">{{#expr}}new Date('{{this.start_date}}').getDate(){{/expr}}</div>
+								<div class="date-month">
+									{{#expr}}new Date('{{this.start_date}}').toLocaleString('es-AR', { month: 'short' }){{/expr}}
+								</div>
+								<div class="date-time">{{formatDateTime this.start_date}}</div>
+							</div>
+							{{#if this.registration_open}}
+								<span class="status-badge open">✅ Abierto</span>
+							{{else}}
+								<span class="status-badge closed">🔒 Cerrado</span>
+							{{/if}}
+						</div>
+
+						<div class="card-main">
+							<div class="tournament-title-section">
+								<h2>{{this.tournament_name}}</h2>
+								<div class="tournament-badges">
+									{{#if this.count_to_ranking}}
+										<span class="badge ranking">⭐ Ranking</span>
+									{{/if}}
+									{{#if this.double_points}}
+										<span class="badge double-points">⚡ Doble Puntos</span>
+									{{/if}}
+									{{#if this.knockout_bounty}}
+										<span class="badge knockout">💀 Knockout</span>
+									{{/if}}
+								</div>
+							</div>
+
+							<div class="tournament-details-grid">
+								<div class="detail-item">
+									<span class="detail-icon">💰</span>
+									<div class="detail-content">
+										<span class="detail-label">Buy-in</span>
+										<span class="detail-value">${{currency this.buy_in}}</span>
+									</div>
+								</div>
+
+								{{#if this.re_entry}}
+									<div class="detail-item">
+										<span class="detail-icon">🔄</span>
+										<div class="detail-content">
+											<span class="detail-label">Re-entry</span>
+											<span class="detail-value">${{currency this.re_entry}}</span>
+										</div>
+									</div>
+								{{/if}}
+
+								<div class="detail-item">
+									<span class="detail-icon">🎲</span>
+									<div class="detail-content">
+										<span class="detail-label">Stack Inicial</span>
+										<span class="detail-value">{{this.starting_stack}}</span>
+									</div>
+								</div>
+
+								<div class="detail-item">
+									<span class="detail-icon">⏱️</span>
+									<div class="detail-content">
+										<span class="detail-label">Niveles</span>
+										<span class="detail-value">{{this.blind_levels}} min</span>
+									</div>
+								</div>
+
+								<div class="detail-item">
+									<span class="detail-icon">🎯</span>
+									<div class="detail-content">
+										<span class="detail-label">Small Blind</span>
+										<span class="detail-value">{{this.small_blind}}</span>
+									</div>
+								</div>
+
+								{{#if this.knockout_bounty}}
+									<div class="detail-item">
+										<span class="detail-icon">💀</span>
+										<div class="detail-content">
+											<span class="detail-label">Bounty</span>
+											<span class="detail-value">${{currency this.knockout_bounty}}</span>
+										</div>
+									</div>
+								{{/if}}
+
+								{{#if this.punctuality_discount}}
+									<div class="detail-item special">
+										<span class="detail-icon">⏰</span>
+										<div class="detail-content">
+											<span class="detail-label">Descuento Puntualidad</span>
+											<span class="detail-value">${{currency this.punctuality_discount}}</span>
+										</div>
+									</div>
+								{{/if}}
+							</div>
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{/if}}
+
 	{{#if tournaments.length}}
-		<div class="tournaments-container">
-			{{#each tournaments}}
+		<div class="regular-section">
+			<h2 class="section-title">📆 Todos los Torneos Próximos</h2>
+			<div class="tournaments-container">
+				{{#each tournaments}}
 				<div class="tournament-card-full">
 					<div class="card-left">
 						<div class="tournament-date-block">
@@ -119,12 +229,15 @@
 				</div>
 			{{/each}}
 		</div>
-	{{else}}
-		<div class="empty-state">
-			<div class="empty-icon">🎰</div>
-			<h2>No hay torneos programados</h2>
-			<p>Vuelve pronto para ver los próximos eventos</p>
 		</div>
+	{{else}}
+		{{#unless pinnedTournaments.length}}
+			<div class="empty-state">
+				<div class="empty-icon">🎰</div>
+				<h2>No hay torneos programados</h2>
+				<p>Vuelve pronto para ver los próximos eventos</p>
+			</div>
+		{{/unless}}
 	{{/if}}
 </div>
 
@@ -153,6 +266,23 @@
 	margin: 0;
 }
 
+.section-title {
+	color: #FFD700;
+	font-size: 1.8rem;
+	margin: 2rem 0 1.5rem 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.featured-section {
+	margin-bottom: 3rem;
+}
+
+.regular-section {
+	margin-top: 2rem;
+}
+
 .tournaments-container {
 	display: flex;
 	flex-direction: column;
@@ -169,6 +299,28 @@
 	gap: 2rem;
 	align-items: center;
 	transition: all 0.3s ease;
+	position: relative;
+}
+
+.tournament-card-full.featured-card {
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.03) 100%);
+	border: 2px solid rgba(255, 215, 0, 0.4);
+	box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+}
+
+.featured-badge {
+	position: absolute;
+	top: -12px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+	color: #1a1a2e;
+	font-weight: 700;
+	font-size: 0.75rem;
+	padding: 0.35rem 1rem;
+	border-radius: 20px;
+	letter-spacing: 1px;
+	box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
 }
 
 .tournament-card-full:hover {

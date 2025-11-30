@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { TournamentRepository } from '../repositories/TournamentRepository';
-import { requireAdmin } from '../middleware/requireAuth';
+import { requireAdmin, requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
 
 // Lista de torneos (SSR)
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
     const tournaments = await tournamentRepo.getAll();
     res.render('tournaments/list', { 
@@ -19,21 +19,32 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Próximos torneos (vista pública mejorada)
-router.get('/upcoming', async (req: Request, res: Response) => {
+router.get('/upcoming', requireAuth, async (req: Request, res: Response) => {
   try {
     const { Tournament } = await import('../models/Tournament');
     const { Op } = await import('sequelize');
     const now = new Date();
     
-    const upcomingTournaments = await Tournament.findAll({
+    // Obtener torneos pinned y regulares por separado
+    const pinnedTournaments = await Tournament.findAll({
       where: {
+        pinned: true,
+        start_date: { [Op.gte]: now }
+      },
+      order: [['start_date', 'ASC']]
+    });
+
+    const regularTournaments = await Tournament.findAll({
+      where: {
+        pinned: false,
         start_date: { [Op.gte]: now }
       },
       order: [['start_date', 'ASC']]
     });
 
     res.render('tournaments/upcoming', {
-      tournaments: upcomingTournaments.map((t: any) => t.get({ plain: true })),
+      pinnedTournaments: pinnedTournaments.map((t: any) => t.get({ plain: true })),
+      tournaments: regularTournaments.map((t: any) => t.get({ plain: true })),
       username: req.session!.username
     });
   } catch (error) {

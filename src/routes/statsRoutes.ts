@@ -3,6 +3,7 @@ import { requireAuth, requireAdmin } from '../middleware/requireAuth';
 import { User } from '../models/User';
 import { Registration } from '../models/Registration';
 import { Tournament } from '../models/Tournament';
+import { Season } from '../models/Season';
 import CashParticipant from '../models/CashParticipant';
 import CashGame from '../models/CashGame';
 import { Payment } from '../models/Payment';
@@ -27,8 +28,12 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 			return res.status(404).send('Usuario no encontrado');
 		}
 
+		// Filtro de temporada
+		const seasonId = req.query.season ? Number(req.query.season) : null;
+		const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
+
 		// === ESTADÍSTICAS DE TORNEOS ===
-		const tournamentStats = await sequelize.query(`
+		let tournamentStatsQuery = `
 			SELECT 
 				COUNT(DISTINCT r.tournament_id) as total_tournaments,
 				COUNT(CASE WHEN r.action_type = 1 THEN 1 END) as buy_ins,
@@ -39,9 +44,14 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 				MIN(CASE WHEN r.position IS NOT NULL THEN r.position END) as best_position,
 				COUNT(CASE WHEN r.position <= 3 THEN 1 END) as podium_finishes
 			FROM registrations r
-			WHERE r.user_id = :userId
-		`, {
-			replacements: { userId },
+			JOIN tournaments t ON t.id = r.tournament_id
+			WHERE r.user_id = :userId`;
+		if (seasonId) {
+			tournamentStatsQuery += ' AND t.season_id = :seasonId';
+		}
+
+		const tournamentStats = await sequelize.query(tournamentStatsQuery, {
+			replacements: { userId, seasonId },
 			type: (sequelize as any).QueryTypes.SELECT
 		});
 
@@ -77,11 +87,6 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 		// === ÚLTIMOS TORNEOS ===
 		const recentTournaments = await Registration.findAll({
 			where: { user_id: userId },
-			include: [{
-				model: Tournament,
-				as: 'tournament',
-				attributes: ['id', 'tournament_name', 'start_date', 'buy_in']
-			}],
 			order: [['registration_date', 'DESC']],
 			limit: 10
 		});
@@ -89,13 +94,51 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 		// === ÚLTIMAS SESIONES CASH ===
 		const recentCashSessions = await CashParticipant.findAll({
 			where: { user_id: userId },
-			include: [{
-				model: CashGame,
-				as: 'cashGame',
-				attributes: ['id', 'small_blind', 'start_datetime', 'end_datetime', 'dealer']
-			}],
 			order: [['joined_at', 'DESC']],
 			limit: 10
+		});
+
+		// === DATOS PARA GRÁFICOS ===
+		// Distribución de posiciones
+		let positionDistQuery = `
+			SELECT 
+				CASE 
+					WHEN r.position = 1 THEN '1st'
+					WHEN r.position <= 3 THEN '2nd-3rd'
+					WHEN r.position <= 9 THEN '4th-9th'
+					ELSE '10th+'
+				END as position_range,
+				COUNT(*) as count
+			FROM registrations r
+			JOIN tournaments t ON t.id = r.tournament_id
+			WHERE r.user_id = :userId AND r.position IS NOT NULL`;
+		if (seasonId) {
+			positionDistQuery += ' AND t.season_id = :seasonId';
+		}
+		positionDistQuery += ' GROUP BY position_range';
+
+		const positionDist = await sequelize.query(positionDistQuery, {
+			replacements: { userId, seasonId },
+			type: (sequelize as any).QueryTypes.SELECT
+		});
+
+	// Evolución temporal (últimos 10 torneos)
+	let evolutionQuery = `
+		SELECT 
+			t.tournament_name,
+			t.start_date,
+			r.position,
+			COALESCE(tp.points, 0) as points
+		FROM registrations r
+		JOIN tournaments t ON t.id = r.tournament_id
+		LEFT JOIN tournament_points tp ON tp.tournament_id = t.id AND tp.position = r.position
+		WHERE r.user_id = :userId AND r.position IS NOT NULL`;
+	if (seasonId) {
+		evolutionQuery += ' AND t.season_id = :seasonId';
+	}
+	evolutionQuery += ' ORDER BY t.start_date DESC LIMIT 10';		const evolution = await sequelize.query(evolutionQuery, {
+			replacements: { userId, seasonId },
+			type: (sequelize as any).QueryTypes.SELECT
 		});
 
 		const stats = {
@@ -104,7 +147,11 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 			cash: (cashStats as any)[0],
 			payments: (paymentStats as any)[0],
 			recentTournaments: recentTournaments.map((r: any) => r.get({ plain: true })),
-			recentCashSessions: recentCashSessions.map((c: any) => c.get({ plain: true }))
+			recentCashSessions: recentCashSessions.map((c: any) => c.get({ plain: true })),
+			charts: {
+				positionDist: (positionDist as any),
+				evolution: (evolution as any).reverse() // Orden cronológico para el gráfico
+			}
 		};
 
 		res.render('stats/user', {
@@ -112,7 +159,9 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 			targetUser: user.get({ plain: true }),
 			isOwnProfile: userId === currentUserId,
 			isAdmin,
-			username: req.session!.username
+			username: req.session!.username,
+			seasons,
+			selectedSeason: seasonId
 		});
 
 	} catch (err) {
@@ -122,24 +171,23 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 });
 
 // GET /stats/leaderboard - Tabla de clasificación general
-router.get('/leaderboard', requireAuth, async (req: Request, res: Response) => {
+	router.get('/leaderboard', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const metric = (req.query.metric as string) || 'points';
+		const seasonId = req.query.season ? Number(req.query.season) : null;
+		const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
 		
 		let orderBy = 'u.current_points DESC';
 		if (metric === 'tournaments') {
 			orderBy = 'tournament_count DESC';
 		} else if (metric === 'winrate') {
 			orderBy = 'win_rate DESC';
-		} else if (metric === 'cash_sessions') {
-			orderBy = 'cash_sessions DESC';
 		}
 
-		const leaderboard = await sequelize.query(`
+		let leaderboardQuery = `
 			SELECT 
 				u.id,
 				u.username,
-				u.full_name,
 				u.avatar,
 				u.current_points,
 				COUNT(DISTINCT r.tournament_id) as tournament_count,
@@ -149,25 +197,27 @@ router.get('/leaderboard', requireAuth, async (req: Request, res: Response) => {
 					WHEN COUNT(CASE WHEN r.position IS NOT NULL THEN 1 END) > 0 
 					THEN ROUND((COUNT(CASE WHEN r.position = 1 THEN 1 END) * 100.0) / COUNT(CASE WHEN r.position IS NOT NULL THEN 1 END), 2)
 					ELSE 0 
-				END as win_rate,
-				COUNT(DISTINCT cp.cash_game_id) as cash_sessions,
-				COALESCE(SUM(p.paid_amount), 0) as total_paid
+				END as win_rate
 			FROM users u
 			LEFT JOIN registrations r ON r.user_id = u.id
-			LEFT JOIN cash_participants cp ON cp.user_id = u.id
-			LEFT JOIN payments p ON p.user_id = u.id AND p.paid = 1
-			WHERE u.is_deleted = 0 AND u.is_player = 1
-			GROUP BY u.id, u.username, u.full_name, u.avatar, u.current_points
-			ORDER BY ${orderBy}
-			LIMIT 50
-		`, {
+			LEFT JOIN tournaments t ON t.id = r.tournament_id
+			WHERE u.is_deleted = 0 AND u.is_player = 1`;
+		if (seasonId) {
+			leaderboardQuery += ' AND t.season_id = :seasonId';
+		}
+		leaderboardQuery += ` GROUP BY u.id, u.username, u.avatar, u.current_points ORDER BY ${orderBy} LIMIT 50`;
+
+		const leaderboard = await sequelize.query(leaderboardQuery, {
+			replacements: { seasonId },
 			type: (sequelize as any).QueryTypes.SELECT
 		});
 
 		res.render('stats/leaderboard', {
 			leaderboard,
 			currentMetric: metric,
-			username: req.session!.username
+			username: req.session!.username,
+			seasons,
+			selectedSeason: seasonId
 		});
 
 	} catch (err) {

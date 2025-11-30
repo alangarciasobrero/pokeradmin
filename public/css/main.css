@@ -991,3 +991,207 @@ table tbody tr:last-child td {
 	}
 }
 
+/* ===== ANIMACIONES Y MICRO-INTERACCIONES GLOBALES ===== */
+
+/* Fade in suave para todos los elementos principales */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Aplicar fade in a cards y secciones principales */
+.pa-card,
+.home-card,
+.admin-dashboard-modern,
+.admin-cash-modern,
+.admin-tournaments-modern,
+.registrations-modern {
+	animation: fadeIn 0.5s ease-out;
+}
+
+/* Hover suave para todos los botones */
+button,
+.btn,
+a.btn {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active,
+.btn:active,
+a.btn:active {
+	transform: scale(0.96);
+}
+
+/* Pulse sutil para badges importantes */
+@keyframes pulseGlow {
+	0%, 100% {
+		box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 16px rgba(255, 215, 0, 0.6);
+	}
+}
+
+/* Shimmer effect para loading states */
+@keyframes shimmer {
+	0% {
+		background-position: -1000px 0;
+	}
+	100% {
+		background-position: 1000px 0;
+	}
+}
+
+.loading {
+	background: linear-gradient(
+		90deg,
+		rgba(255, 255, 255, 0.02) 0%,
+		rgba(255, 255, 255, 0.08) 50%,
+		rgba(255, 255, 255, 0.02) 100%
+	);
+	background-size: 1000px 100%;
+	animation: shimmer 2s infinite linear;
+}
+
+/* Smooth transitions para inputs */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+textarea,
+select {
+	transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.15);
+}
+
+/* Ripple effect para clicks en botones */
+@keyframes ripple {
+	from {
+		opacity: 1;
+		transform: scale(0);
+	}
+	to {
+		opacity: 0;
+		transform: scale(2.5);
+	}
+}
+
+/* Bounce sutil para elementos interactivos */
+@keyframes subtleBounce {
+	0%, 100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-4px);
+	}
+}
+
+/* Glow effect para elementos destacados */
+.glow-effect {
+	animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Smooth scroll behavior */
+html {
+	scroll-behavior: smooth;
+}
+
+/* Transiciones para modales y overlays */
+.modal,
+.overlay {
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover lift para cards */
+.tournament-card-modern:hover,
+.cash-card-modern:hover,
+.content-card:hover {
+	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.spinner {
+	animation: spin 1s linear infinite;
+}
+
+/* Success/Error message fade out */
+@keyframes messageFadeOut {
+	0% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	80% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+}
+
+.message-auto-hide {
+	animation: messageFadeOut 4s ease-out forwards;
+}
+
+/* Tooltip smooth appear */
+@keyframes tooltipAppear {
+	from {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+[title]:hover::after {
+	animation: tooltipAppear 0.2s ease-out;
+}
+
+/* Scale on hover for interactive elements */
+.interactive:hover {
+	transform: scale(1.02);
+	transition: transform 0.2s ease;
+}
+
+/* Gradient animation for special elements */
+@keyframes gradientShift {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+.gradient-animated {
+	background-size: 200% 200%;
+	animation: gradientShift 3s ease infinite;
+}
+
