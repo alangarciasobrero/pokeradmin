@@ -74,7 +74,13 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!tournament) {
       return res.status(404).send('Torneo no encontrado');
     }
-    res.render('tournaments/detail', { tournament });
+    const isAdmin = req.session?.role === 'admin';
+    const referer = req.get('referer') || '/dashboard';
+    res.render('tournaments/detail', { 
+      tournament,
+      isAdmin,
+      backUrl: referer
+    });
   } catch (error) {
     res.status(500).send('Error al obtener el torneo');
   }

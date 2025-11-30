@@ -27,6 +27,7 @@ import devRoutes from './routes/devRoutes';
 import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
+import adminSeasonRoutes from './routes/adminSeasonRoutes';
 import profileRoutes from './routes/profileRoutes';
 import statsRoutes from './routes/statsRoutes';
 import publicProfileRoutes from './routes/publicProfileRoutes';
@@ -96,7 +97,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Register simple Handlebars helpers
 import Handlebars from 'handlebars';
-import { requireAuth as requireAuthMiddleware, requireAdmin as requireAdminMiddleware } from './middleware/requireAuth';
+import { requireAuth as requireAuthMiddleware, requireAdmin } from './middleware/requireAuth';
 
 Handlebars.registerHelper('range', function(start: number, end: number) {
 	const out = [] as number[];
@@ -115,37 +116,110 @@ Handlebars.registerHelper('formatDate', function(d: any) {
 	if (!d) return '';
 	const dt = new Date(d);
 	if (isNaN(dt.getTime())) return d;
-	return dt.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' });
+	// Formato dd/mm/yyyy
+	const day = String(dt.getDate()).padStart(2, '0');
+	const month = String(dt.getMonth() + 1).padStart(2, '0');
+	const year = dt.getFullYear();
+	return `${day}/${month}/${year}`;
+});
+
+// Helper para inputs de fecha en formato dd/mm/yyyy
+Handlebars.registerHelper('formatDateInput', function(d: any) {
+	if (!d) return '';
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return '';
+	const day = String(dt.getDate()).padStart(2, '0');
+	const month = String(dt.getMonth() + 1).padStart(2, '0');
+	const year = dt.getFullYear();
+	return `${day}/${month}/${year}`;
 });
 
 Handlebars.registerHelper('formatDateTime', function(d: any) {
 	if (!d) return '';
 	const dt = new Date(d);
 	if (isNaN(dt.getTime())) return d;
-	return dt.toLocaleString('es-AR', { 
-		timeZone: 'America/Argentina/Buenos_Aires',
-		dateStyle: 'medium',
-		timeStyle: 'short'
-	});
+	// Formato dd/mm/yyyy HH:mm
+	const day = String(dt.getDate()).padStart(2, '0');
+	const month = String(dt.getMonth() + 1).padStart(2, '0');
+	const year = dt.getFullYear();
+	const hours = String(dt.getHours()).padStart(2, '0');
+	const minutes = String(dt.getMinutes()).padStart(2, '0');
+	return `${day}/${month}/${year} ${hours}:${minutes}`;
 });
-// helper to extract method label (before |by:...)
+// helper to extract method label (before |by: or |By:...) and format nicely
 Handlebars.registerHelper('methodLabel', function(m: any) {
-	if (!m) return '';
-	const s = String(m);
-	const idx = s.indexOf('|by:');
-	return idx === -1 ? s : s.slice(0, idx);
+	if (!m || m === '' || m === null || m === undefined) return '🔖 FIADO';
+	const s = String(m).trim();
+	if (s === '' || s === '0' || s === 'null') return '🔖 FIADO';
+	
+	// Search for |by: case insensitive using regex
+	const match = s.match(/\|by:/i);
+	const method = match ? s.substring(0, match.index).trim() : s;
+	
+	// If method is empty after extraction, it's fiado
+	if (!method || method === '') return '🔖 FIADO';
+	
+	// Format common methods nicely - normalize to lowercase for comparison
+	const methodLower = method.toLowerCase();
+	
+	const methodMap: Record<string, string> = {
+		'cash': '💵 Efectivo',
+		'efectivo': '💵 Efectivo',
+		'transfer': '🏦 Transferencia',
+		'transferencia': '🏦 Transferencia',
+		'card': '💳 Tarjeta',
+		'tarjeta': '💳 Tarjeta',
+		'credit': '🎁 Crédito',
+		'credito': '🎁 Crédito',
+		'credit_consumed': '💳 Crédito usado',
+		'debit': '💸 Débito',
+		'debito': '💸 Débito',
+		'manual': '✍️ Manual',
+		'other': '📝 Otro',
+		'otro': '📝 Otro',
+		'fiado': '🔖 FIADO'
+	};
+	
+	// Direct match first
+	if (methodMap[methodLower]) {
+		return methodMap[methodLower];
+	}
+	
+	// Check if method starts with any key
+	for (const [key, label] of Object.entries(methodMap)) {
+		if (methodLower.startsWith(key)) {
+			return label;
+		}
+	}
+	
+	// If not found, return cleaned method string with first letter uppercase
+	return method.charAt(0).toUpperCase() + method.slice(1).toLowerCase();
 });
-// helper to extract recorder (after |by:)
+// helper to extract recorder (after |by: or |By:)
 Handlebars.registerHelper('recordedBy', function(m: any) {
 	if (!m) return '';
 	const s = String(m);
-	const idx = s.indexOf('|by:');
-	if (idx === -1) return '';
-	return s.slice(idx + 4);
+	// Search for |by: case insensitive using regex
+	const match = s.match(/\|by:(.+)/i);
+	if (!match) return '';
+	// Extract only username (before the colon if there's userId)
+	const fullRecorder = match[1];
+	const colonIdx = fullRecorder.indexOf(':');
+	return colonIdx > -1 ? fullRecorder.substring(0, colonIdx) : fullRecorder;
 });
 Handlebars.registerHelper('currency', function(n: any) {
 	if (n === null || n === undefined) return '';
 	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+});
+Handlebars.registerHelper('debtDisplay', function(n: any) {
+	if (n === null || n === undefined) return '';
+	const num = Number(n);
+	const formatted = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	// Negative amount = user owes money (deuda)
+	if (num < 0) return `<span class="debt-owed" title="El jugador debe dinero">-$${formatted}</span>`;
+	// Positive = user has credit
+	if (num > 0) return `<span class="debt-credit" title="El jugador tiene crédito a favor">+$${formatted}</span>`;
+	return `<span class="debt-zero">$${formatted}</span>`;
 });
 Handlebars.registerHelper('inc', function(value: number) {
 	return Number(value) + 1;
@@ -237,18 +311,21 @@ app.use('/admin/games/ranking', adminRankingRoutes);
 app.use('/admin/games/settings', adminSettingsRoutes);
 
 // Admin bonus calculation
-app.use('/admin/bonus', requireAdminMiddleware, adminBonusRoutes);
+app.use('/admin/bonus', adminBonusRoutes);
+
+// Admin seasons management
+app.use('/admin/seasons', adminSeasonRoutes);
 
 // Admin XLSX import UI
-app.use('/admin/imports', requireAdminMiddleware, adminImportsRoutes);
+app.use('/admin/imports', adminImportsRoutes);
 
 // Admin registrations (SSR)
 app.use('/admin/registrations', adminRegistrationRoutes);
 
 // Admin payments
-app.use('/admin/payments', requireAdminMiddleware, adminPaymentRoutes);
+app.use('/admin/payments', adminPaymentRoutes);
 // Debtors page
-app.use('/admin/debtors', requireAdminMiddleware, adminDebtorsRoutes);
+app.use('/admin/debtors', adminDebtorsRoutes);
 
 // Dev-only routes (auto-login helpers). Registered only in development to avoid exposure.
 if (process.env.NODE_ENV === 'development') {
@@ -260,7 +337,7 @@ if (process.env.NODE_ENV === 'development') {
 
 
 // Dashboard de admin
-app.get('/admin/dashboard', requireAdminMiddleware, getAdminDashboard);
+app.get('/admin/dashboard', requireAdmin, getAdminDashboard);
 
 // Perfil público de jugadores
 app.use('/player', publicProfileRoutes);

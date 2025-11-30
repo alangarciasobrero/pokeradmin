@@ -1,28 +1,243 @@
-<section class="pa-card admin-debtors">
-  <h1>Deudores</h1>
-  <form method="get" action="/admin/debtors">
-    <label for="date">Fecha:</label>
-    <input type="date" id="date" name="date" value="{{formatDate date}}" />
-    <button type="submit">Filtrar</button>
-  </form>
+<div class="debtors-modern">
+  <div class="page-header">
+    <h1>⚠️ Deudores</h1>
+  </div>
+
+  <div class="filters-section">
+    <form method="get" action="/admin/debtors" class="filter-form">
+      <div class="form-group">
+        <label for="date">📅 Filtrar por fecha:</label>
+        <input type="text" id="date" name="date" value="{{formatDate date}}" placeholder="dd/mm/yyyy" class="date-input" />
+      </div>
+      <button type="submit" class="btn-filter">🔍 Filtrar</button>
+    </form>
+  </div>
 
   {{#if rows.length}}
-    <table class="pa-table">
-      <thead><tr><th>Usuario</th><th>Nombre</th><th>Monto adeudado</th><th>Acciones</th></tr></thead>
-      <tbody>
-        {{#each rows}}
-          <tr>
-            <td>{{this.user.username}}</td>
-            <td>{{this.user.full_name}}</td>
-            <td>{{currency this.amountDue}}</td>
-            <td>
-              <a class="btn" href="/admin/users/{{this.user.id}}/ledger">Ver ledger</a>
-            </td>
-          </tr>
-        {{/each}}
-      </tbody>
-    </table>
+    <div class="debtors-grid">
+      {{#each rows}}
+        <div class="debtor-card">
+          <div class="card-header">
+            <div class="user-info">
+              <span class="user-icon">👤</span>
+              <div>
+                <h3>{{this.user.username}}</h3>
+                <p class="full-name">{{this.user.full_name}}</p>
+              </div>
+            </div>
+            <div class="debt-amount">
+              <span class="amount-label">Debe:</span>
+              <span class="amount-value">{{currency this.amountDue}}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a class="btn-ledger" href="/admin/users/{{this.user.id}}/ledger">
+              📊 Ver libro mayor
+            </a>
+          </div>
+        </div>
+      {{/each}}
+    </div>
   {{else}}
-    <p>No hay deudores para la fecha seleccionada</p>
+    <div class="empty-state">
+      <span class="empty-icon">✅</span>
+      <p>No hay deudores para la fecha seleccionada</p>
+    </div>
   {{/if}}
-</section>
+</div>
+
+<style>
+.debtors-modern {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header h1 {
+  color: #FFD700;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.filters-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filter-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.form-group {
+  flex: 1;
+  max-width: 300px;
+}
+
+.form-group label {
+  display: block;
+  color: #dfe6ff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.btn-filter {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  color: #FFD700;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.15));
+  transform: translateY(-2px);
+}
+
+.debtors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.debtor-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.debtor-card:hover {
+  border-color: rgba(244, 67, 54, 0.6);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(244, 67, 54, 0.2);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.user-icon {
+  font-size: 2.5rem;
+}
+
+.user-info h3 {
+  color: #FFD700;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.3rem;
+}
+
+.full-name {
+  color: #dfe6ff;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.debt-amount {
+  text-align: right;
+}
+
+.amount-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.amount-value {
+  display: block;
+  color: #f44336;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-ledger {
+  padding: 0.75rem 1.5rem;
+  background: rgba(33, 150, 243, 0.1);
+  border: 2px solid rgba(33, 150, 243, 0.3);
+  border-radius: 8px;
+  color: #2196F3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-ledger:hover {
+  background: rgba(33, 150, 243, 0.2);
+  border-color: #2196F3;
+  transform: translateY(-2px);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #dfe6ff;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .debtors-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .form-group {
+    max-width: none;
+  }
+  
+  .btn-filter {
+    width: 100%;
+  }
+}
+</style>
+
+<script src="/js/date-input-validator.js"></script>

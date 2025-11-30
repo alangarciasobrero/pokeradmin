@@ -2,8 +2,8 @@
 <!-- Tournament Detail View (Handlebars) -->
 {{!-- Contenedor principal de la vista de detalles de torneo --}}
 <div class="tournament-detail-container">
-    {{!-- Enlace para volver a la lista de torneos --}}
-    <a class="back-link" href="/tournaments">&#8592; Volver a la lista</a>
+    {{!-- Enlace para volver a la página anterior --}}
+    <a class="back-link" href="javascript:history.back()">&#8592; Volver</a>
 
     <h1>
         <svg class="trophy-icon" viewBox="0 0 24 24" fill="none"><defs><radialGradient id="gold" cx="50%" cy="50%" r="80%"><stop offset="0%" stop-color="#fffde4"/><stop offset="100%" stop-color="#FFD600"/></radialGradient></defs><path d="M7 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h1v2.09A7.001 7.001 0 0 0 5 14a7 7 0 0 0 14 0 7.001 7.001 0 0 0-3-5.91V6h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H7Zm1 2V4h8v1H8Zm4 16a5 5 0 0 1-5-5c0-2.21 1.44-4.08 3.5-4.77V6h3v2.23A5.002 5.002 0 0 1 17 13a5 5 0 0 1-5 5Z" fill="url(#gold)" stroke="#FFD600" stroke-width="1.2"/><circle cx="12" cy="19" r="1.2" fill="#FFD600"/></svg>
@@ -25,8 +25,10 @@
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#00bcd4"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">CR</text></svg> Cuenta para Ranking:</span> <span class="badge badge-{{tournament.count_to_ranking}}">{{#if tournament.count_to_ranking}}Sí{{else}}No{{/if}}</span></p>
     {{!-- Doble puntaje --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff7043"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">DP</text></svg> Doble Puntaje:</span> <span class="badge badge-{{tournament.double_points}}">{{#if tournament.double_points}}Sí{{else}}No{{/if}}</span></p>
-    {{!-- Niveles de ciegas --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">BL</text></svg> Niveles de Ciega:</span> {{tournament.blind_levels}}</p>
+    {{!-- Niveles de re-entry --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">RE</text></svg> Niveles Re-entry:</span> {{tournament.blind_levels}} niveles</p>
+    {{!-- Duración de ciegas --}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FF6F00"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">⏱</text></svg> Duración Ciega:</span> {{tournament.small_blind}} minutos</p>
     {{!-- Descuento por puntualidad --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Descuento Puntualidad:</span> ${{tournament.punctuality_discount}}</p>
     {{!-- Temporada --}}
@@ -35,6 +37,7 @@
     {{/if}}
     </div>
 
+    {{#if isAdmin}}
     <div class="admin-actions">
                 {{#if tournament.registration_open}}
                     <button id="openCloseRegistrationsBtn" class="btn btn-warning">🔒 Cerrar Inscripciones y Ver Pozo</button>
@@ -45,6 +48,7 @@
                     <button id="openFinalizeModalBtn" class="btn btn-danger" style="margin-left:0.5rem">🏁 Finalizar Torneo y Asignar Premios</button>
                 {{/if}}
             </div>
+    {{/if}}
 
             <!-- Modal for close registrations (preview only) -->
             <div id="registrationsModal" class="modal" style="display:none;">
@@ -425,40 +429,65 @@
     {{!-- Inline registration form for admins --}}
     {{#isAdmin role}}
     <div class="tournament-registrations">
-        <h2>Registrar jugador</h2>
-        <form method="post" action="/admin/games/tournaments/{{tournament.id}}/register">
-            <label for="action_type">Tipo de acción:</label>
-            <select id="action_type" name="action_type">
-                <option value="1">Buy-in</option>
-                <option value="2">Re-entry</option>
-                <option value="3">Duplo</option>
-            </select>
+        <h2>📝 Registrar jugador en torneo</h2>
+        <form method="post" action="/admin/games/tournaments/{{tournament.id}}/register" id="tournamentRegForm" style="background:rgba(255,255,255,0.03);padding:1.5rem;border-radius:12px;border:1px solid rgba(255,255,255,0.1);">
+            
+            {{!-- Sección 1: Buscar o crear jugador --}}
+            <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid rgba(255,255,255,0.1);">
+                <h3 style="color:#FFD700;margin-top:0;">👤 Seleccionar Jugador</h3>
+                <label for="user_search_input" style="font-weight:600;color:#dfe6ff;">Usuario (buscar):</label>
+                <input list="user_search_list" id="user_search_input" name="user_search_input" placeholder="Escribe username o nombre..." autocomplete="off" style="width:100%;padding:0.75rem;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:0.5rem;" required />
+                <datalist id="user_search_list"></datalist>
+                <input type="hidden" id="user_id" name="user_id" value="" />
+                
+                <details style="margin-top:0.75rem;">
+                    <summary style="cursor:pointer;color:#FFD700;font-weight:600;">+ Crear usuario nuevo</summary>
+                    <div style="margin-top:0.75rem;padding:0.75rem;background:rgba(255,215,0,0.05);border-radius:8px;">
+                        <label for="new_user_username" style="font-weight:600;color:#dfe6ff;">Username:</label>
+                        <input id="new_user_username" name="new_user_username" placeholder="nuevo_username" style="width:100%;padding:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;margin-bottom:0.5rem;">
+                        <label for="new_user_full_name" style="font-weight:600;color:#dfe6ff;">Nombre completo (opcional):</label>
+                        <input id="new_user_full_name" name="new_user_full_name" placeholder="Nombre Apellido" style="width:100%;padding:0.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;margin-bottom:0.5rem;">
+                        <button type="button" id="quick_create_user_btn" style="padding:0.5rem 1rem;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓ Crear y seleccionar</button>
+                    </div>
+                </details>
+            </div>
 
-            <label for="user_search_input">Usuario (buscar o seleccionar):</label>
-            <input list="user_search_list" id="user_search_input" name="user_search_input" placeholder="Escribe username o nombre..." autocomplete="off" />
-            <datalist id="user_search_list"></datalist>
-            <input type="hidden" id="user_id" name="user_id" value="" />
-            <p>O crear usuario rápido:</p>
-            <label for="new_user_username">Usuario:</label>
-            <input id="new_user_username" name="new_user_username" placeholder="nuevo_username">
-            <label for="new_user_full_name">Nombre completo (opcional):</label>
-            <input id="new_user_full_name" name="new_user_full_name" placeholder="Nombre Apellido">
-            <button type="button" id="quick_create_user_btn">Crear y seleccionar</button>
+            {{!-- Sección 2: Tipo de acción DESPUÉS de nombres --}}
+            <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid rgba(255,255,255,0.1);">
+                <h3 style="color:#FFD700;margin-top:0;">🎯 Tipo de Inscripción</h3>
+                <label for="action_type" style="font-weight:600;color:#dfe6ff;">Acción:</label>
+                <select id="action_type" name="action_type" required style="width:100%;padding:0.75rem;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:1rem;">
+                    <option value="1">💰 Buy-in (Entrada inicial)</option>
+                    <option value="2">🔄 Re-entry (Reentrada)</option>
+                    <option value="3">✨ Duplo (Doble)</option>
+                </select>
+                <small style="color:rgba(255,255,255,0.6);font-size:0.85rem;display:block;margin-top:0.5rem;">
+                    ℹ️ Solo puede haber UN buy-in por jugador en este torneo
+                </small>
+            </div>
 
-            <label for="amount_paid">Monto pagado ahora:</label>
-            <input type="number" id="amount_paid" name="amount_paid" step="0.01" min="0">
+            {{!-- Sección 3: Pago --}}
+            <div style="margin-bottom:1.5rem;">
+                <h3 style="color:#FFD700;margin-top:0;">💵 Información de Pago</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <label for="amount_paid" style="font-weight:600;color:#dfe6ff;">Monto pagado ahora (vacío = FIADO):</label>
+                        <input type="number" id="amount_paid" name="amount_paid" step="0.01" min="0" placeholder="Dejar vacío si es fiado" style="width:100%;padding:0.75rem;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;">
+                    </div>
+                    <div>
+                        <label for="method" style="font-weight:600;color:#dfe6ff;">Método de pago:</label>
+                        <select id="method" name="method" style="width:100%;padding:0.75rem;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;">
+                            <option value="">🔖 No paga (FIADO)</option>
+                            <option value="cash" selected>💵 Efectivo</option>
+                            <option value="transfer">🏦 Transferencia</option>
+                            <option value="card">💳 Tarjeta</option>
+                            <option value="other">📝 Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-            <label for="method">Método de pago:</label>
-            <select id="method" name="method">
-                <option value="cash">Efectivo</option>
-                <option value="card">Tarjeta</option>
-                <option value="transfer">Transferencia</option>
-                <option value="other">Otro</option>
-            </select>
-
-            <!-- removed duplicate action_type select (kept the first one above) -->
-
-            <button type="submit">Registrar</button>
+            <button type="submit" style="width:100%;padding:1rem;background:linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.1));border:2px solid #4CAF50;border-radius:10px;color:#4CAF50;font-size:1.1rem;font-weight:700;cursor:pointer;">✔️ Registrar Inscripción</button>
         </form>
         <script src="/js/user-autocomplete.js"></script>
         <script src="/js/typeahead-quickcreate.js"></script>
@@ -466,16 +495,78 @@
             // attach typeahead for tournament registration (fallbacks to old autocomplete if needed)
             (function(){
                 if (window.TypeaheadQuickCreate) {
-                    window.TypeaheadQuickCreate.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' });
+                    window.TypeaheadQuickCreate.attach({ 
+                        inputSelector: '#user_search_input', 
+                        hiddenSelector: '#user_id',
+                        onNoResults: (query) => {
+                            // Cuando no hay resultados al presionar Enter, abrir modal
+                            if (confirm(`No se encontró "${query}".\n\n¿Deseas crear este usuario?`)) {
+                                window.TypeaheadQuickCreate.openQuickCreate({ 
+                                    inputSelector: '#user_search_input', 
+                                    hiddenSelector: '#user_id',
+                                    prefillUsername: query
+                                });
+                            }
+                        }
+                    });
                 } else if (window.UserAutocomplete) {
                     window.UserAutocomplete.attach({ inputSelector: '#user_search_input', hiddenSelector: '#user_id', datalistSelector: '#user_search_list' });
                 }
 
-                // wire quick create button to open modal
+                // wire quick create button to create inline (NO modal)
                 const btn = document.getElementById('quick_create_user_btn');
                 if (btn && window.TypeaheadQuickCreate) {
                     btn.addEventListener('click', async () => {
-                        window.TypeaheadQuickCreate.openQuickCreate({ inputSelector: '#user_search_input', hiddenSelector: '#user_id' });
+                        const u = document.getElementById('new_user_username');
+                        const f = document.getElementById('new_user_full_name');
+                        const uval = u && u.value ? u.value.trim() : '';
+                        const fval = f && f.value ? f.value.trim() : '';
+                        
+                        if (!uval) {
+                            alert('⚠️ Ingresa un username válido');
+                            return;
+                        }
+
+                        try {
+                            const res = await fetch('/admin/users/quick-create', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify({ username: uval, full_name: fval }) 
+                            });
+                            const created = await res.json();
+                            
+                            if (!res.ok) {
+                                alert('❌ Error: ' + (created.error || 'No se pudo crear el usuario'));
+                                return;
+                            }
+
+                            // Seleccionar el usuario creado
+                            const hid = document.getElementById('user_id');
+                            const input = document.getElementById('user_search_input');
+                            if (hid) hid.value = created.id;
+                            if (input) input.value = `${created.username}${created.full_name ? ' - ' + created.full_name : ''}`;
+                            
+                            // Limpiar campos
+                            if (u) u.value = '';
+                            if (f) f.value = '';
+
+                            // Cerrar el details expandible
+                            const details = btn.closest('details');
+                            if (details) details.open = false;
+                            
+                            // Mostrar contraseña temporal
+                            if (created.tempPassword) {
+                                alert(`✅ Usuario creado exitosamente!\n\n` +
+                                      `👤 Username: ${created.username}\n` +
+                                      `🔑 Contraseña temporal: ${created.tempPassword}\n\n` +
+                                      `⚠️ IMPORTANTE: Guarda esta contraseña, el usuario la necesitará para iniciar sesión.`);
+                            } else {
+                                alert('✅ Usuario creado y seleccionado');
+                            }
+                        } catch (err) {
+                            alert('❌ Error de red al crear usuario');
+                            console.error(err);
+                        }
                     });
                 } else if (btn && window.UserAutocomplete) {
                     // legacy fallback: inline quick-create
@@ -493,10 +584,54 @@
                             if (input) input.value = `${created.username}${created.full_name ? " - " + created.full_name : ""}`;
                             if (u) u.value = '';
                             if (f) f.value = '';
-                            alert('Usuario creado y seleccionado');
+                            
+                            // Mostrar contraseña temporal generada
+                            if (created.tempPassword) {
+                                alert(`✅ Usuario creado exitosamente!\n\n` +
+                                      `👤 Username: ${created.username}\n` +
+                                      `🔑 Contraseña temporal: ${created.tempPassword}\n\n` +
+                                      `⚠️ IMPORTANTE: Guarda esta contraseña, el usuario la necesitará para iniciar sesión.`);
+                            } else {
+                                alert('Usuario creado y seleccionado');
+                            }
                         } catch (err) {
                             alert('Error creando usuario: ' + (err && err.error ? err.error : err));
                         }
+                    });
+                }
+
+                // Validación de buy-in duplicado
+                const form = document.getElementById('tournamentRegForm');
+                const actionTypeSelect = document.getElementById('action_type');
+                const userIdInput = document.getElementById('user_id');
+
+                if (form) {
+                    form.addEventListener('submit', async (e) => {
+                        const actionType = actionTypeSelect ? actionTypeSelect.value : '';
+                        const userId = userIdInput ? userIdInput.value : '';
+
+                        // Solo validar si es Buy-in (action_type = 1)
+                        if (actionType === '1' && userId) {
+                            e.preventDefault();
+                            
+                            try {
+                                const response = await fetch(`/admin/registrations/check-buyin?tournament_id={{tournament.id}}&user_id=${userId}`);
+                                const data = await response.json();
+                                
+                                if (data.exists) {
+                                    alert('⚠️ Este jugador ya tiene un Buy-in registrado en este torneo.\n\nSolo puede haber UN buy-in por jugador. Si quieres agregar una reentrada, selecciona "Re-entry" en el tipo de acción.');
+                                    return;
+                                }
+                                
+                                // Si no existe, enviar el formulario
+                                form.submit();
+                            } catch (err) {
+                                console.error('Error validando buy-in:', err);
+                                // En caso de error, permitir envío (no bloquear)
+                                form.submit();
+                            }
+                        }
+                        // Si no es buy-in o no hay userId, dejar que se envíe normalmente
                     });
                 }
             })();

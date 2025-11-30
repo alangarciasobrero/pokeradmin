@@ -48,6 +48,32 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+// Check if buy-in already exists for validation
+router.get('/check-buyin', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.query.user_id);
+    const tournamentId = Number(req.query.tournament_id);
+    
+    if (!userId || !tournamentId) {
+      return res.json({ exists: false });
+    }
+
+    const { Registration } = await import('../models/Registration');
+    const existingBuyin = await Registration.findOne({
+      where: {
+        user_id: userId,
+        tournament_id: tournamentId,
+        action_type: 1 // Buy-in
+      }
+    });
+
+    res.json({ exists: !!existingBuyin });
+  } catch (err) {
+    console.error(err);
+    res.json({ exists: false });
+  }
+});
+
 // New form: need tournaments and users for select options
 router.get('/new', requireAdmin, async (req: Request, res: Response) => {
   try {

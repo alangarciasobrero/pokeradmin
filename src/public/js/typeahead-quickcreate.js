@@ -31,14 +31,16 @@
     const minChars = opts.minChars || 2;
     const dd = createDropdown(input);
     let results = [];
+    let selectedIndex = -1;
 
     input.addEventListener('input', async () => {
       const q = input.value.trim();
       hidden && (hidden.value = '');
+      selectedIndex = -1;
       if (q.length < minChars) { dd.innerHTML = ''; return; }
       results = await searchUsers(q, opts.limit || 20);
       dd.innerHTML = '';
-      results.forEach(u => {
+      results.forEach((u, idx) => {
         const item = document.createElement('div');
         item.className = 'ta-item';
         item.style.padding = '6px 8px';
@@ -48,14 +50,72 @@
         const isRegistered = (window.REGISTERED_USERS && window.REGISTERED_USERS.has && window.REGISTERED_USERS.has(String(u.id))) || (window.REGISTERED_USERS && window.REGISTERED_USERS.has && window.REGISTERED_USERS.has(Number(u.id)));
         item.textContent = label + (isRegistered ? ' (inscrito)' : '');
         item.dataset.uid = u.id;
+        item.dataset.idx = idx;
         item.addEventListener('click', () => {
-          input.value = item.textContent;
-          hidden && (hidden.value = item.dataset.uid);
-          dd.innerHTML = '';
+          selectUser(u, item.textContent);
         });
         dd.appendChild(item);
       });
     });
+
+    // Keyboard navigation
+    input.addEventListener('keydown', async (e) => {
+      const items = dd.querySelectorAll('.ta-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        highlightItem(items, selectedIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        highlightItem(items, selectedIndex);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const q = input.value.trim();
+        
+        // Si hay un item seleccionado con las flechas
+        if (selectedIndex >= 0 && items[selectedIndex]) {
+          const selectedItem = items[selectedIndex];
+          const userId = selectedItem.dataset.uid;
+          const user = results.find(u => String(u.id) === userId);
+          if (user) {
+            selectUser(user, selectedItem.textContent);
+          }
+        }
+        // Si hay resultados pero ninguno seleccionado, seleccionar el primero
+        else if (results.length > 0) {
+          selectUser(results[0], items[0].textContent);
+        }
+        // Si no hay resultados y hay texto, abrir modal de crear usuario
+        else if (q.length >= minChars) {
+          dd.innerHTML = '';
+          if (opts.onNoResults) {
+            opts.onNoResults(q);
+          }
+        }
+      } else if (e.key === 'Escape') {
+        dd.innerHTML = '';
+        selectedIndex = -1;
+      }
+    });
+
+    function selectUser(user, displayText) {
+      input.value = displayText;
+      hidden && (hidden.value = user.id);
+      dd.innerHTML = '';
+      selectedIndex = -1;
+    }
+
+    function highlightItem(items, index) {
+      items.forEach((item, idx) => {
+        if (idx === index) {
+          item.style.backgroundColor = 'rgba(255, 215, 0, 0.2)';
+        } else {
+          item.style.backgroundColor = '';
+        }
+      });
+    }
 
     // hide on outside click
     document.addEventListener('click', (ev) => {
@@ -103,15 +163,27 @@
           hiddenEl && (hiddenEl.value = j.id);
           inputEl && (inputEl.value = `${j.username}${j.full_name ? ' - ' + j.full_name : ''}`);
           modal.style.display = 'none';
+          // Show temp password if generated
+          if (j.tempPassword) {
+            setTimeout(() => {
+              alert(`✅ Usuario creado exitosamente!\n\n` +
+                    `👤 Username: ${j.username}\n` +
+                    `🔑 Contraseña temporal: ${j.tempPassword}\n\n` +
+                    `⚠️ IMPORTANTE: Guarda esta contraseña.`);
+            }, 100);
+          }
         } catch (e) {
           msg.textContent = 'Error de red';
         }
       });
     }
-    // reset fields and show
-    const uReset = document.getElementById('ta_qc_username'); if (uReset) uReset.value = '';
-    const fReset = document.getElementById('ta_qc_fullname'); if (fReset) fReset.value = '';
-    const msgReset = document.getElementById('ta_qc_msg'); if (msgReset) msgReset.textContent = '';
+    // reset or prefill fields and show
+    const uReset = document.getElementById('ta_qc_username'); 
+    if (uReset) uReset.value = opts.prefillUsername || '';
+    const fReset = document.getElementById('ta_qc_fullname'); 
+    if (fReset) fReset.value = '';
+    const msgReset = document.getElementById('ta_qc_msg'); 
+    if (msgReset) msgReset.textContent = '';
     modal.style.display = 'flex';
   }
 

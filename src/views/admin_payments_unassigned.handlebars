@@ -10,7 +10,7 @@
             <td>{{this.id}}</td>
             <td>{{this.reference_id}}</td>
             <td>{{currency this.amount}}</td>
-            <td>{{this.method}}</td>
+            <td>{{methodLabel this.method}}</td>
             <td>
               <form method="post" action="/admin/payments/unassigned/{{this.id}}/assign">
                 <input name="user_id" placeholder="user id" style="width:100px;" />

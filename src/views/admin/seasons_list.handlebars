@@ -1,0 +1,328 @@
+<div class="admin-seasons-modern">
+  <div class="page-header-modern">
+    <h1>🗓️ Gestión de Temporadas</h1>
+    <a href="/admin/seasons/new" class="btn-create">+ Nueva Temporada</a>
+  </div>
+
+  {{#if seasons.length}}
+    <div class="seasons-grid">
+      {{#each seasons}}
+        <div class="season-card season-{{this.estado}}">
+          <div class="card-header-modern">
+            <span class="season-name">{{this.nombre}}</span>
+            <span class="status-badge status-{{this.estado}}">
+              {{#if (eq this.estado 'activa')}}🟢 Activa{{/if}}
+              {{#if (eq this.estado 'planificada')}}🔵 Planificada{{/if}}
+              {{#if (eq this.estado 'finalizada')}}⚫ Finalizada{{/if}}
+            </span>
+          </div>
+          
+          <div class="card-body-modern">
+            <div class="date-range">
+              <div class="date-item">
+                <span class="date-label">📅 Inicio:</span>
+                <span class="date-value">{{formatDate this.fecha_inicio}}</span>
+              </div>
+              <div class="date-item">
+                <span class="date-label">📅 Fin:</span>
+                <span class="date-value">{{formatDate this.fecha_fin}}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card-footer-modern">
+            <a href="/admin/seasons/{{this.id}}/edit" class="btn-edit">✏️ Editar</a>
+            <form method="post" action="/admin/seasons/{{this.id}}/delete" class="delete-form">
+              <button class="btn-delete" type="submit" onclick="return confirm('¿Eliminar temporada {{this.nombre}}?')">🗑️ Eliminar</button>
+            </form>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="empty-state">
+      <span class="empty-icon">🗓️</span>
+      <p>No hay temporadas creadas</p>
+      <a href="/admin/seasons/new" class="btn-primary">Crear primera temporada</a>
+    </div>
+  {{/if}}
+</div>
+
+<style>
+.admin-seasons-modern {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header-modern h1 {
+  color: #FFD700;
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.btn-create {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.btn-create:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.seasons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.season-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.season-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.season-card.season-activa::before {
+  background: linear-gradient(90deg, #4CAF50 0%, #81C784 50%, #4CAF50 100%);
+}
+
+.season-card.season-planificada::before {
+  background: linear-gradient(90deg, #2196F3 0%, #64B5F6 50%, #2196F3 100%);
+}
+
+.season-card.season-finalizada::before {
+  background: linear-gradient(90deg, #757575 0%, #9E9E9E 50%, #757575 100%);
+}
+
+.season-card:hover::before {
+  opacity: 1;
+}
+
+.season-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.card-header-modern {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 1rem;
+}
+
+.season-name {
+  color: #FFD700;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.status-badge {
+  padding: 0.4rem 0.875rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-activa {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.status-planificada {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196F3;
+  border: 1px solid rgba(33, 150, 243, 0.4);
+}
+
+.status-finalizada {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9E9E9E;
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.card-body-modern {
+  padding: 1.5rem 1.25rem;
+}
+
+.date-range {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.date-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.date-label {
+  color: #dfe6ff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.date-value {
+  color: #fff;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.card-footer-modern {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  gap: 0.75rem;
+}
+
+.delete-form {
+  flex: 1;
+  margin: 0;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid;
+  text-align: center;
+  cursor: pointer;
+  flex: 1;
+}
+
+.btn-edit {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+}
+
+.btn-edit:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.btn-delete {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.btn-delete:hover {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  color: #dfe6ff;
+  font-size: 1.2rem;
+  margin: 0 0 1.5rem 0;
+}
+
+.btn-primary {
+  padding: 0.875rem 2rem;
+  background: rgba(255, 215, 0, 0.2);
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .admin-seasons-modern {
+    padding: 1rem;
+  }
+
+  .page-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-create {
+    width: 100%;
+    text-align: center;
+  }
+
+  .seasons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header-modern {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+</style>

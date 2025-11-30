@@ -22,40 +22,135 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const perPage = Math.min(100, Math.max(5, Number(req.query.per_page) || 20));
   const offset = (page - 1) * perPage;
+  
+  // Extraer todos los filtros
   const showClosed = req.query.show_closed === 'true';
-  const dateFrom = req.query.date_from as string;
-  const dateTo = req.query.date_to as string;
+  const dateFromStr = req.query.date_from as string;
+  const dateToStr = req.query.date_to as string;
+  const dayOfWeek = req.query.day_of_week as string;
+  
+  // Importar utilidades de fecha
+  const { parseDateDMY, formatDateDMY } = await import('../utils/dateUtils');
+  const buyInRange = req.query.buy_in_range as string;
+  const seasonId = req.query.season_id as string;
+  const status = req.query.status as string;
+  const search = req.query.search as string;
+  const doublePoints = req.query.double_points === 'true';
+  const knockout = req.query.knockout === 'true';
+  const countRanking = req.query.count_ranking === 'true';
 
   try {
-    const whereClause: any = showClosed ? {} : { registration_open: true };
+    const { Op } = await import('sequelize');
+    const whereClause: any = {};
     
-    // Add date filters if provided
-    if (dateFrom || dateTo) {
+    // Filtro por estado (status overrides show_closed)
+    if (status === 'open') {
+      whereClause.registration_open = true;
+      whereClause.end_date = null;
+    } else if (status === 'closed') {
+      whereClause.registration_open = false;
+      whereClause.end_date = null;
+    } else if (status === 'finished') {
+      whereClause.end_date = { [Op.ne]: null };
+    } else if (!showClosed) {
+      whereClause.registration_open = true;
+    }
+    
+    // Filtro por búsqueda de nombre
+    if (search && search.trim()) {
+      whereClause.tournament_name = { [Op.like]: `%${search.trim()}%` };
+    }
+    
+    // Filtro por rango de fechas (formato dd/mm/yyyy)
+    if (dateFromStr || dateToStr) {
       whereClause.start_date = {};
-      if (dateFrom) {
-        whereClause.start_date[(await import('sequelize')).Op.gte] = new Date(dateFrom);
+      if (dateFromStr) {
+        const dateFrom = parseDateDMY(dateFromStr);
+        if (dateFrom) {
+          whereClause.start_date[Op.gte] = dateFrom;
+        }
       }
-      if (dateTo) {
-        const endDate = new Date(dateTo);
-        endDate.setHours(23, 59, 59, 999); // Include entire day
-        whereClause.start_date[(await import('sequelize')).Op.lte] = endDate;
+      if (dateToStr) {
+        const dateTo = parseDateDMY(dateToStr);
+        if (dateTo) {
+          dateTo.setHours(23, 59, 59, 999);
+          whereClause.start_date[Op.lte] = dateTo;
+        }
       }
     }
     
-    const { rows, count } = await (await import('../models/Tournament')).Tournament.findAndCountAll({
-      where: whereClause,
-      limit: perPage,
-      offset,
-      order: [['start_date', 'DESC']]
-    });
+    // Filtro por día de la semana (0=domingo, 1=lunes, ..., 6=sábado)
+    if (dayOfWeek !== undefined && dayOfWeek !== '') {
+      const dayNum = parseInt(dayOfWeek);
+      whereClause[Op.and] = whereClause[Op.and] || [];
+      whereClause[Op.and].push(
+        (await import('sequelize')).where(
+          (await import('sequelize')).fn('DAYOFWEEK', (await import('sequelize')).col('start_date')),
+          dayNum + 1 // MySQL DAYOFWEEK: 1=domingo, 2=lunes, etc
+        )
+      );
+    }
+    
+    // Filtro por rango de buy-in
+    if (buyInRange) {
+      if (buyInRange === '0-50') {
+        whereClause.buy_in = { [Op.between]: [0, 50] };
+      } else if (buyInRange === '50-100') {
+        whereClause.buy_in = { [Op.between]: [50, 100] };
+      } else if (buyInRange === '100-200') {
+        whereClause.buy_in = { [Op.between]: [100, 200] };
+      } else if (buyInRange === '200-500') {
+        whereClause.buy_in = { [Op.between]: [200, 500] };
+      } else if (buyInRange === '500+') {
+        whereClause.buy_in = { [Op.gte]: 500 };
+      }
+    }
+    
+    // Filtro por temporada
+    if (seasonId) {
+      whereClause.season_id = parseInt(seasonId);
+    }
+    
+    // Filtros por características especiales
+    if (doublePoints) {
+      whereClause.double_points = true;
+    }
+    if (knockout) {
+      whereClause.knockout_bounty = { [Op.gt]: 0 };
+    }
+    if (countRanking) {
+      whereClause.count_to_ranking = true;
+    }
+    
+    // Obtener torneos y temporadas
+    const [{ rows, count }, seasons] = await Promise.all([
+      (await import('../models/Tournament')).Tournament.findAndCountAll({
+        where: whereClause,
+        limit: perPage,
+        offset,
+        order: [['start_date', 'DESC']]
+      }),
+      (await import('../models/Season')).Season.findAll({
+        order: [['fecha_inicio', 'DESC']]
+      })
+    ]);
 
     const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
 
+    // Construir queryParams para paginación
     const queryParams = new URLSearchParams();
     queryParams.set('per_page', perPage.toString());
-    queryParams.set('show_closed', showClosed.toString());
-    if (dateFrom) queryParams.set('date_from', dateFrom);
-    if (dateTo) queryParams.set('date_to', dateTo);
+    if (showClosed) queryParams.set('show_closed', 'true');
+    if (dateFromStr) queryParams.set('date_from', dateFromStr);
+    if (dateToStr) queryParams.set('date_to', dateToStr);
+    if (dayOfWeek) queryParams.set('day_of_week', dayOfWeek);
+    if (buyInRange) queryParams.set('buy_in_range', buyInRange);
+    if (seasonId) queryParams.set('season_id', seasonId);
+    if (status) queryParams.set('status', status);
+    if (search) queryParams.set('search', search);
+    if (doublePoints) queryParams.set('double_points', 'true');
+    if (knockout) queryParams.set('knockout', 'true');
+    if (countRanking) queryParams.set('count_ranking', 'true');
 
     const links = {
       prev: page > 1 ? `/admin/games/tournaments/list?page=${page - 1}&${queryParams.toString()}` : null,
@@ -64,12 +159,21 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
 
     res.render('admin/tournaments_list', {
       tournaments: rows,
+      seasons,
       username: req.session.username,
       meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
       links,
       showClosed,
-      dateFrom: dateFrom || '',
-      dateTo: dateTo || '',
+      dateFrom: dateFromStr || '',
+      dateTo: dateToStr || '',
+      dayOfWeek: dayOfWeek || '',
+      buyInRange: buyInRange || '',
+      seasonId: seasonId || '',
+      status: status || '',
+      search: search || '',
+      doublePoints,
+      knockout,
+      countRanking,
       queryString: queryParams.toString()
     });
   } catch (err) {

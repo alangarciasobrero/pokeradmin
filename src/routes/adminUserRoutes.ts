@@ -76,7 +76,8 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
       try {
         // Esperamos columnas: username, password, first_name, last_name, email, role
         const username = row.username || row.user || row.Username || row.User;
-        const password = row.password || row.pass || 'changeme';
+        // Si no hay password en CSV, generar una basada en username (primeras 4 letras + 4 dígitos)
+        const password = row.password || row.pass || (username ? username.substring(0, 4).toLowerCase() + Math.floor(1000 + Math.random() * 9000) : 'changeme');
         let first_name = row.first_name || row.firstName || row.FirstName || null;
         let last_name = row.last_name || row.lastName || row.LastName || null;
         // Support a single `full_name` column and split it into first/last when possible
@@ -162,10 +163,20 @@ router.post('/quick-create', requireAdmin, async (req: Request, res: Response) =
     // ensure username uniqueness
     const existing = await User.findOne({ where: { username } });
     if (existing) return res.status(409).json({ error: 'username exists', id: existing.id, username: existing.username });
+    
+    // Generar contraseña temporal: primeras 4 letras del username + 4 dígitos aleatorios
+    const tempPassword = username.substring(0, 4).toLowerCase() + Math.floor(1000 + Math.random() * 9000);
+    
     const bcrypt = await import('bcrypt');
-    const hash = await bcrypt.hash('imported', 10);
+    const hash = await bcrypt.hash(tempPassword, 10);
     const newUser = await User.create({ username, password_hash: hash, full_name: full_name || null, is_player: true });
-    return res.status(201).json({ id: newUser.id, username: newUser.username, full_name: newUser.full_name });
+    
+    return res.status(201).json({ 
+      id: newUser.id, 
+      username: newUser.username, 
+      full_name: newUser.full_name,
+      tempPassword: tempPassword // Enviar contraseña temporal al frontend
+    });
   } catch (err) {
     console.error('quick-create user error', err);
     return res.status(500).json({ error: 'error creating user', details: err });

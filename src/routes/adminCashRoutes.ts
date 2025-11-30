@@ -158,21 +158,37 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
 // Create via admin form (POST to API already exists, but provide server-side forwarding)
 router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
+    const { initial_pot, small_blind, dealer } = req.body;
+    
+    // Validaciones
+    if (!small_blind || Number(small_blind) <= 0) {
+      return res.render('cash/form', {
+        formTitle: 'Nueva Mesa Cash',
+        formAction: '/admin/games/cash/new',
+        error: 'La ciega pequeña es requerida y debe ser mayor a 0',
+        cash: req.body
+      });
+    }
+    
     const payload = {
-      user_id: Number(req.body.user_id),
-      start_datetime: req.body.date,
-      end_datetime: req.body.end_date || null,
-      small_blind: Number(req.body.small_blind || 0),
-      total_commission: Number(req.body.amount || 0),
-      dealer: req.body.dealer || null,
-      total_tips: Number(req.body.total_tips || 0),
-      description: req.body.description || null
+      small_blind: Number(small_blind),
+      start_datetime: new Date(), // Fecha automática actual
+      end_datetime: null,
+      total_commission: Number(initial_pot || 0), // Monto inicial del bote
+      dealer: dealer || null,
+      total_tips: 0
     };
+    
     await CashGameRepository.create(payload as any);
     res.redirect('/admin/games/cash/list');
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Error al crear cash game');
+    console.error('Error creating cash game:', err);
+    res.render('cash/form', {
+      formTitle: 'Nueva Mesa Cash',
+      formAction: '/admin/games/cash/new',
+      error: 'Error al crear la mesa cash',
+      cash: req.body
+    });
   }
 });
 
@@ -180,19 +196,37 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
 router.post('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const payload = {
-      start_datetime: req.body.date,
-      end_datetime: req.body.end_date || null,
-      small_blind: Number(req.body.small_blind || 0),
-      total_commission: Number(req.body.amount || 0),
-      dealer: req.body.dealer || null,
-      total_tips: Number(req.body.total_tips || 0),
-      description: req.body.description || null
+    const { initial_pot, small_blind, dealer, start_datetime, end_datetime } = req.body;
+    
+    // Validaciones
+    if (!small_blind || Number(small_blind) <= 0) {
+      const cash = await CashGameRepository.findById(id);
+      return res.render('cash/form', {
+        formTitle: 'Editar Mesa Cash',
+        formAction: `/admin/games/cash/${id}/edit`,
+        error: 'La ciega pequeña es requerida y debe ser mayor a 0',
+        cash: { ...cash?.toJSON(), ...req.body, id }
+      });
+    }
+    
+    const payload: any = {
+      small_blind: Number(small_blind),
+      total_commission: Number(initial_pot || 0),
+      dealer: dealer || null
     };
-    await CashGameRepository.update(id, payload as any);
+    
+    // Solo actualizar fechas si se proporcionan (para edición)
+    if (start_datetime) {
+      payload.start_datetime = new Date(start_datetime);
+    }
+    if (end_datetime) {
+      payload.end_datetime = new Date(end_datetime);
+    }
+    
+    await CashGameRepository.update(id, payload);
     res.redirect('/admin/games/cash/list');
   } catch (err) {
-    console.error(err);
+    console.error('Error updating cash game:', err);
     res.status(500).send('Error al actualizar cash game');
   }
 });

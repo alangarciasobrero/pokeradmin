@@ -15,32 +15,53 @@
     </div>
   </div>
   {{#if leaderboard.length}}
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Usuario</th>
-          <th>Puntos Totales</th>
-          <th>Puntos Históricos</th>
-          <th>Ganancias</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{#each leaderboard}}
-          <tr>
-            <td>{{this.position}}</td>
-            <td>
-              <a href="/player/{{this.username}}" class="player-link">{{this.username}}</a>
-            </td>
-            <td><strong>{{this.total_points}}</strong></td>
-            <td class="historical-points">{{this.historical_points}}</td>
-            <td>${{this.total_winnings}}</td>
-          </tr>
-        {{/each}}
-      </tbody>
-    </table>
+    <div class="ranking-modern-grid">
+      {{#each leaderboard}}
+        <div class="ranking-card {{#ifEquals this.position 1}}gold{{else}}{{#ifEquals this.position 2}}silver{{else}}{{#ifEquals this.position 3}}bronze{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}">
+          <div class="ranking-position">
+            {{#ifEquals this.position 1}}🥇{{else}}{{#ifEquals this.position 2}}🥈{{else}}{{#ifEquals this.position 3}}🥉{{else}}{{this.position}}º{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
+          </div>
+          <div class="ranking-content">
+            <a href="/player/{{this.username}}" class="player-name">{{this.username}}</a>
+            <div class="ranking-stats">
+              <div class="stat-item">
+                <span class="stat-icon">🏆</span>
+                <div class="stat-value">
+                  <strong>{{this.total_points}}</strong>
+                  <small>puntos</small>
+                </div>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">📊</span>
+                <div class="stat-value">
+                  <strong>{{this.attendance_count}}</strong>
+                  <small>torneos</small>
+                </div>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">🎯</span>
+                <div class="stat-value">
+                  <strong>{{this.final_tables}}</strong>
+                  <small>mesas finales</small>
+                </div>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">👑</span>
+                <div class="stat-value">
+                  <strong>{{this.wins}}</strong>
+                  <small>victorias</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
   {{else}}
-    <div>No hay datos de ranking.</div>
+    <div class="empty-state">
+      <span class="empty-icon">🏆</span>
+      <p>No hay datos de ranking para esta temporada</p>
+    </div>
   {{/if}}
 </div>
 
@@ -76,40 +97,197 @@
   border-color: #FFD700;
   background: rgba(255, 215, 0, 0.1);
 }
-.ranking-table { width:100%; border-collapse:collapse }
-.ranking-table th, .ranking-table td { padding:0.6rem 0.8rem; border-bottom:1px solid #eee }
-.ranking-table thead { background: var(--muted-surface) }
-.ranking-table .historical-points { color: #6c757d; font-size: 0.9rem; }
-.ranking-table .player-link {
+.ranking-modern-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.ranking-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+.ranking-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+}
+.ranking-card.gold {
+  border-color: #FFD700;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+}
+.ranking-card.silver {
+  border-color: #C0C0C0;
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.05));
+}
+.ranking-card.bronze {
+  border-color: #CD7F32;
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.05));
+}
+.ranking-position {
+  font-size: 2rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+  color: #FFD700;
+}
+.ranking-content {
+  flex: 1;
+}
+.player-name {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FFD700;
+  text-decoration: none;
+  margin-bottom: 0.6rem;
+  transition: color 0.3s ease;
+}
+.player-name:hover {
+  color: #FFF;
+}
+.ranking-stats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.stat-icon {
+  font-size: 1.5rem;
+}
+.stat-value strong {
+  display: block;
+  font-size: 1.3rem;
+  color: #fff;
+  line-height: 1;
+}
+.stat-value small {
+  display: block;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
+}
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  margin-bottom: 3rem;
+}
+.empty-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+.empty-state p {
+  color: #dfe6ff;
+  font-size: 1.2rem;
+  margin: 0;
+}
+</style>
+<section class="ranking-config">
+  <div class="config-header">
+    <h2>⚙️ Distribución de Puntos</h2>
+    <a href="/admin/games/settings" class="btn-edit">✏️ Editar</a>
+  </div>
+  <div class="points-distribution">
+    <div class="distribution-grid">
+      <div class="dist-item"><strong>1º:</strong> 23%</div>
+      <div class="dist-item"><strong>2º:</strong> 17%</div>
+      <div class="dist-item"><strong>3º:</strong> 14%</div>
+      <div class="dist-item"><strong>4º:</strong> 11%</div>
+      <div class="dist-item"><strong>5º:</strong> 9%</div>
+      <div class="dist-item"><strong>6º:</strong> 8%</div>
+      <div class="dist-item"><strong>7º:</strong> 7%</div>
+      <div class="dist-item"><strong>8º:</strong> 6%</div>
+      <div class="dist-item"><strong>9º:</strong> 5%</div>
+    </div>
+  </div>
+</section>
+
+<style>
+.ranking-config {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+}
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.config-header h2 {
+  color: #FFD700;
+  margin: 0;
+  font-size: 1.8rem;
+}
+.btn-edit {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid #FFD700;
+  border-radius: 8px;
   color: #FFD700;
   text-decoration: none;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
-.ranking-table .player-link:hover {
-  color: #FFF;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+.btn-edit:hover {
+  background: rgba(255, 215, 0, 0.2);
+  transform: translateY(-2px);
+}
+.distribution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.dist-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  text-align: center;
+  color: #dfe6ff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+.dist-item:hover {
+  background: rgba(255, 215, 0, 0.1);
+  transform: translateY(-2px);
+}
+.dist-item strong {
+  color: #FFD700;
+  font-size: 1.3rem;
+}
+@media (max-width: 768px) {
+  .ranking-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ranking-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .ranking-position {
+    min-width: auto;
+  }
+  .ranking-stats {
+    justify-content: center;
+    gap: 2rem;
+  }
+  .distribution-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 </style>
-<section class="ranking-rules">
-  <h2>Reglas y configuración</h2>
-  <div>
-    <h3>Tabla de puntos (posición → puntos)</h3>
-      <ol>
-      {{#each rules.pointsTable}}
-        <li>Pos {{inc @index}}: {{this}} pts</li>
-      {{/each}}
-    </ol>
-  </div>
-  <div>
-    <h3>Distribución de premios</h3>
-    <p>Posiciones pagadas: {{rules.prizeOverride.positions}}</p>
-    <ol>
-      {{#each rules.prizeOverride.percentages}}
-        <li>Pos {{inc @index}}: {{this}}%</li>
-      {{/each}}
-    </ol>
-  </div>
-</section>
 
  

@@ -93,13 +93,14 @@
 					<input type="number" name="requested_amount" id="requested_amount" step="0.01" min="0" placeholder="Monto solicitado" />
 				</div>
 				<div class="form-group">
-					<label for="amount_paid">Monto pagado</label>
-					<input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" placeholder="Monto entregado" required />
+					<label for="amount_paid">Monto pagado (dejar vacío si es fiado)</label>
+					<input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" placeholder="Dejar vacío = FIADO" />
 				</div>
 				<div class="form-group">
 					<label for="method">Método de pago</label>
 					<select name="method" id="method">
-						<option value="cash">Efectivo</option>
+						<option value="">-- No paga (FIADO) --</option>
+						<option value="cash" selected>Efectivo</option>
 						<option value="card">Tarjeta</option>
 						<option value="transfer">Transferencia</option>
 					</select>
@@ -113,6 +114,8 @@
 			</div>
 		</form>
 	</div>
+{{/if}}
+
 <script src="/js/user-autocomplete.js"></script>
 <script src="/js/typeahead-quickcreate.js"></script>
 <script>
@@ -144,7 +147,16 @@
 					if (input) input.value = `${created.username}${created.full_name ? ' - ' + created.full_name : ''}`;
 					if (u) u.value = '';
 					if (f) f.value = '';
-					alert('Usuario creado y seleccionado');
+					
+					// Mostrar contraseña temporal generada
+					if (created.tempPassword) {
+						alert(`✅ Usuario creado exitosamente!\n\n` +
+						      `👤 Username: ${created.username}\n` +
+						      `🔑 Contraseña temporal: ${created.tempPassword}\n\n` +
+						      `⚠️ IMPORTANTE: Guarda esta contraseña, el usuario la necesitará para iniciar sesión.`);
+					} else {
+						alert('Usuario creado y seleccionado');
+					}
 				} catch (err) {
 					alert('Error creando usuario: ' + (err && err.error ? err.error : err));
 				}
@@ -462,43 +474,45 @@
 	}
 }
 </style>
+
+<!-- Modal de cambio de turno -->
+{{#if username}}
+<div id="shiftModal" class="modal" style="display:none;">
+	<div class="modal-content" style="max-width:600px">
+		<h2 style="margin-top:0;color:#43a047">🔄 Cambio de Turno</h2>
+		<p style="color:#666">Finaliza el turno actual y comienza uno nuevo</p>
+		<form id="shiftForm">
+			<div class="form-group">
+				<label>Turno actual</label>
+				<div style="background:#f5f5f5;padding:1rem;border-radius:6px;margin-bottom:1rem;">
+					<p style="margin:0.25rem 0;"><strong>Inicio:</strong> <span id="shiftStartTime"></span></p>
+					<p style="margin:0.25rem 0;"><strong>Fin:</strong> <span id="shiftEndTime"></span></p>
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="dealer_name">Nombre del repartidor</label>
+				<input type="text" id="dealer_name" name="dealer_name" required placeholder="Nombre del dealer" />
+			</div>
+			<div class="form-row">
+				<div class="form-group">
+					<label for="commission">Comisión ($)</label>
+					<input type="number" id="commission" name="commission" step="0.01" min="0" value="0" required />
+				</div>
+				<div class="form-group">
+					<label for="tips">Propinas ($)</label>
+					<input type="number" id="tips" name="tips" step="0.01" min="0" value="0" required />
+				</div>
+			</div>
+			<div style="margin-top:1.5rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+				<button type="button" id="cancelShiftBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
+				<button type="submit" class="btn btn-primary" style="background:#43a047">✓ Confirmar cambio de turno</button>
+			</div>
+		</form>
+	</div>
+</div>
 {{/if}}
 
-	<!-- Modal de cambio de turno -->
-	<div id="shiftModal" class="modal" style="display:none;">
-		<div class="modal-content" style="max-width:600px">
-			<h2 style="margin-top:0;color:#43a047">🔄 Cambio de Turno</h2>
-			<p style="color:#666">Finaliza el turno actual y comienza uno nuevo</p>
-			<form id="shiftForm">
-				<div class="form-group">
-					<label>Turno actual</label>
-					<div style="background:#f5f5f5;padding:1rem;border-radius:6px;margin-bottom:1rem;">
-						<p style="margin:0.25rem 0;"><strong>Inicio:</strong> <span id="shiftStartTime"></span></p>
-						<p style="margin:0.25rem 0;"><strong>Fin:</strong> <span id="shiftEndTime"></span></p>
-					</div>
-				</div>
-				<div class="form-group">
-					<label for="dealer_name">Nombre del repartidor</label>
-					<input type="text" id="dealer_name" name="dealer_name" required placeholder="Nombre del dealer" />
-				</div>
-				<div class="form-row">
-					<div class="form-group">
-						<label for="commission">Comisión ($)</label>
-						<input type="number" id="commission" name="commission" step="0.01" min="0" value="0" required />
-					</div>
-					<div class="form-group">
-						<label for="tips">Propinas ($)</label>
-						<input type="number" id="tips" name="tips" step="0.01" min="0" value="0" required />
-					</div>
-				</div>
-				<div style="margin-top:1.5rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
-					<button type="button" id="cancelShiftBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
-					<button type="submit" class="btn btn-primary" style="background:#43a047">✓ Confirmar cambio de turno</button>
-				</div>
-			</form>
-		</div>
-	</div>
-
+{{#if username}}
 	{{#unless cash.end_datetime}}
 	<div style="margin-top:2rem;padding:1rem;background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.3);border-radius:8px;">
 		<a class="btn btn-danger" href="/admin/games/cash/{{cash.id}}/close" style="background:#c62828">🔴 Cerrar mesa definitivamente</a>
@@ -541,7 +555,7 @@
 							<td class="text-center">{{this.seat_number}}</td>
 							<td class="amount-cell">${{currency this.requested_amount}}</td>
 							<td class="amount-cell highlight">${{currency this.amount_paid}}</td>
-							<td>{{this.method}}</td>
+							<td>{{methodLabel this.method}}</td>
 							<td>{{formatDateTime this.joined_at}}</td>
 							<td>{{#if this.left_at}}{{formatDateTime this.left_at}}{{else}}<span class="text-success">En mesa</span>{{/if}}</td>
 							<td class="admin-cell">{{this.recorded_by}}</td>
@@ -556,4 +570,5 @@
 		</div>
 	{{/if}}
 </div>
+
 </div>

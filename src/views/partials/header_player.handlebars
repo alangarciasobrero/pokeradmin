@@ -9,6 +9,9 @@
         <a href="/">Dashboard</a>
         <a href="/tournaments/upcoming">Próximos Torneos</a>
         <a href="/stats/leaderboard">📊 Ranking</a>
+        {{#if currentUser.id}}
+        <a href="/stats/user/{{currentUser.id}}">📈 Mis Estadísticas</a>
+        {{/if}}
     </nav>
     <div class="actions">
         {{#if username}}

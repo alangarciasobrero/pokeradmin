@@ -100,6 +100,22 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   // Re-sort after adding historical points
   leaderboard.sort((a, b) => b.total_points - a.total_points || b.total_winnings - a.total_winnings);
 
+  // Calculate attendance (tournament participation count), final tables, and wins
+  const attendanceByUser: Record<number, number> = {};
+  const finalTablesByUser: Record<number, number> = {};
+  const winsByUser: Record<number, number> = {};
+  
+  for (const entry of leaderboard) {
+    // Count unique tournaments this user participated in
+    attendanceByUser[entry.user_id] = (entry.breakdown || []).length;
+    
+    // Count final tables (top 9 positions)
+    finalTablesByUser[entry.user_id] = (entry.breakdown || []).filter((b: any) => b.position && b.position <= 9).length;
+    
+    // Count wins (1st place)
+    winsByUser[entry.user_id] = (entry.breakdown || []).filter((b: any) => b.position === 1).length;
+  }
+
   // attach username for each entry
   const userIds = leaderboard.map(l => l.user_id);
   let users: any[] = [];
@@ -118,6 +134,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       total_points: l.total_points,
       total_winnings: l.total_winnings,
       historical_points: historicalByUser[l.user_id] || 0,
+      attendance_count: attendanceByUser[l.user_id] || 0,
+      final_tables: finalTablesByUser[l.user_id] || 0,
+      wins: winsByUser[l.user_id] || 0,
       breakdown: l.breakdown,
     }));
 

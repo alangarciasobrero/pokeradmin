@@ -1,0 +1,390 @@
+<div class="season-form-modern">
+  <div class="form-header">
+    <h1>{{formTitle}}</h1>
+    <a href="/admin/seasons" class="btn-back">← Volver</a>
+  </div>
+
+  {{#if error}}
+    <div class="alert alert-error">⚠️ {{error}}</div>
+  {{/if}}
+
+  <form method="post" action="{{formAction}}" class="modern-form">
+    <div class="form-section">
+      <div class="form-group">
+        <label for="nombre">📝 Nombre de la Temporada *</label>
+        <input 
+          type="text" 
+          id="nombre" 
+          name="nombre" 
+          value="{{season.nombre}}" 
+          placeholder="Ej: ♠️ Temporada Pica 2026"
+          required
+          class="form-input"
+        />
+        <span class="input-hint">Usa emojis para hacerla más visual: ♠️ ♦️ ♥️ ♣️</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fecha_inicio">📅 Fecha de Inicio *</label>
+          <input 
+            type="text" 
+            id="fecha_inicio" 
+            name="fecha_inicio" 
+            value="{{formatDateInput season.fecha_inicio}}" 
+            placeholder="dd/mm/yyyy"
+            required 
+            class="form-input date-input"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="fecha_fin">📅 Fecha de Fin *</label>
+          <input 
+            type="text" 
+            id="fecha_fin" 
+            name="fecha_fin" 
+            value="{{formatDateInput season.fecha_fin}}" 
+            placeholder="dd/mm/yyyy"
+            required 
+            class="form-input date-input"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="estado">🔘 Estado de la Temporada *</label>
+        <select id="estado" name="estado" required class="form-select">
+          <option value="planificada" {{#if (eq season.estado 'planificada')}}selected{{/if}}>
+            🔵 Planificada (aún no inicia)
+          </option>
+          <option value="activa" {{#if (eq season.estado 'activa')}}selected{{/if}}>
+            🟢 Activa (en curso)
+          </option>
+          <option value="finalizada" {{#if (eq season.estado 'finalizada')}}selected{{/if}}>
+            ⚫ Finalizada (terminada)
+          </option>
+        </select>
+        <span class="input-hint">Solo puede haber una temporada activa a la vez</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="/admin/seasons" class="btn-cancel">Cancelar</a>
+      <button type="submit" class="btn-submit">
+        {{#if season.id}}✓ Actualizar Temporada{{else}}+ Crear Temporada{{/if}}
+      </button>
+    </div>
+  </form>
+
+  {{#if season.id}}
+    <div class="danger-zone">
+      <h3>⚠️ Zona de Peligro</h3>
+      <p>Eliminar esta temporada afectará todos los torneos asociados.</p>
+      <form method="post" action="/admin/seasons/{{season.id}}/delete" style="display:inline;">
+        <button type="submit" class="btn-danger" onclick="return confirm('¿ELIMINAR temporada {{season.nombre}}? Esto no se puede deshacer.')">
+          🗑️ Eliminar Temporada
+        </button>
+      </form>
+    </div>
+  {{/if}}
+</div>
+
+<style>
+.season-form-modern {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.form-header h1 {
+  color: #FFD700;
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.btn-back {
+  padding: 0.625rem 1.25rem;
+  background: rgba(158, 158, 158, 0.1);
+  border: 2px solid rgba(158, 158, 158, 0.3);
+  border-radius: 8px;
+  color: #9e9e9e;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  background: rgba(158, 158, 158, 0.2);
+  border-color: #9e9e9e;
+  transform: translateY(-2px);
+}
+
+.alert {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+.alert-error {
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.modern-form {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #dfe6ff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-input,
+.form-select {
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.input-hint {
+  color: #9e9e9e;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.form-actions {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn-cancel,
+.btn-submit {
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: rgba(158, 158, 158, 0.1);
+  border-color: rgba(158, 158, 158, 0.3);
+  color: #9e9e9e;
+}
+
+.btn-cancel:hover {
+  background: rgba(158, 158, 158, 0.2);
+  border-color: #9e9e9e;
+  transform: translateY(-2px);
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border-color: #FFD700;
+  color: #FFD700;
+}
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.danger-zone {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: rgba(244, 67, 54, 0.05);
+  border: 2px solid rgba(244, 67, 54, 0.2);
+  border-radius: 12px;
+}
+
+.danger-zone h3 {
+  color: #f44336;
+  margin: 0 0 0.5rem 0;
+}
+
+.danger-zone p {
+  color: #dfe6ff;
+  margin: 0 0 1rem 0;
+}
+
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  color: #f44336;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .season-form-modern {
+    padding: 1rem;
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-back {
+    width: 100%;
+    text-align: center;
+  }
+
+  .modern-form {
+    padding: 1.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Estilos para inputs de fecha */
+.date-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+}
+
+.date-input.invalid {
+  border-color: rgba(244, 67, 54, 0.6);
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+</style>
+
+<script>
+// Validación y formato de fechas dd/mm/yyyy
+document.addEventListener('DOMContentLoaded', function() {
+	const dateInputs = document.querySelectorAll('.date-input');
+	
+	dateInputs.forEach(input => {
+		// Validar al escribir
+		input.addEventListener('input', function(e) {
+			let value = e.target.value.replace(/[^0-9/]/g, '');
+			
+			// Auto-agregar barras
+			if (value.length === 2 && !value.includes('/')) {
+				value += '/';
+			} else if (value.length === 5 && value.split('/').length === 2) {
+				value += '/';
+			}
+			
+			// Limitar a 10 caracteres (dd/mm/yyyy)
+			value = value.substring(0, 10);
+			e.target.value = value;
+			
+			// Validar formato completo
+			if (value.length === 10) {
+				const isValid = validateDateDMY(value);
+				e.target.classList.toggle('invalid', !isValid);
+			} else {
+				e.target.classList.remove('invalid');
+			}
+		});
+		
+		// Validar al salir del campo
+		input.addEventListener('blur', function(e) {
+			const value = e.target.value.trim();
+			if (value && value.length === 10) {
+				const isValid = validateDateDMY(value);
+				if (!isValid) {
+					alert('Fecha inválida. Use el formato dd/mm/yyyy (ej: 31/12/2025)');
+					e.target.focus();
+				}
+			}
+		});
+	});
+	
+	function validateDateDMY(dateStr) {
+		const parts = dateStr.split('/');
+		if (parts.length !== 3) return false;
+		
+		const day = parseInt(parts[0], 10);
+		const month = parseInt(parts[1], 10);
+		const year = parseInt(parts[2], 10);
+		
+		if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+		if (day < 1 || day > 31) return false;
+		if (month < 1 || month > 12) return false;
+		if (year < 1900 || year > 2100) return false;
+		
+		// Verificar fecha válida
+		const date = new Date(year, month - 1, day);
+		return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+	}
+});
+</script>
