@@ -1,0 +1,220 @@
+{{#> layouts/main title="Pozos Acumulados" }}
+<div class="admin-pools">
+  <h1>Pozos Acumulados de Comisiones</h1>
+  
+  {{#if success}}
+    <div class="alert alert-success">
+      {{#if (eq success 'closed')}}✓ Pozo cerrado exitosamente{{/if}}
+      {{#if (eq success 'paid')}}✓ Pozo marcado como pagado{{/if}}
+    </div>
+  {{/if}}
+
+  <div class="summary-cards">
+    <div class="summary-card">
+      <h3>💰 Especial Mensual</h3>
+      <div class="amount active">Activo: ${{summary.monthly.active}}</div>
+      <div class="amount closed">Cerrado: ${{summary.monthly.closed}}</div>
+      <div class="amount paid">Pagado: ${{summary.monthly.paid}}</div>
+    </div>
+
+    <div class="summary-card">
+      <h3>🏆 Ranking Trimestral</h3>
+      <div class="amount active">Activo: ${{summary.quarterly.active}}</div>
+      <div class="amount closed">Cerrado: ${{summary.quarterly.closed}}</div>
+      <div class="amount paid">Pagado: ${{summary.quarterly.paid}}</div>
+    </div>
+
+    <div class="summary-card">
+      <h3>👑 Copa Don Humberto</h3>
+      <div class="amount active">Activo: ${{summary.copa_don_humberto.active}}</div>
+      <div class="amount closed">Cerrado: ${{summary.copa_don_humberto.closed}}</div>
+      <div class="amount paid">Pagado: ${{summary.copa_don_humberto.paid}}</div>
+    </div>
+
+    <div class="summary-card">
+      <h3>🏠 Casa</h3>
+      <div class="amount active">Activo: ${{summary.house.active}}</div>
+      <div class="amount closed">Cerrado: ${{summary.house.closed}}</div>
+      <div class="amount paid">Pagado: ${{summary.house.paid}}</div>
+    </div>
+  </div>
+
+  <h2>Historial de Pozos</h2>
+  {{#if pools.length}}
+    <table class="pools-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Período</th>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Fecha Creación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each pools}}
+          <tr class="status-{{this.status}}">
+            <td>{{this.id}}</td>
+            <td>
+              {{#if (eq this.pool_type 'monthly')}}Mensual{{/if}}
+              {{#if (eq this.pool_type 'quarterly')}}Trimestral{{/if}}
+              {{#if (eq this.pool_type 'copa_don_humberto')}}Copa Don Humberto{{/if}}
+              {{#if (eq this.pool_type 'house')}}Casa{{/if}}
+            </td>
+            <td>{{this.period_identifier}}</td>
+            <td>${{this.accumulated_amount}}</td>
+            <td>
+              <span class="badge badge-{{this.status}}">
+                {{#if (eq this.status 'active')}}Activo{{/if}}
+                {{#if (eq this.status 'closed')}}Cerrado{{/if}}
+                {{#if (eq this.status 'paid')}}Pagado{{/if}}
+              </span>
+            </td>
+            <td>{{formatDate this.created_at}}</td>
+            <td class="actions">
+              {{#if (eq this.status 'active')}}
+                <form method="POST" action="/admin/games/settings/pools/{{this.id}}/close" style="display:inline">
+                  <button type="submit" class="btn-sm btn-warning">Cerrar</button>
+                </form>
+              {{/if}}
+              {{#if (eq this.status 'closed')}}
+                <form method="POST" action="/admin/games/settings/pools/{{this.id}}/pay" style="display:inline">
+                  <button type="submit" class="btn-sm btn-success">Marcar Pagado</button>
+                </form>
+              {{/if}}
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <p>No hay pozos registrados.</p>
+  {{/if}}
+
+  <div class="actions-bar">
+    <a href="/admin/games/settings" class="btn btn-secondary">Volver a Configuración</a>
+    <a href="/admin/games/settings/commissions" class="btn btn-primary">Configurar Comisiones</a>
+  </div>
+</div>
+
+<style>
+  .admin-pools {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
+  .alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+  }
+  .alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .summary-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .summary-card h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+  .summary-card .amount {
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .amount.active { color: #28a745; }
+  .amount.closed { color: #ffc107; }
+  .amount.paid { color: #6c757d; }
+  .pools-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+  }
+  .pools-table th,
+  .pools-table td {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color, #ddd);
+    text-align: left;
+  }
+  .pools-table thead {
+    background: var(--muted-surface, #f8f9fa);
+  }
+  .pools-table tbody tr:hover {
+    background: rgba(0,0,0,0.02);
+  }
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .badge-active {
+    background: #d4edda;
+    color: #155724;
+  }
+  .badge-closed {
+    background: #fff3cd;
+    color: #856404;
+  }
+  .badge-paid {
+    background: #d6d8db;
+    color: #383d41;
+  }
+  .actions {
+    white-space: nowrap;
+  }
+  .btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-warning {
+    background: #ffc107;
+    color: #212529;
+  }
+  .btn-success {
+    background: #28a745;
+    color: white;
+  }
+  .actions-bar {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color, #eee);
+  }
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary {
+    background: #3949ab;
+    color: white;
+  }
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+</style>
+{{/layouts/main}}

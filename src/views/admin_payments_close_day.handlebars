@@ -1,0 +1,14 @@
+<section class="pa-card admin-payments-close-day">
+  <h1>Resumen de cierre - {{formatDate date}}</h1>
+  <div class="close-summary">
+    <div><strong>Total registrado:</strong> {{currency totals.totalAmount}}</div>
+    <div><strong>Total pagado:</strong> {{currency totals.totalPaid}}</div>
+    <div><strong>Por cobrar:</strong> {{currency totals.outstanding}}</div>
+  </div>
+  <p><a class="btn" href="/admin/payments?date={{formatDate date 'YYYY-MM-DD'}}">Ver lista de pagos</a></p>
+</section>
+
+<style>
+.close-summary { display:flex; gap:1.5rem; margin-top:1rem; }
+.close-summary div { background: var(--card-bg); padding:1rem 1.5rem; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+</style>

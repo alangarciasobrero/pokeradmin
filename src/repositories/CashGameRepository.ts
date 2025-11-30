@@ -1,4 +1,5 @@
 import CashGame, { CashGameAttributes, CashGameCreationAttributes } from '../models/CashGame';
+import { Op } from 'sequelize';
 
 export default class CashGameRepository {
   // Crear un nuevo registro de cash game
@@ -22,6 +23,24 @@ export default class CashGameRepository {
   // Obtener un registro por ID
   static async findById(id: number): Promise<CashGame | null> {
     return await CashGame.findByPk(id);
+  }
+
+  // Find cash games that started on a given date and are still open (end_datetime IS NULL)
+  static async findOpenByDate(date: Date): Promise<CashGame[]> {
+    const start = new Date(date);
+    start.setHours(0,0,0,0);
+    const end = new Date(date);
+    end.setHours(23,59,59,999);
+    return await CashGame.findAll({ where: { start_datetime: { [Op.between]: [start, end] }, end_datetime: null }, order: [['start_datetime','ASC']] });
+  }
+
+  // Find cash games that occurred on a given date (start_datetime within the day)
+  static async findByDate(date: Date): Promise<CashGame[]> {
+    const start = new Date(date);
+    start.setHours(0,0,0,0);
+    const end = new Date(date);
+    end.setHours(23,59,59,999);
+    return await CashGame.findAll({ where: { start_datetime: { [Op.between]: [start, end] } }, order: [['start_datetime','ASC']] });
   }
 
   // Actualizar un registro por ID

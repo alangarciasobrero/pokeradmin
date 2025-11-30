@@ -1,0 +1,138 @@
+{{#> layouts/main title="Configuración de Comisiones" }}
+<div class="admin-commissions-config">
+  <h1>Configuración de Comisiones</h1>
+  
+  {{#if success}}
+    <div class="alert alert-success">✓ Configuración actualizada exitosamente</div>
+  {{/if}}
+
+  <form method="POST" action="/admin/games/settings/commissions">
+    <div class="form-section">
+      <h2>Distribución de Comisiones</h2>
+      <p class="help-text">Configure los porcentajes de comisión. El total debe ser la suma de todos los destinos.</p>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="total">Comisión Total (%)</label>
+          <input type="number" id="total" name="total" value="{{config.total}}" step="0.1" min="0" max="100" required>
+          <small>Porcentaje total sobre el pozo (buy-in + re-entries). Bounty NO incluido.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="quarterly">Ranking Trimestral (%)</label>
+          <input type="number" id="quarterly" name="quarterly" value="{{config.quarterly}}" step="0.1" min="0" max="100" required>
+          <small>Torneo final de temporada (PICA, DIAMANTE, TRÉBOL, CORAZÓN)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="monthly">Especial del Mes (%)</label>
+          <input type="number" id="monthly" name="monthly" value="{{config.monthly}}" step="0.1" min="0" max="100" required>
+          <small>Torneo especial mensual</small>
+        </div>
+
+        <div class="form-group">
+          <label for="copa">Copa Don Humberto (%)</label>
+          <input type="number" id="copa" name="copa" value="{{config.copa}}" step="0.1" min="0" max="100" required>
+          <small>Mesa final de campeones</small>
+        </div>
+
+        <div class="form-group">
+          <label for="house">Casa (%)</label>
+          <input type="number" id="house" name="house" value="{{config.house}}" step="0.1" min="0" max="100" required>
+          <small>Comisión operativa de la casa</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+        <a href="/admin/games/settings" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<style>
+  .admin-commissions-config {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
+  .alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+  }
+  .alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  .form-section {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .form-section h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+  .help-text {
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+  .form-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .form-group input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  .form-group small {
+    margin-top: 0.25rem;
+    color: #666;
+    font-size: 0.875rem;
+  }
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color, #eee);
+  }
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary {
+    background: #3949ab;
+    color: white;
+  }
+  .btn-primary:hover {
+    background: #2c3a8f;
+  }
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+  .btn-secondary:hover {
+    background: #5a6268;
+  }
+</style>
+{{/layouts/main}}

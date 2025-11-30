@@ -1,0 +1,503 @@
+<div class="overview-container">
+	<div class="overview-header">
+		<h1>📊 Estadísticas Generales del Sistema</h1>
+		<p class="subtitle">Vista completa del estado del club</p>
+	</div>
+
+	<!-- Métricas Globales -->
+	<div class="metrics-grid">
+		<div class="metric-card players">
+			<div class="metric-icon">👥</div>
+			<div class="metric-content">
+				<span class="metric-value">{{stats.total_players}}</span>
+				<span class="metric-label">Jugadores Activos</span>
+			</div>
+		</div>
+
+		<div class="metric-card tournaments">
+			<div class="metric-icon">🏆</div>
+			<div class="metric-content">
+				<span class="metric-value">{{stats.total_tournaments}}</span>
+				<span class="metric-label">Torneos Realizados</span>
+			</div>
+		</div>
+
+		<div class="metric-card registrations">
+			<div class="metric-icon">📝</div>
+			<div class="metric-content">
+				<span class="metric-value">{{stats.total_registrations}}</span>
+				<span class="metric-label">Registros Totales</span>
+			</div>
+		</div>
+
+		<div class="metric-card cash">
+			<div class="metric-icon">💵</div>
+			<div class="metric-content">
+				<span class="metric-value">{{stats.total_cash_games}}</span>
+				<span class="metric-label">Sesiones Cash</span>
+			</div>
+		</div>
+
+		<div class="metric-card revenue">
+			<div class="metric-icon">💰</div>
+			<div class="metric-content">
+				<span class="metric-value">${{currency stats.total_revenue}}</span>
+				<span class="metric-label">Ingresos Totales</span>
+			</div>
+		</div>
+
+		<div class="metric-card debt">
+			<div class="metric-icon">⚠️</div>
+			<div class="metric-content">
+				<span class="metric-value">${{currency stats.total_debt}}</span>
+				<span class="metric-label">Deuda Pendiente</span>
+			</div>
+		</div>
+
+		<div class="metric-card participants">
+			<div class="metric-icon">🎲</div>
+			<div class="metric-content">
+				<span class="metric-value">{{stats.total_cash_participants}}</span>
+				<span class="metric-label">Participaciones Cash</span>
+			</div>
+		</div>
+
+		<div class="metric-card active">
+			<div class="metric-icon">🔴</div>
+			<div class="metric-content">
+				<span class="metric-value">{{stats.active_cash_games}}</span>
+				<span class="metric-label">Mesas Activas</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Top Players y Actividad Reciente -->
+	<div class="content-grid">
+		<!-- Top 10 Jugadores -->
+		<div class="panel">
+			<h2>🌟 Top 10 Jugadores</h2>
+			<div class="top-players-list">
+				{{#if topPlayers.length}}
+					{{#each topPlayers}}
+						<div class="top-player-item {{#if (lte @index 2)}}rank-{{@index}}{{/if}}">
+							<span class="player-rank">
+								{{#if (eq @index 0)}}🥇{{/if}}
+								{{#if (eq @index 1)}}🥈{{/if}}
+								{{#if (eq @index 2)}}🥉{{/if}}
+								{{#if (gt @index 2)}}{{add @index 1}}{{/if}}
+							</span>
+							<div class="player-info-mini">
+								{{#if this.avatar}}
+									<img src="{{this.avatar}}" alt="{{this.username}}" class="player-avatar-mini" />
+								{{else}}
+									<div class="avatar-placeholder-mini">👤</div>
+								{{/if}}
+								<div class="player-details-mini">
+									<span class="player-name-mini">{{#if this.full_name}}{{this.full_name}}{{else}}{{this.username}}{{/if}}</span>
+									<span class="player-stats-mini">{{this.tournaments_played}} torneos</span>
+								</div>
+							</div>
+							<span class="player-points">{{this.current_points}} pts</span>
+							<a href="/stats/user/{{this.id}}" class="btn-mini">Ver</a>
+						</div>
+					{{/each}}
+				{{else}}
+					<p class="empty-message">No hay datos disponibles</p>
+				{{/if}}
+			</div>
+		</div>
+
+		<!-- Actividad Reciente -->
+		<div class="panel">
+			<h2>📅 Actividad Reciente</h2>
+			<div class="recent-activity-list">
+				{{#if recentActivity.length}}
+					{{#each recentActivity}}
+						<div class="activity-item">
+							<div class="activity-icon">🏆</div>
+							<div class="activity-details">
+								<h3>{{this.name}}</h3>
+								<p>{{formatDateTime this.date}}</p>
+								<span class="participant-count">{{this.participant_count}} participantes</span>
+							</div>
+						</div>
+					{{/each}}
+				{{else}}
+					<p class="empty-message">No hay actividad reciente</p>
+				{{/if}}
+			</div>
+		</div>
+	</div>
+
+	<!-- Ingresos Mensuales -->
+	<div class="panel revenue-panel">
+		<h2>💳 Ingresos por Mes (Últimos 6 meses)</h2>
+		{{#if monthlyRevenue.length}}
+			<div class="revenue-chart">
+				{{#each monthlyRevenue}}
+					<div class="revenue-bar-container">
+						<div class="revenue-bar" style="height: {{#expr}}({{this.revenue}} / 50000) * 100{{/expr}}%;">
+							<span class="revenue-value">${{currency this.revenue}}</span>
+						</div>
+						<span class="revenue-month">{{this.month}}</span>
+						<span class="revenue-count">{{this.payment_count}} pagos</span>
+					</div>
+				{{/each}}
+			</div>
+		{{else}}
+			<p class="empty-message">No hay datos de ingresos</p>
+		{{/if}}
+	</div>
+</div>
+
+<style>
+.overview-container {
+	max-width: 1400px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+.overview-header {
+	text-align: center;
+	margin-bottom: 2.5rem;
+}
+
+.overview-header h1 {
+	color: #FFD700;
+	font-size: 2.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.overview-header .subtitle {
+	color: #dfe6ff;
+	opacity: 0.8;
+	font-size: 1.1rem;
+}
+
+.metrics-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2.5rem;
+}
+
+.metric-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+	transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+	border-color: rgba(255, 215, 0, 0.3);
+}
+
+.metric-icon {
+	font-size: 3rem;
+	opacity: 0.8;
+}
+
+.metric-content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.metric-value {
+	font-size: 2rem;
+	font-weight: 700;
+	color: #FFD700;
+	line-height: 1;
+}
+
+.metric-label {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	opacity: 0.8;
+}
+
+.metric-card.revenue .metric-value,
+.metric-card.debt .metric-value {
+	font-size: 1.5rem;
+}
+
+.content-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+	gap: 2rem;
+	margin-bottom: 2.5rem;
+}
+
+.panel {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+}
+
+.panel h2 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.75rem;
+}
+
+.top-players-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.top-player-item {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.75rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+	transition: all 0.2s ease;
+}
+
+.top-player-item:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 215, 0, 0.2);
+}
+
+.top-player-item.rank-0 {
+	background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
+}
+
+.top-player-item.rank-1 {
+	background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, transparent 100%);
+}
+
+.top-player-item.rank-2 {
+	background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, transparent 100%);
+}
+
+.player-rank {
+	font-size: 1.5rem;
+	font-weight: 700;
+	width: 40px;
+	text-align: center;
+}
+
+.player-info-mini {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex: 1;
+}
+
+.player-avatar-mini {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	object-fit: cover;
+}
+
+.avatar-placeholder-mini {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.2rem;
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.player-details-mini {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.player-name-mini {
+	color: #fff;
+	font-weight: 600;
+}
+
+.player-stats-mini {
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.85rem;
+}
+
+.player-points {
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 1.1rem;
+	min-width: 80px;
+	text-align: right;
+}
+
+.btn-mini {
+	padding: 0.4rem 0.8rem;
+	background: rgba(57, 73, 171, 0.2);
+	border: 1px solid rgba(57, 73, 171, 0.4);
+	border-radius: 6px;
+	color: #7B93FF;
+	text-decoration: none;
+	font-size: 0.85rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.btn-mini:hover {
+	background: rgba(57, 73, 171, 0.3);
+	border-color: #7B93FF;
+}
+
+.recent-activity-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.activity-item {
+	display: flex;
+	gap: 1rem;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+}
+
+.activity-icon {
+	font-size: 2rem;
+}
+
+.activity-details h3 {
+	margin: 0 0 0.5rem 0;
+	color: #fff;
+	font-size: 1.05rem;
+}
+
+.activity-details p {
+	margin: 0.25rem 0;
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.9rem;
+}
+
+.participant-count {
+	display: inline-block;
+	padding: 0.25rem 0.75rem;
+	background: rgba(76, 175, 80, 0.2);
+	border: 1px solid rgba(76, 175, 80, 0.4);
+	border-radius: 12px;
+	color: #4CAF50;
+	font-size: 0.85rem;
+	font-weight: 600;
+	margin-top: 0.5rem;
+}
+
+.revenue-panel {
+	grid-column: 1 / -1;
+}
+
+.revenue-chart {
+	display: flex;
+	gap: 1.5rem;
+	align-items: flex-end;
+	justify-content: space-around;
+	min-height: 300px;
+	padding: 2rem 1rem 1rem 1rem;
+}
+
+.revenue-bar-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1;
+	max-width: 120px;
+}
+
+.revenue-bar {
+	width: 100%;
+	max-width: 80px;
+	min-height: 40px;
+	background: linear-gradient(180deg, #FFD700 0%, rgba(255, 215, 0, 0.5) 100%);
+	border-radius: 8px 8px 0 0;
+	position: relative;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 0.5rem;
+}
+
+.revenue-bar:hover {
+	background: linear-gradient(180deg, #FFE44D 0%, rgba(255, 215, 0, 0.7) 100%);
+	transform: scale(1.05);
+}
+
+.revenue-value {
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #1a1d2e;
+}
+
+.revenue-month {
+	margin-top: 0.75rem;
+	color: #FFD700;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.revenue-count {
+	margin-top: 0.25rem;
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.8rem;
+}
+
+.empty-message {
+	text-align: center;
+	color: #dfe6ff;
+	opacity: 0.5;
+	padding: 2rem;
+}
+
+@media (max-width: 1024px) {
+	.metrics-grid {
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	}
+
+	.content-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.overview-header h1 {
+		font-size: 2rem;
+	}
+
+	.metrics-grid {
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 1rem;
+	}
+
+	.metric-card {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.revenue-chart {
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+}
+</style>

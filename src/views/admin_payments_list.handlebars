@@ -1,0 +1,47 @@
+<section class="pa-card admin-payments">
+  <h1>Pagos - {{formatDate date}}</h1>
+
+  {{#if payments}}
+    <table class="pa-table">
+      <thead>
+        <tr><th>ID</th><th>Usuario</th><th>Monto</th><th>Fecha</th><th>Fuente</th><th>Pagado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {{#each payments}}
+          <tr>
+            <td>{{this.id}}</td>
+            <td>{{this.user_id}}</td>
+            <td>{{currency this.amount}}</td>
+            <td>{{formatDate this.payment_date}}</td>
+            <td>{{this.source}}</td>
+            <td>{{#if this.paid}}Sí{{else}}No{{/if}}</td>
+            <td>
+                {{#if this.paid}}
+                —
+              {{else}}
+                <form method="post" action="/admin/payments/{{this.id}}/mark-paid" class="form-inline" style="margin-right:0.5rem;">
+                  <button class="btn" type="submit">Marcar pago</button>
+                </form>
+                <form method="post" action="/admin/payments/{{this.id}}/update" class="form-inline">
+                  <input name="paid_amount" value="{{this.paid_amount}}" placeholder="monto parcial" class="qp-input" />
+                  <button class="btn" type="submit">Actualizar</button>
+                </form>
+              {{/if}}
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <p>No hay pagos para esta fecha</p>
+  {{/if}}
+</section>
+
+<style>
+  .pa-table { width:100%; border-collapse:collapse; }
+  .pa-table th, .pa-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eee; text-align:left; }
+  .pa-table tbody tr:nth-child(odd) { background: var(--muted-surface); }
+  .pa-table .btn { background:#007bff; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
+  .pa-table input[name="paid_amount"] { padding:6px; border:1px solid #ddd; border-radius:6px; }
+  form[action$="/update"] { display:inline-flex; gap:0.4rem; align-items:center; }
+</style>

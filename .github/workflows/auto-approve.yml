@@ -1,0 +1,60 @@
+name: Auto-approve Pull Requests
+
+on:
+  pull_request_target:
+    types: [opened, labeled, synchronize]
+
+jobs:
+  auto-approve:
+    name: Auto-approve when allowed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-approve check and review
+        uses: actions/github-script@v6
+        env:
+          AUTO_APPROVE_USER: ${{ secrets.AUTO_APPROVE_USER }}
+          AUTO_APPROVE_EXPIRES: ${{ secrets.AUTO_APPROVE_EXPIRES }}
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info('No pull request context, exiting');
+              return;
+            }
+            const labels = (pr.labels || []).map(l => l.name);
+            const allowedUser = process.env.AUTO_APPROVE_USER;
+            const expires = process.env.AUTO_APPROVE_EXPIRES;
+
+            // Check author or label
+            const authorAllowed = allowedUser && pr.user && pr.user.login === allowedUser;
+            const labeled = labels.includes('auto-approve');
+
+            if (!authorAllowed && !labeled) {
+              core.info('PR not eligible for auto-approve (author/label mismatch)');
+              return;
+            }
+
+            // Check expiry window if provided
+            if (expires) {
+              const now = new Date();
+              const exp = new Date(expires);
+              if (isNaN(exp.getTime())) {
+                core.info('AUTO_APPROVE_EXPIRES is not a valid date; aborting auto-approve');
+                return;
+              }
+              if (exp < now) {
+                core.info('Auto-approve window expired');
+                return;
+              }
+            }
+
+            // Create approval review
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              event: 'APPROVE',
+              body: 'Auto-approved by repository workflow.'
+            });
+
+            core.info(`Approved PR #${pr.number}`);

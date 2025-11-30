@@ -1,0 +1,575 @@
+<div class="public-profile-container">
+	<div class="profile-header">
+		<div class="player-card">
+			{{#if stats.user.avatar}}
+				<img src="{{stats.user.avatar}}" alt="{{stats.user.username}}" class="player-avatar-xl" />
+			{{else}}
+				<div class="avatar-placeholder-xl">👤</div>
+			{{/if}}
+			<div class="player-info">
+				<h1 class="player-username">@{{stats.user.username}}</h1>
+				<div class="player-meta">
+					<span class="player-points">⭐ {{stats.user.current_points}} puntos</span>
+					<span class="player-member-since">🗓️ Miembro desde {{formatDate stats.user.created_at}}</span>
+				</div>
+				{{#if isOwnProfile}}
+					<a href="/profile" class="btn-edit-profile">✏️ Editar mi perfil</a>
+				{{/if}}
+			</div>
+		</div>
+	</div>
+
+	<!-- Estadísticas principales -->
+	<div class="stats-showcase">
+		<div class="stat-highlight trophy">
+			<div class="stat-icon">🏆</div>
+			<div class="stat-value">{{stats.tournaments.first_places}}</div>
+			<div class="stat-label">Victorias</div>
+		</div>
+		<div class="stat-highlight podium">
+			<div class="stat-icon">🥇</div>
+			<div class="stat-value">{{stats.tournaments.podium_finishes}}</div>
+			<div class="stat-label">Podios (Top 3)</div>
+		</div>
+		<div class="stat-highlight final">
+			<div class="stat-icon">🎯</div>
+			<div class="stat-value">{{stats.tournaments.final_tables}}</div>
+			<div class="stat-label">Mesas Finales</div>
+		</div>
+		<div class="stat-highlight tournaments">
+			<div class="stat-icon">📊</div>
+			<div class="stat-value">{{stats.tournaments.total_tournaments}}</div>
+			<div class="stat-label">Torneos Jugados</div>
+		</div>
+	</div>
+
+	<!-- Detalles de estadísticas -->
+	<div class="stats-details-grid">
+		<!-- Estadísticas de Torneos -->
+		<div class="stats-panel">
+			<h2>🏆 Desempeño en Torneos</h2>
+			<div class="stats-list">
+				<div class="stat-row">
+					<span class="label">Mejor posición:</span>
+					<span class="value highlight">
+						{{#if stats.tournaments.best_position}}
+							#{{stats.tournaments.best_position}}
+						{{else}}
+							-
+						{{/if}}
+					</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">Posición promedio:</span>
+					<span class="value">
+						{{#if stats.tournaments.avg_position}}
+							#{{stats.tournaments.avg_position}}
+						{{else}}
+							-
+						{{/if}}
+					</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">Win rate:</span>
+					<span class="value success">{{winRate}}%</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">Torneos finalizados:</span>
+					<span class="value">{{stats.tournaments.tournaments_finished}}</span>
+				</div>
+				<div class="stat-row divider">
+					<span class="label">1° puestos:</span>
+					<span class="value gold">🥇 {{stats.tournaments.first_places}}</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">2° puestos:</span>
+					<span class="value silver">🥈 {{stats.tournaments.second_places}}</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">3° puestos:</span>
+					<span class="value bronze">🥉 {{stats.tournaments.third_places}}</span>
+				</div>
+				<div class="stat-row divider">
+					<span class="label">Buy-ins:</span>
+					<span class="value">{{stats.tournaments.buy_ins}}</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">Re-entries:</span>
+					<span class="value">{{stats.tournaments.reentries}}</span>
+				</div>
+				<div class="stat-row">
+					<span class="label">Duplos:</span>
+					<span class="value">{{stats.tournaments.duplos}}</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Mejores resultados -->
+			{{#if stats.topFinishes.length}}
+				<div class="top-finishes">
+					<h3>🌟 Mejores Resultados</h3>
+					<div class="finishes-list">
+						{{#each stats.topFinishes}}
+							<div class="finish-item position-{{this.position}}">
+								<span class="finish-position">
+									{{#if (eq this.position 1)}}🥇{{/if}}
+									{{#if (eq this.position 2)}}🥈{{/if}}
+									{{#if (eq this.position 3)}}🥉{{/if}}
+									#{{this.position}}
+								</span>
+								<div class="finish-details">
+									<span class="finish-tournament">{{this.tournament_name}}</span>
+									<span class="finish-date">{{formatDate this.start_date}}</span>
+								</div>
+							</div>
+						{{/each}}
+					</div>
+				</div>
+			{{/if}}
+		</div>
+	</div>
+
+	<!-- Historial reciente -->
+	{{#if stats.recentTournaments.length}}
+		<div class="recent-history">
+			<h2>📅 Historial Reciente</h2>
+			<div class="tournaments-timeline">
+				{{#each stats.recentTournaments}}
+					<div class="timeline-item">
+						<div class="timeline-marker position-{{this.position}}">
+							{{#if (lte this.position 3)}}
+								{{#if (eq this.position 1)}}🥇{{/if}}
+								{{#if (eq this.position 2)}}🥈{{/if}}
+								{{#if (eq this.position 3)}}🥉{{/if}}
+							{{else}}
+								#{{this.position}}
+							{{/if}}
+						</div>
+						<div class="timeline-content">
+							<h3>{{this.tournament_name}}</h3>
+							<p class="timeline-date">{{formatDate this.start_date}}</p>
+							<span class="timeline-position">Posición #{{this.position}}</span>
+						</div>
+					</div>
+				{{/each}}
+			</div>
+		</div>
+	{{/if}}
+</div>
+
+<style>
+.public-profile-container {
+	max-width: 1200px;
+	margin: 2rem auto;
+	padding: 0 1.5rem;
+}
+
+.profile-header {
+	background: linear-gradient(135deg, rgba(57, 73, 171, 0.15) 0%, rgba(229, 57, 53, 0.15) 100%);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	border-radius: 16px;
+	padding: 2.5rem;
+	margin-bottom: 2rem;
+}
+
+.player-card {
+	display: flex;
+	align-items: center;
+	gap: 2rem;
+}
+
+.player-avatar-xl {
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+	border: 4px solid #FFD700;
+	object-fit: cover;
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.avatar-placeholder-xl {
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+	border: 4px solid #FFD700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 4rem;
+	background: rgba(255, 215, 0, 0.1);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.player-info {
+	flex: 1;
+}
+
+.player-username {
+	font-size: 2.5rem;
+	color: #FFD700;
+	margin: 0 0 1rem 0;
+	font-weight: 700;
+}
+
+.player-meta {
+	display: flex;
+	gap: 2rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.player-points,
+.player-member-since {
+	color: #dfe6ff;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.btn-edit-profile {
+	display: inline-block;
+	padding: 0.75rem 1.5rem;
+	background: rgba(57, 73, 171, 0.3);
+	border: 1px solid rgba(57, 73, 171, 0.5);
+	border-radius: 8px;
+	color: #7B93FF;
+	text-decoration: none;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	margin-top: 1rem;
+}
+
+.btn-edit-profile:hover {
+	background: rgba(57, 73, 171, 0.5);
+	border-color: #7B93FF;
+	transform: translateY(-2px);
+}
+
+.stats-showcase {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.stat-highlight {
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	border-radius: 16px;
+	padding: 2rem;
+	text-align: center;
+	transition: all 0.3s ease;
+}
+
+.stat-highlight:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.stat-highlight.trophy {
+	border-color: rgba(255, 215, 0, 0.4);
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, transparent 100%);
+}
+
+.stat-highlight.podium {
+	border-color: rgba(192, 192, 192, 0.4);
+	background: linear-gradient(135deg, rgba(192, 192, 192, 0.05) 0%, transparent 100%);
+}
+
+.stat-highlight.final {
+	border-color: rgba(205, 127, 50, 0.4);
+	background: linear-gradient(135deg, rgba(205, 127, 50, 0.05) 0%, transparent 100%);
+}
+
+.stat-highlight.tournaments {
+	border-color: rgba(57, 73, 171, 0.4);
+	background: linear-gradient(135deg, rgba(57, 73, 171, 0.05) 0%, transparent 100%);
+}
+
+.stat-icon {
+	font-size: 3rem;
+	margin-bottom: 0.5rem;
+}
+
+.stat-value {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: #FFD700;
+	line-height: 1;
+	margin-bottom: 0.5rem;
+}
+
+.stat-label {
+	color: #dfe6ff;
+	font-size: 0.95rem;
+	opacity: 0.9;
+	font-weight: 600;
+}
+
+.stats-details-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+	gap: 2rem;
+	margin-bottom: 2rem;
+}
+
+.stats-panel {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 2rem;
+}
+
+.stats-panel h2 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.75rem;
+	font-size: 1.4rem;
+}
+
+.stats-panel h3 {
+	color: #ffd884;
+	margin-top: 2rem;
+	margin-bottom: 1rem;
+	font-size: 1.2rem;
+}
+
+.stats-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.stat-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.75rem;
+	background: rgba(255, 255, 255, 0.02);
+	border-radius: 6px;
+}
+
+.stat-row.divider {
+	margin-top: 0.5rem;
+	border-top: 1px solid rgba(255, 215, 0, 0.1);
+	padding-top: 1.25rem;
+}
+
+.stat-row .label {
+	color: #ffd884;
+	font-weight: 600;
+}
+
+.stat-row .value {
+	color: #fff;
+	font-weight: 700;
+	font-size: 1.05rem;
+}
+
+.stat-row .value.highlight {
+	color: #FFD700;
+	font-size: 1.2rem;
+}
+
+.stat-row .value.success {
+	color: #4CAF50;
+}
+
+.stat-row .value.gold {
+	color: #FFD700;
+}
+
+.stat-row .value.silver {
+	color: #C0C0C0;
+}
+
+.stat-row .value.bronze {
+	color: #CD7F32;
+}
+
+.top-finishes {
+	margin-top: 2rem;
+	padding-top: 2rem;
+	border-top: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.finishes-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.finish-item {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+}
+
+.finish-item.position-1 {
+	border-color: rgba(255, 215, 0, 0.3);
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.finish-item.position-2 {
+	border-color: rgba(192, 192, 192, 0.3);
+	background: rgba(192, 192, 192, 0.05);
+}
+
+.finish-item.position-3 {
+	border-color: rgba(205, 127, 50, 0.3);
+	background: rgba(205, 127, 50, 0.05);
+}
+
+.finish-position {
+	font-size: 2rem;
+	font-weight: 700;
+	min-width: 60px;
+	text-align: center;
+}
+
+.finish-details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.finish-tournament {
+	color: #fff;
+	font-weight: 600;
+	font-size: 1.05rem;
+}
+
+.finish-date {
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.9rem;
+}
+
+.recent-history {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 2rem;
+}
+
+.recent-history h2 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 2rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.75rem;
+}
+
+.tournaments-timeline {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.timeline-item {
+	display: flex;
+	gap: 1.5rem;
+	align-items: flex-start;
+}
+
+.timeline-marker {
+	min-width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.5rem;
+	font-weight: 700;
+	background: rgba(255, 255, 255, 0.05);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-marker.position-1 {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: #FFD700;
+	color: #FFD700;
+	font-size: 2rem;
+}
+
+.timeline-marker.position-2 {
+	background: rgba(192, 192, 192, 0.2);
+	border-color: #C0C0C0;
+	color: #C0C0C0;
+	font-size: 2rem;
+}
+
+.timeline-marker.position-3 {
+	background: rgba(205, 127, 50, 0.2);
+	border-color: #CD7F32;
+	color: #CD7F32;
+	font-size: 2rem;
+}
+
+.timeline-content {
+	flex: 1;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	border-radius: 8px;
+}
+
+.timeline-content h3 {
+	margin: 0 0 0.5rem 0;
+	color: #fff;
+	font-size: 1.1rem;
+}
+
+.timeline-date {
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-size: 0.9rem;
+	margin: 0.25rem 0;
+}
+
+.timeline-position {
+	display: inline-block;
+	padding: 0.25rem 0.75rem;
+	background: rgba(57, 73, 171, 0.2);
+	border: 1px solid rgba(57, 73, 171, 0.4);
+	border-radius: 12px;
+	color: #7B93FF;
+	font-size: 0.85rem;
+	font-weight: 600;
+	margin-top: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+	.stats-details-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 768px) {
+	.player-card {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.player-username {
+		font-size: 2rem;
+	}
+
+	.player-meta {
+		justify-content: center;
+	}
+
+	.stats-showcase {
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	}
+
+	.stat-value {
+		font-size: 2rem;
+	}
+}
+</style>

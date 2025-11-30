@@ -25,17 +25,49 @@
             <div class="tournament-form-col">
                 <label for="blind_levels">Niveles de ciegas:</label>
                 <input type="number" id="blind_levels" name="blind_levels" value="{{tournament.blind_levels}}" required>
-                <label for="small_blind">Small Blind:</label>
-                <input type="number" id="small_blind" name="small_blind" value="{{tournament.small_blind}}" required>
-                <label for="punctuality_discount">Descuento por puntualidad:</label>
-                <input type="number" id="punctuality_discount" name="punctuality_discount" value="{{tournament.punctuality_discount}}" required>
+                <input type="hidden" id="small_blind" name="small_blind" value="{{#if tournament.small_blind}}{{tournament.small_blind}}{{else}}10{{/if}}">
+                <label for="punctuality_apply" class="checkbox-inline">
+                    <input type="checkbox" id="punctuality_apply" name="punctuality_apply" {{#if tournament.punctuality_discount}}checked{{/if}}> Aplicar puntualidad
+                </label>
+                <label for="punctuality_discount">Descuento por puntualidad (%):</label>
+                <input type="number" id="punctuality_discount" name="punctuality_discount" value="{{tournament.punctuality_discount}}" min="0" max="100" {{#unless tournament.punctuality_discount}}disabled{{/unless}}>
                 <label for="count_to_ranking">Cuenta para ranking:</label>
                 <select id="count_to_ranking" name="count_to_ranking" required>
                     <option value="true" {{#if tournament.count_to_ranking}}selected{{/if}}>Sí</option>
                     <option value="false" {{#unless tournament.count_to_ranking}}selected{{/unless}}>No</option>
+                </select>
+                <label for="pinned" class="checkbox-inline">
+                    <input type="checkbox" id="pinned" name="pinned" {{#if tournament.pinned}}checked{{/if}}> ⭐ Destacar en dashboard (máximo 5)
+                </label>
+                <label for="season_id">Temporada / Ranking:</label>
+                <select id="season_id" name="season_id">
+                    <option value="">Sin temporada</option>
+                    {{#each seasons}}
+                    <option value="{{this.id}}" {{#ifEquals this.id ../tournament.season_id}}selected{{/ifEquals}}>
+                        {{this.nombre}} ({{formatDate this.fecha_inicio}} - {{formatDate this.fecha_fin}})
+                    </option>
+                    {{/each}}
                 </select>
             </div>
         </div>
         <button type="submit">Guardar</button>
     </form>
 </div>
+    <script>
+        (function(){
+            const chk = document.getElementById('punctuality_apply');
+            const input = document.getElementById('punctuality_discount');
+            if (!chk || !input) return;
+            function toggle() {
+                if (chk.checked) {
+                    input.removeAttribute('disabled');
+                    if (!input.value) input.value = '20';
+                } else {
+                    input.setAttribute('disabled','disabled');
+                }
+            }
+            chk.addEventListener('change', toggle);
+            // init
+            toggle();
+        })();
+    </script>

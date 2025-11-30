@@ -1,0 +1,10 @@
+<div class="registration-detail">
+  <h2>Inscripción #{{registration.id}}</h2>
+  <p><strong>Usuario:</strong> {{#if user}}{{user.full_name}} ({{user.username}}){{else}}#{{registration.user_id}}{{/if}}</p>
+  <p><strong>Torneo:</strong> {{#if tournament}}{{tournament.tournament_name}}{{else}}#{{registration.tournament_id}}{{/if}}</p>
+  <p><strong>Fecha registro:</strong> {{registration.registration_date}}</p>
+  <p><strong>Puntualidad:</strong> {{registration.punctuality}}</p>
+  <form method="post" action="/admin/registrations/{{registration.id}}/delete">
+    <button class="btn btn-danger" type="submit">Eliminar inscripción</button>
+  </form>
+</div>
