@@ -10,7 +10,7 @@
  * - Resultados realistas con distribución de posiciones
  */
 
-import sequelize from '../src/models/index';
+import sequelize from '../src/services/database';
 import { User } from '../src/models/User';
 import { Tournament } from '../src/models/Tournament';
 import { Registration } from '../src/models/Registration';
@@ -20,7 +20,7 @@ import { Season } from '../src/models/Season';
 import { CashGame } from '../src/models/CashGame';
 import { CashParticipant } from '../src/models/CashParticipant';
 import bcrypt from 'bcrypt';
-const { Op } = require('sequelize');
+import { Op } from 'sequelize';
 
 // Nombres reales para jugadores
 const playerNames = [
@@ -150,30 +150,33 @@ async function createSeason() {
 	console.log('🏆 Creando temporada SuperTest...');
 	
 	const season = await Season.create({
-		season_name: 'SuperTest',
-		start_date: new Date('2024-07-01'),
-		end_date: new Date('2024-12-31'),
-		is_active: true
-	} as any);
+		nombre: 'SuperTest 2024',
+		descripcion: 'Temporada de prueba completa con 50 jugadores',
+		fecha_inicio: new Date('2024-07-01'),
+		fecha_fin: new Date('2024-12-31'),
+		torneos_totales: 28,
+		torneos_jugados: 0,
+		estado: 'activa'
+	});
 	
-	console.log(`✅ Temporada creada: SuperTest (ID: ${season.id})`);
+	console.log(`✅ Temporada creada: SuperTest 2024 (ID: ${season.id})`);
 	return season;
 }
 
 async function createPlayers() {
 	console.log('👥 Creando 50 jugadores...');
 	
-	const password = await bcrypt.hash('poker123', 10);
+	const password_hash = await bcrypt.hash('poker123', 10);
 	const players: User[] = [];
 	
 	for (const playerData of playerNames) {
 		const user = await User.create({
 			username: playerData.username,
 			full_name: playerData.full_name,
-			password,
-			role: 'player',
+			password_hash,
+			role: 'user',
 			is_player: true
-		});
+		} as any);
 		players.push(user);
 	}
 	
@@ -250,8 +253,9 @@ async function createTournament(
 			action_type: 1, // Buy-in
 			amount_paid: buyInAmount,
 			method: buyInMethod,
+			punctuality: Math.random() < 0.7, // true=on_time, false=late
 			recorded_by: 'admin'
-		});
+		} as any);
 		registrations.push(buyInReg);
 		
 		// Re-entry
@@ -266,8 +270,9 @@ async function createTournament(
 				action_type: 2, // Re-entry
 				amount_paid: reentryAmount,
 				method: reentryMethod,
+				punctuality: false, // late
 				recorded_by: 'admin'
-			});
+			} as any);
 		}
 		
 		// Duplo
@@ -282,8 +287,9 @@ async function createTournament(
 				action_type: 3, // Duplo
 				amount_paid: duploAmount,
 				method: duploMethod,
+				punctuality: true, // on_time
 				recorded_by: 'admin'
-			});
+			} as any);
 		}
 	}
 	
@@ -339,7 +345,7 @@ async function createCashGame(
 			leftAt.setMinutes(leftAt.getMinutes() - Math.floor(Math.random() * 30));
 		}
 		
-		const participant = await CashParticipant.create({
+		const participant: any = await CashParticipant.create({
 			cash_game_id: cash.id,
 			user_id: player.id,
 			seat_number: participants.length + 1,
@@ -354,7 +360,8 @@ async function createCashGame(
 		participants.push(participant);
 	}
 	
-	// Crear turnos de dealer
+	// Crear turnos de dealer (comentado - modelo DealerShift no existe aún)
+	/*
 	const shifts = [];
 	const numShifts = Math.floor(Math.random() * 2) + 1; // 1-2 turnos
 	
@@ -389,8 +396,9 @@ async function createCashGame(
 		total_commission: totalCommission,
 		total_tips: totalTips
 	});
+	*/
 	
-	return { cash, participants, shifts };
+	return { cash, participants, shifts: [] };
 }
 
 async function generateSuperTest() {
@@ -521,13 +529,11 @@ async function generateSuperTest() {
 		
 		for (const player of players) {
 			const registrations = await Registration.findAll({
-				where: { user_id: player.id },
-				include: [{ model: Tournament, where: { season_id: season.id, count_to_ranking: true } }]
+				where: { user_id: player.id }
 			});
 			
 			const results = await Result.findAll({
-				where: { user_id: player.id },
-				include: [{ model: Tournament, where: { season_id: season.id, count_to_ranking: true } }]
+				where: { user_id: player.id }
 			});
 			
 			const payments = await Payment.findAll({ where: { user_id: player.id } });

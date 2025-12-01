@@ -24,39 +24,39 @@
 				<div class="form-grid">
 					<div class="form-field">
 						<label>🥇 1º Lugar (%)</label>
-						<input type="number" name="pos_1" value="23" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos1" value="{{#if pointsData.1}}{{pointsData.1}}{{else}}23{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>🥈 2º Lugar (%)</label>
-						<input type="number" name="pos_2" value="17" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos2" value="{{#if pointsData.2}}{{pointsData.2}}{{else}}17{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>🥉 3º Lugar (%)</label>
-						<input type="number" name="pos_3" value="14" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos3" value="{{#if pointsData.3}}{{pointsData.3}}{{else}}14{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>4º Lugar (%)</label>
-						<input type="number" name="pos_4" value="11" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos4" value="{{#if pointsData.4}}{{pointsData.4}}{{else}}11{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>5º Lugar (%)</label>
-						<input type="number" name="pos_5" value="9" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos5" value="{{#if pointsData.5}}{{pointsData.5}}{{else}}9{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>6º Lugar (%)</label>
-						<input type="number" name="pos_6" value="8" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos6" value="{{#if pointsData.6}}{{pointsData.6}}{{else}}8{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>7º Lugar (%)</label>
-						<input type="number" name="pos_7" value="7" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos7" value="{{#if pointsData.7}}{{pointsData.7}}{{else}}7{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>8º Lugar (%)</label>
-						<input type="number" name="pos_8" value="6" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos8" value="{{#if pointsData.8}}{{pointsData.8}}{{else}}6{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>9º Lugar (%)</label>
-						<input type="number" name="pos_9" value="5" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos9" value="{{#if pointsData.9}}{{pointsData.9}}{{else}}5{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 				</div>
 				<div class="form-actions">
@@ -74,16 +74,16 @@
 			<form method="post" action="/admin/games/settings/commissions" class="settings-form">
 				<div class="form-group">
 					<label>Comisión base (%)</label>
-					<input type="number" name="commission_rate" value="5" min="0" max="20" step="0.1" />
+					<input type="number" name="commission_rate" value="{{config.commission_rate}}" min="0" max="20" step="0.1" />
 					<small>Porcentaje de comisión sobre el buy-in</small>
 				</div>
 				<div class="form-group">
 					<label>Comisión mínima ($)</label>
-					<input type="number" name="commission_min" value="5" min="0" step="0.5" />
+					<input type="number" name="commission_min" value="{{config.commission_min}}" min="0" step="0.5" />
 				</div>
 				<div class="form-group">
 					<label>Comisión máxima ($)</label>
-					<input type="number" name="commission_max" value="50" min="0" step="1" />
+					<input type="number" name="commission_max" value="{{config.commission_max}}" min="0" step="1" />
 				</div>
 				<div class="form-actions">
 					<button type="submit" class="btn btn-primary">💾 Guardar Comisiones</button>
@@ -100,19 +100,20 @@
 			<form method="post" action="/admin/games/settings/general" class="settings-form">
 				<div class="form-group">
 					<label>💵 Buy-in predeterminado</label>
-					<input type="number" name="default_buyin" value="22" min="1" step="1" />
+					<input type="number" name="default_buyin" value="{{config.default_buyin}}" min="1" step="1" />
 				</div>
 				<div class="form-group">
 					<label>🔄 Re-entry predeterminado</label>
-					<input type="number" name="default_reentry" value="22" min="1" step="1" />
+					<input type="number" name="default_reentry" value="{{config.default_reentry}}" min="1" step="1" />
 				</div>
 				<div class="form-group">
 					<label>🎯 Bounty predeterminado</label>
-					<input type="number" name="default_bounty" value="5" min="0" step="1" />
+					<input type="number" name="default_bounty" value="{{config.default_bounty}}" min="0" step="1" />
 				</div>
 				<div class="form-group">
-					<label>⏰ Niveles Re-entry por defecto</label>
-					<input type="number" name="default_blind_levels" value="3" min="1" max="10" />
+					<label>⏰ Niveles de ciegas por defecto</label>
+					<input type="text" name="default_blind_levels" value="{{config.default_blind_levels}}" placeholder="25/50" />
+					<small>Formato: pequeña/grande (ej: 25/50)</small>
 				</div>
 				<div class="form-actions">
 					<button type="submit" class="btn btn-primary">💾 Guardar General</button>
@@ -129,21 +130,21 @@
 			<form method="post" action="/admin/games/settings/language" class="settings-form">
 				<div class="language-options">
 					<label class="language-option">
-						<input type="radio" name="language" value="es" checked />
+						<input type="radio" name="language" value="es" {{#if (eq config.language 'es')}}checked{{/if}} />
 						<div class="language-card">
 							<span class="flag">🇦🇷</span>
 							<span class="lang-name">Español</span>
 						</div>
 					</label>
 					<label class="language-option">
-						<input type="radio" name="language" value="en" />
+						<input type="radio" name="language" value="en" {{#if (eq config.language 'en')}}checked{{/if}} />
 						<div class="language-card">
 							<span class="flag">🇺🇸</span>
 							<span class="lang-name">English</span>
 						</div>
 					</label>
 					<label class="language-option">
-						<input type="radio" name="language" value="pt" />
+						<input type="radio" name="language" value="pt" {{#if (eq config.language 'pt')}}checked{{/if}} />
 						<div class="language-card">
 							<span class="flag">🇧🇷</span>
 							<span class="lang-name">Português</span>

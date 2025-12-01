@@ -23,17 +23,75 @@ function safeReadFile(filePath: string) {
 }
 
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
+  // Load current settings from points_table.json
   const pointsRaw = safeReadFile(POINTS_FILE) || '{}';
-  const prizeRaw = safeReadFile(PRIZE_FILE) || '{}';
-  res.render('admin/games_settings', { pointsRaw, prizeRaw, username: req.session.username });
+  let pointsData: Record<string, number> = {};
+  try {
+    pointsData = JSON.parse(pointsRaw);
+  } catch (e) {
+    pointsData = {};
+  }
+
+  // Load commission settings
+  const settings = await Setting.findAll({
+    where: {
+      key: ['commission_total_pct', 'commission_min', 'commission_max', 'default_buyin', 'default_reentry', 'default_bounty', 'default_blind_levels', 'language']
+    } as any
+  });
+
+  const config: Record<string, any> = {
+    commission_rate: 20,
+    commission_min: 0,
+    commission_max: 0,
+    default_buyin: 5000,
+    default_reentry: 5000,
+    default_bounty: 500,
+    default_blind_levels: '25/50',
+    language: 'es'
+  };
+
+  for (const s of settings) {
+    const key = (s as any).key;
+    const val = (s as any).value;
+    config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
+  }
+
+  res.render('admin/settings_improved', {
+    username: req.session.username,
+    pointsData,
+    config,
+    flash: req.session.flash
+  });
+  
+  if (req.session.flash) delete req.session.flash;
 });
 
-router.post('/', requireAdmin, async (req: Request, res: Response) => {
-  const { points_table: pointsText, prize_override: prizeText } = req.body;
-  // Basic JSON validation
+/**
+ * POST /admin/games/settings/points
+ * Actualizar distribución de puntos
+ */
+router.post('/points', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const pointsObj = pointsText ? JSON.parse(pointsText) : null;
-    const prizeObj = prizeText ? JSON.parse(prizeText) : null;
+    const { pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8, pos9 } = req.body;
+    
+    const pointsObj: Record<string, number> = {
+      '1': Number(pos1) || 23,
+      '2': Number(pos2) || 17,
+      '3': Number(pos3) || 14,
+      '4': Number(pos4) || 11,
+      '5': Number(pos5) || 9,
+      '6': Number(pos6) || 8,
+      '7': Number(pos7) || 7,
+      '8': Number(pos8) || 6,
+      '9': Number(pos9) || 5,
+    };
+
+    // Validate total is 100%
+    const total = Object.values(pointsObj).reduce((sum, val) => sum + val, 0);
+    if (Math.abs(total - 100) > 0.01) {
+      if (req.session) req.session.flash = { type: 'error', message: `La suma debe ser 100%. Actual: ${total}%` };
+      return res.redirect('/admin/games/settings');
+    }
 
     // ensure backup dir exists
     if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
@@ -42,19 +100,79 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
     if (fs.existsSync(POINTS_FILE)) {
       fs.copyFileSync(POINTS_FILE, path.join(BACKUP_DIR, `points_table.json.${ts}.bak`));
     }
-    if (fs.existsSync(PRIZE_FILE)) {
-      fs.copyFileSync(PRIZE_FILE, path.join(BACKUP_DIR, `prize_override.json.${ts}.bak`));
-    }
 
-    // write pretty JSON
-    if (pointsObj !== null) fs.writeFileSync(POINTS_FILE, JSON.stringify(pointsObj, null, 2), 'utf8');
-    if (prizeObj !== null) fs.writeFileSync(PRIZE_FILE, JSON.stringify(prizeObj, null, 2), 'utf8');
+    fs.writeFileSync(POINTS_FILE, JSON.stringify(pointsObj, null, 2), 'utf8');
 
-    if (req.session) req.session.flash = { type: 'success', message: 'Configuración guardada. Backup creado.' };
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Distribución de puntos actualizada' };
     return res.redirect('/admin/games/settings');
   } catch (err: any) {
-    console.error('Error parsing JSON', err);
-    if (req.session) req.session.flash = { type: 'error', message: 'JSON inválido: ' + (err && err.message ? err.message : String(err)) };
+    console.error('Error saving points:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
+    return res.redirect('/admin/games/settings');
+  }
+});
+
+/**
+ * POST /admin/games/settings/general
+ * Actualizar configuración general (defaults)
+ */
+router.post('/general', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { default_buyin, default_reentry, default_bounty, default_blind_levels } = req.body;
+
+    const updates = [
+      { key: 'default_buyin', value: String(default_buyin || 5000), description: 'Buy-in predeterminado' },
+      { key: 'default_reentry', value: String(default_reentry || 5000), description: 'Re-entry predeterminado' },
+      { key: 'default_bounty', value: String(default_bounty || 500), description: 'Bounty predeterminado' },
+      { key: 'default_blind_levels', value: String(default_blind_levels || '25/50'), description: 'Niveles de ciegas predeterminados' },
+    ];
+
+    for (const u of updates) {
+      const [setting, created] = await Setting.findOrCreate({
+        where: { key: u.key } as any,
+        defaults: { key: u.key, value: u.value, description: u.description } as any,
+      });
+      if (!created) {
+        await Setting.update({ value: u.value }, { where: { key: u.key } as any });
+      }
+    }
+
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Configuración general actualizada' };
+    return res.redirect('/admin/games/settings');
+  } catch (err: any) {
+    console.error('Error saving general config:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
+    return res.redirect('/admin/games/settings');
+  }
+});
+
+/**
+ * POST /admin/games/settings/language
+ * Cambiar idioma de la aplicación
+ */
+router.post('/language', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { language } = req.body;
+    
+    if (!['es', 'en', 'pt'].includes(language)) {
+      if (req.session) req.session.flash = { type: 'error', message: 'Idioma inválido' };
+      return res.redirect('/admin/games/settings');
+    }
+
+    const [setting, created] = await Setting.findOrCreate({
+      where: { key: 'language' } as any,
+      defaults: { key: 'language', value: language, description: 'Idioma de la aplicación' } as any,
+    });
+    
+    if (!created) {
+      await Setting.update({ value: language }, { where: { key: 'language' } as any });
+    }
+
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Idioma actualizado' };
+    return res.redirect('/admin/games/settings');
+  } catch (err: any) {
+    console.error('Error saving language:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
     return res.redirect('/admin/games/settings');
   }
 });
@@ -106,14 +224,12 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
  */
 router.post('/commissions', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { total, quarterly, monthly, copa, house } = req.body;
+    const { commission_rate, commission_min, commission_max } = req.body;
 
     const updates = [
-      { key: 'commission_total_pct', value: String(total || 20), description: 'Porcentaje total de comisión sobre el pozo' },
-      { key: 'commission_quarterly_pct', value: String(quarterly || 1), description: 'Porcentaje para ranking trimestral' },
-      { key: 'commission_monthly_pct', value: String(monthly || 1), description: 'Porcentaje para especial del mes' },
-      { key: 'commission_copa_pct', value: String(copa || 1), description: 'Porcentaje para Copa Don Humberto' },
-      { key: 'commission_house_pct', value: String(house || 17), description: 'Porcentaje para la casa' },
+      { key: 'commission_total_pct', value: String(commission_rate || 20), description: 'Porcentaje de comisión sobre el buy-in' },
+      { key: 'commission_min', value: String(commission_min || 0), description: 'Comisión mínima por jugador' },
+      { key: 'commission_max', value: String(commission_max || 0), description: 'Comisión máxima por jugador' },
     ];
 
     for (const u of updates) {
@@ -126,10 +242,12 @@ router.post('/commissions', requireAdmin, async (req: Request, res: Response) =>
       }
     }
 
-    res.redirect('/admin/games/settings/commissions?success=1');
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Comisiones actualizadas' };
+    res.redirect('/admin/games/settings');
   } catch (err) {
     console.error('Error updating commission settings:', err);
-    res.status(500).send('Error actualizando configuración');
+    if (req.session) req.session.flash = { type: 'error', message: 'Error actualizando comisiones' };
+    res.redirect('/admin/games/settings');
   }
 });
 
