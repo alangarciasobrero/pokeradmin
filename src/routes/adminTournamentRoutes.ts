@@ -619,6 +619,27 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
   }
 });
 
+// DELETE /:tournamentId/registrations/:registrationId - delete registration and its payments
+router.delete('/:tournamentId/registrations/:registrationId', requireAdmin, async (req: Request, res: Response) => {
+  const registrationId = Number(req.params.registrationId);
+  try {
+    // Delete associated payments first (foreign key constraint)
+    await Payment.destroy({ where: { reference_id: registrationId, source: 'tournament' } as any });
+    
+    // Delete registration
+    const deleted = await Registration.destroy({ where: { id: registrationId } as any });
+    
+    if (deleted === 0) {
+      return res.status(404).json({ error: 'Inscripción no encontrada' });
+    }
+    
+    return res.json({ success: true, message: 'Inscripción eliminada' });
+  } catch (e) {
+    console.error('Error deleting registration', e);
+    return res.status(500).json({ error: 'Error al eliminar inscripción' });
+  }
+});
+
 // POST confirm-close: accept commission/prizes/positions, create payouts and finalize
 router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
