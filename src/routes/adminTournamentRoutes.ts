@@ -565,10 +565,7 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
       const paid = Number((p as any).paid_amount || 0) || (Number((p as any).amount || 0) * ((p as any).paid ? 1 : 0));
       if (!isNaN(paid) && paid !== 0) perReg[rid].paid += paid;
       const amt = Number((p as any).amount || 0);
-      if (!isNaN(amt) && amt !== 0) {
-        perReg[rid].expected += amt;
-        console.log(`[DEBUG] Payment ${(p as any).id} for reg ${rid}: amount=${amt}, paid=${paid}, source=${(p as any).source}`);
-      }
+      if (!isNaN(amt) && amt !== 0) perReg[rid].expected += amt;
       if ((p as any).method) perReg[rid].lastMethod = (p as any).method;
       if ((p as any).personal_account) perReg[rid].personal_account = true;
     }
