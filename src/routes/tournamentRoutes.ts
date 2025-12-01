@@ -142,6 +142,32 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/tournaments/:id/toggle-pin
+ * Alterna el estado de torneo destacado (pinned)
+ */
+router.post('/:id/toggle-pin', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  
+  if (!id || isNaN(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID de torneo inválido' });
+  }
+
+  try {
+    const tournament = await tournamentRepo.getById(id);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Torneo no encontrado' });
+    }
+
+    const newPinnedState = !tournament.pinned;
+    await tournamentRepo.updateById(id, { pinned: newPinnedState });
+
+    res.json({ success: true, pinned: newPinnedState, message: newPinnedState ? 'Torneo destacado' : 'Torneo desmarcado' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al cambiar estado de torneo', details: error });
+  }
+});
+
+/**
  * Exporta el router para ser usado en app.ts
  */
 export default router;

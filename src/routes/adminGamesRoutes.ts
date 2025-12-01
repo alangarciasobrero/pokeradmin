@@ -14,7 +14,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   let cashGames: any[] = [];
   let summary: any = {};
   try {
-    tournaments = await Tournament.findAll({ order: [['start_date', 'DESC']] });
+    tournaments = await Tournament.findAll({ 
+      order: [['pinned', 'DESC'], ['start_date', 'DESC']] 
+    });
   } catch (err) {
     console.error('Error loading tournaments', err);
     tournaments = [];

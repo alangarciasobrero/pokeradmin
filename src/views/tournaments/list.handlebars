@@ -4,12 +4,20 @@
     {{#if tournaments.length}}
       <div class="games-list">
         {{#each tournaments}}
-          <div class="game-card">
+          <div class="game-card {{#if pinned}}game-card-pinned{{/if}}" data-tournament-id="{{id}}">
+            <div class="pin-badge">
+              <button class="btn-pin" onclick="togglePin({{id}}, this)" title="{{#if pinned}}Desmarcar como destacado{{else}}Marcar como destacado{{/if}}">
+                {{#if pinned}}📌{{else}}📍{{/if}}
+              </button>
+            </div>
             <div class="game-info">
-              <div><strong>Nombre:</strong> {{tournament_name}}</div>
+              <div><strong>{{#if pinned}}⭐ {{/if}}{{tournament_name}}</strong></div>
               <div><strong>Fecha:</strong> {{start_date}}</div>
               <div><strong>Buy-in:</strong> ${{buy_in}}</div>
-              <div><strong>Stack inicial:</strong> {{starting_stack}}</div>
+              <div><strong>Stack:</strong> {{starting_stack}}</div>
+            </div>
+            <div class="card-actions">
+              <a href="/admin/games/tournaments/{{id}}" class="btn-small">Ver detalle</a>
             </div>
           </div>
         {{/each}}
@@ -19,9 +27,82 @@
     {{/if}}
     <a class="add-tournament-btn" href="/tournaments/new">Agregar Torneo</a>
 </div>
+
+<script>
+async function togglePin(tournamentId, button) {
+  try {
+    const response = await fetch(`/api/tournaments/${tournamentId}/toggle-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await response.json();
+    
+    if (data.success) {
+      const card = button.closest('.game-card');
+      if (data.pinned) {
+        card.classList.add('game-card-pinned');
+        button.textContent = '📌';
+        button.title = 'Desmarcar como destacado';
+        // Mover al principio
+        card.parentElement.prepend(card);
+      } else {
+        card.classList.remove('game-card-pinned');
+        button.textContent = '📍';
+        button.title = 'Marcar como destacado';
+      }
+    }
+  } catch (error) {
+    console.error('Error toggling pin:', error);
+  }
+}
+</script>
+
 <style>
 .games-list { display: flex; flex-wrap: wrap; gap: 1.5rem; }
-.game-card { background: var(--muted-surface); border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding: 1rem 1.5rem; min-width: 220px; }
-.game-info { font-size: 1rem; }
+.game-card { 
+  background: var(--muted-surface); 
+  border-radius: 8px; 
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); 
+  padding: 1rem 1.5rem; 
+  min-width: 220px; 
+  position: relative;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.game-card-pinned { 
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-color: #FF8C00;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+.pin-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+.btn-pin {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  opacity: 0.7;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.btn-pin:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+.game-info { font-size: 1rem; margin-bottom: 0.5rem; }
+.card-actions { margin-top: 0.5rem; }
+.btn-small {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.btn-small:hover { background: #135ea8; }
 .empty-list { color: #888; font-style: italic; margin-top: 1rem; }
 </style>
