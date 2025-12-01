@@ -12,11 +12,14 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   // Obtener torneos y cash games
   let tournaments: any[] = [];
   let cashGames: any[] = [];
+  let activeTournament: any = null;
   let summary: any = {};
   try {
     tournaments = await Tournament.findAll({ 
       order: [['pinned', 'DESC'], ['start_date', 'DESC']] 
     });
+    // Buscar torneo activo (registration_open = true)
+    activeTournament = tournaments.find((t: any) => t.registration_open === true);
   } catch (err) {
     console.error('Error loading tournaments', err);
     tournaments = [];
@@ -45,6 +48,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   res.render('admin_games', {
     tournaments,
     cashGames,
+    activeTournament,
     summary,
     username: req.session.username,
     role: req.session.role
