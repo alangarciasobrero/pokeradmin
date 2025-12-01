@@ -276,7 +276,7 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
     // load registrations and users for the inline registration form
     const registrations = await Registration.findAll({ where: { tournament_id: id }, order: [['registration_date','ASC']] });
     const users = await User.findAll({ where: { is_deleted: false }, order: [['username','ASC']] });
-    res.render('tournaments/detail', { tournament, registrations, users, username: req.session.username });
+    res.render('tournaments/detail', { tournament, registrations, users, username: req.session.username, isAdmin: true });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error');
