@@ -64,6 +64,7 @@ export class TournamentRepository {
         blind_levels: number;
         small_blind: number;
         punctuality_discount: number;
+        pinned: boolean;
     }>): Promise<[number, Tournament[]]> {
         return Tournament.update(data, {
             where: { id },
