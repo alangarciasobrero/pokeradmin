@@ -718,7 +718,31 @@
                                             const paidClass = isPaid ? "text-success" : "text-danger";
                                             const punctualityLabel = p.punctuality ? "✓" : "✗";
                                             const punctualityClass = p.punctuality ? "text-success" : "text-danger";
-                                            const methodLabel = p.lastMethod ? (p.lastMethod === 'cash' ? 'Efectivo' : p.lastMethod === 'card' ? 'Tarjeta' : p.lastMethod === 'transfer' ? 'Transferencia' : p.lastMethod) : "";
+                                            
+                                            // Extraer método de pago (antes del |by:)
+                                            let methodLabel = "";
+                                            if (p.lastMethod) {
+                                                const methodStr = String(p.lastMethod).trim();
+                                                const match = methodStr.match(/\|by:/i);
+                                                const method = match ? methodStr.substring(0, match.index).trim() : methodStr;
+                                                const methodLower = method.toLowerCase();
+                                                
+                                                const methodMap = {
+                                                    'cash': '💵 Efectivo',
+                                                    'efectivo': '💵 Efectivo',
+                                                    'transfer': '🏦 Transferencia',
+                                                    'transferencia': '🏦 Transferencia',
+                                                    'card': '💳 Tarjeta',
+                                                    'tarjeta': '💳 Tarjeta',
+                                                    'credit': '💳 Tarjeta',
+                                                    'debit': '💳 Débito',
+                                                    'manual': '📝 Manual',
+                                                    'other': '📝 Otro',
+                                                    'fiado': '🔖 FIADO'
+                                                };
+                                                
+                                                methodLabel = methodMap[methodLower] || `📝 ${method}`;
+                                            }
                                             
                                             // Determinar estado de pago para filtro
                                             let paymentStatus = 'unpaid';
