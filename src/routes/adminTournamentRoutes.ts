@@ -574,7 +574,11 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
       const u = umap[uid];
       const agg = perReg[rid] || { paid: 0, expected: 0, lastMethod: null, personal_account: false };
       const debt = +(agg.expected - agg.paid);
-      const amountToPot = +(agg.paid > 0 ? agg.paid : 0);
+      // Al pozo va todo el expected (buy-in/re-entry), sin importar si pagó o no. El fiado lo asume la casa.
+      const amountToPot = +(agg.expected || 0);
+      // Si no pagó completamente, el método es "Fiado"
+      const isPaid = agg.paid >= agg.expected;
+      const effectiveMethod = isPaid ? agg.lastMethod : 'fiado';
       // compute action label from numeric action_type when available; fall back to legacy is_reentry flag
       const actionTypeNum = (r as any).action_type ? Number((r as any).action_type) : ((r as any).is_reentry ? 2 : 1);
       const actionLabel = actionTypeNum === 2 ? 'Re-entry' : (actionTypeNum === 3 ? 'Duplo' : 'Buy-in');
@@ -590,7 +594,7 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
         paid: +agg.paid,
         expected: +agg.expected,
         debt: +debt,
-        lastMethod: agg.lastMethod,
+        lastMethod: effectiveMethod,
         personal_account: !!agg.personal_account,
         position: (r as any).position || null,
         amount_contributed_to_pot: +amountToPot
