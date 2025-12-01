@@ -56,6 +56,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
 
     // Cargar todas las temporadas para el selector
     const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
+    
+    // Encontrar temporada activa
+    const activeSeason = seasons.find((s: any) => s.is_active === true);
 
     const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll, seasonId);
 
@@ -145,7 +148,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     username: req.session.username, 
     rules: { pointsTable, prizeOverride },
     seasons,
-    selectedSeason: seasonId 
+    selectedSeason: seasonId,
+    activeSeason
   });
   } catch (err) {
     const e: any = err;
