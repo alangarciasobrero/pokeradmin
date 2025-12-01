@@ -229,8 +229,19 @@ function normalizeTournamentInput(data: any) {
   }
   for (const f of dateFields) {
     if (out[f] !== undefined && out[f] !== null && out[f] !== '') {
-      const d = new Date(out[f]);
-      out[f] = isNaN(d.getTime()) ? out[f] : d;
+      // Parse DD/MM/YYYY format (European/Argentine style)
+      const dateStr = String(out[f]).trim();
+      const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // months are 0-indexed
+        const year = parseInt(match[3], 10);
+        out[f] = new Date(year, month, day);
+      } else {
+        // Fallback to default Date parsing
+        const d = new Date(out[f]);
+        out[f] = isNaN(d.getTime()) ? out[f] : d;
+      }
     }
   }
   // season_id: convert empty string to null

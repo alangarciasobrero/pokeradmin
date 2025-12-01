@@ -109,8 +109,19 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
     }
     for (const f of dateFields) {
       if (data[f] !== undefined && data[f] !== null && data[f] !== '') {
-        const d = new Date(data[f]);
-        data[f] = isNaN(d.getTime()) ? data[f] : d;
+        // Parse DD/MM/YYYY format (European/Argentine style)
+        const dateStr = String(data[f]).trim();
+        const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (match) {
+          const day = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10) - 1; // months are 0-indexed
+          const year = parseInt(match[3], 10);
+          data[f] = new Date(year, month, day);
+        } else {
+          // Fallback to default Date parsing
+          const d = new Date(data[f]);
+          data[f] = isNaN(d.getTime()) ? data[f] : d;
+        }
       }
     }
 
