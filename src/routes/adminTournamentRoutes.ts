@@ -330,9 +330,17 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
   // create registration (persist action_type)
   const registration = await Registration.create({ user_id: userId, tournament_id: id, registration_date: now, punctuality, action_type });
 
-  // expected amount after punctuality discount
+  // expected amount calculation depends on action_type
+  // Buy-in (1) and Re-entry (2): buy_in with punctuality discount
+  // Duplo (3): buy_in × 1.6 (80% de 2× buy_in = 20% descuento sobre doble caja)
   const pct = Number(tournament.punctuality_discount || 0);
-  const expectedAmount = Number(tournament.buy_in || 0) * (1 - (pct / 100));
+  const baseBuyIn = Number(tournament.buy_in || 0);
+  let expectedAmount = baseBuyIn * (1 - (pct / 100));
+  
+  if (action_type === 3) {
+    // Duplo: buy_in × 2 × 0.8 = buy_in × 1.6
+    expectedAmount = baseBuyIn * 1.6;
+  }
 
   // create payment record linking to registration
   // Support partial payments and debtors: paid = true only if amountPaid >= expectedAmount and amountPaid > 0
@@ -557,7 +565,10 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
       const paid = Number((p as any).paid_amount || 0) || (Number((p as any).amount || 0) * ((p as any).paid ? 1 : 0));
       if (!isNaN(paid) && paid !== 0) perReg[rid].paid += paid;
       const amt = Number((p as any).amount || 0);
-      if (!isNaN(amt) && amt !== 0) perReg[rid].expected += amt;
+      if (!isNaN(amt) && amt !== 0) {
+        perReg[rid].expected += amt;
+        console.log(`[DEBUG] Payment ${(p as any).id} for reg ${rid}: amount=${amt}, paid=${paid}, source=${(p as any).source}`);
+      }
       if ((p as any).method) perReg[rid].lastMethod = (p as any).method;
       if ((p as any).personal_account) perReg[rid].personal_account = true;
     }
