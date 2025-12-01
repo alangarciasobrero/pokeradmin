@@ -18,8 +18,12 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     tournaments = await Tournament.findAll({ 
       order: [['pinned', 'DESC'], ['start_date', 'DESC']] 
     });
-    // Buscar torneo activo (registration_open = true)
-    activeTournament = tournaments.find((t: any) => t.registration_open === true);
+    // Buscar torneo activo (registration_open = true Y no cerrado)
+    const now = new Date();
+    activeTournament = tournaments.find((t: any) => 
+      t.registration_open === true && 
+      (!t.end_date || new Date(t.end_date) >= now)
+    );
   } catch (err) {
     console.error('Error loading tournaments', err);
     tournaments = [];

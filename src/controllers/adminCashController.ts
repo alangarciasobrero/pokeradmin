@@ -19,12 +19,17 @@ export async function handleClosePost(req: Request, res: Response) {
   const id = Number(req.params.id);
   try {
     const cash = await CashGameRepository.findById(id);
-    if (!cash) return res.status(404).send('Cash game no encontrado');
+    if (!cash) {
+      console.error(`[handleClosePost] Cash game ${id} not found`);
+      return res.status(404).send('Cash game no encontrado');
+    }
 
     // Inputs from form (fallback to existing values)
     const total_commission = req.body.total_commission !== undefined ? Number(req.body.total_commission) : Number(cash.total_commission || 0);
     const total_tips = req.body.total_tips !== undefined ? Number(req.body.total_tips) : Number(cash.total_tips || 0);
     const dealer_user_id = req.body.dealer_user_id ? Number(req.body.dealer_user_id) : null;
+
+    console.log(`[handleClosePost] Closing cash game ${id}:`, { total_commission, total_tips, dealer_user_id });
 
     // Mark cash game closed
     await CashGameRepository.update(id, { end_datetime: new Date(), total_commission, total_tips } as any);

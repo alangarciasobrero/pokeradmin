@@ -90,11 +90,11 @@
 				</div>
 				<div class="form-group">
 					<label for="requested_amount">Monto pedido</label>
-					<input type="number" name="requested_amount" id="requested_amount" step="0.01" min="0" value="{{cash.default_buyin}}" placeholder="Monto solicitado" />
+					<input type="number" name="requested_amount" id="requested_amount" step="0.01" min="0" value="{{#if cash.default_buyin}}{{cash.default_buyin}}{{/if}}" placeholder="Monto solicitado" />
 				</div>
 				<div class="form-group">
 					<label for="amount_paid">Monto pagado (dejar vacío si es fiado)</label>
-					<input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" value="{{cash.default_buyin}}" placeholder="Dejar vacío = FIADO" />
+					<input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" value="{{#if cash.default_buyin}}{{cash.default_buyin}}{{/if}}" placeholder="Dejar vacío = FIADO" />
 				</div>
 				<div class="form-group">
 					<label for="method">Método de pago</label>

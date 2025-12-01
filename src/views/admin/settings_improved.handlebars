@@ -8,7 +8,7 @@
 
 	{{#if flash}}
 		<div class="alert alert-{{flash.type}}">
-			{{#if (eq flash.type 'success')}}✅{{else}}⚠️{{/if}} {{flash.message}}
+			{{#ifEquals flash.type 'success'}}✅{{else}}⚠️{{/ifEquals}} {{flash.message}}
 		</div>
 	{{/if}}
 

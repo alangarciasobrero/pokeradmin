@@ -52,7 +52,8 @@ function loadPrizeOverride() {
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
   try {
     const includeAll = req.query.includeAll === '1';
-    const seasonId = req.query.season ? Number(req.query.season) : null;
+    const seasonParam = req.query.season as string | undefined;
+    const seasonId = (seasonParam && seasonParam !== '') ? Number(seasonParam) : null;
 
     // Cargar todas las temporadas para el selector
     const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
