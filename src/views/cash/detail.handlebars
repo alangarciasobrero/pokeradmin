@@ -165,14 +165,14 @@
 	})();
 
 	// Modal de cambio de turno
-	(function(){
+	document.addEventListener('DOMContentLoaded', function() {
 		const cashId = {{cash.id}};
 		const openBtn = document.getElementById('openShiftModal');
 		const modal = document.getElementById('shiftModal');
 		const cancelBtn = document.getElementById('cancelShiftBtn');
 		const form = document.getElementById('shiftForm');
 
-		console.log('Shift modal script loaded:', { openBtn, modal, cancelBtn, form });
+		console.log('Shift modal script loaded:', { openBtn, modal, cancelBtn, form, cashId });
 
 		if (openBtn && modal) {
 			openBtn.addEventListener('click', () => {
@@ -223,7 +223,7 @@
 				}
 			});
 		}
-	})();
+	});
 </script>
 
 <style>
