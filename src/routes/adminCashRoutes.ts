@@ -83,7 +83,12 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
     const users = await User.findAll({ where: { is_deleted: false }, order: [['username','ASC']] });
     const umap: any = {};
     users.forEach((u: any) => umap[u.id] = u);
-    res.render('cash/detail', { cash, participants: enrichedParticipants, users, umap, username: req.session.username });
+    
+    // Load dealer shifts history
+    const DealerShift = (await import('../models/DealerShift')).default;
+    const shifts = await DealerShift.findAll({ where: { cash_game_id: id }, order: [['shift_end', 'DESC']] });
+    
+    res.render('cash/detail', { cash, participants: enrichedParticipants, users, umap, shifts, username: req.session.username });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error');
@@ -293,16 +298,31 @@ router.post('/:id/shift', requireAdmin, async (req: Request, res: Response) => {
     const cash = await CashGameRepository.findById(id);
     if (!cash) return res.status(404).json({ error: 'Cash game no encontrado' });
 
-    const { dealer_name, commission, tips, recorded_by } = req.body;
+    const { outgoing_dealer, incoming_dealer, commission, tips, recorded_by } = req.body;
     const commissionAmount = Number(commission || 0);
     const tipsAmount = Number(tips || 0);
+    
+    // Import DealerShift model
+    const DealerShift = (await import('../models/DealerShift')).default;
+    
+    // Record shift change in history
+    await DealerShift.create({
+      cash_game_id: id,
+      outgoing_dealer: outgoing_dealer || cash.dealer,
+      incoming_dealer: incoming_dealer,
+      shift_start: cash.start_datetime || new Date(),
+      shift_end: new Date(),
+      commission: commissionAmount,
+      tips: tipsAmount,
+      recorded_by: recorded_by || req.session?.username || null
+    });
 
-    // Update dealer name and accumulate commission/tips
+    // Update dealer to the incoming dealer and accumulate commission/tips
     const newTotalCommission = Number(cash.total_commission || 0) + commissionAmount;
     const newTotalTips = Number(cash.total_tips || 0) + tipsAmount;
 
     await CashGameRepository.update(id, { 
-      dealer: dealer_name || cash.dealer,
+      dealer: incoming_dealer || cash.dealer,
       total_commission: newTotalCommission,
       total_tips: newTotalTips
     } as any);

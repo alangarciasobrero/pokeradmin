@@ -146,6 +146,17 @@ Handlebars.registerHelper('formatDateTime', function(d: any) {
 	const minutes = String(dt.getMinutes()).padStart(2, '0');
 	return `${day}/${month}/${year} ${hours}:${minutes}`;
 });
+// helper to calculate time difference in hours and minutes
+Handlebars.registerHelper('timeDiff', function(start: any, end: any) {
+	if (!start || !end) return '';
+	const s = new Date(start);
+	const e = new Date(end);
+	if (isNaN(s.getTime()) || isNaN(e.getTime())) return '';
+	const diff = e.getTime() - s.getTime();
+	const hours = Math.floor(diff / (1000 * 60 * 60));
+	const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+	return `${hours}h ${minutes}m`;
+});
 // helper to extract method label (before |by: or |By:...) and format nicely
 Handlebars.registerHelper('methodLabel', function(m: any) {
 	if (!m || m === '' || m === null || m === undefined) return '🔖 FIADO';

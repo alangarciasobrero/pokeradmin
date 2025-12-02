@@ -197,7 +197,8 @@
 				e.preventDefault();
 				const formData = new FormData(form);
 				const data = {
-					dealer_name: formData.get('dealer_name'),
+					outgoing_dealer: formData.get('outgoing_dealer'),
+					incoming_dealer: formData.get('incoming_dealer'),
 					commission: parseFloat(formData.get('commission') || '0'),
 					tips: parseFloat(formData.get('tips') || '0'),
 					recorded_by: '{{username}}'
@@ -486,25 +487,33 @@
 		<p style="color:#666">Finaliza el turno actual y comienza uno nuevo</p>
 		<form id="shiftForm">
 			<div class="form-group">
-				<label>Turno actual</label>
-				<div style="background:#f5f5f5;padding:1rem;border-radius:6px;margin-bottom:1rem;">
+				<label>📅 Turno que finaliza</label>
+				<div style="background:#fff3cd;padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid #ffc107;">
+					<p style="margin:0.25rem 0;"><strong>Dealer:</strong> <span id="currentDealerName">{{cash.dealer}}</span></p>
 					<p style="margin:0.25rem 0;"><strong>Inicio:</strong> <span id="shiftStartTime"></span></p>
 					<p style="margin:0.25rem 0;"><strong>Fin:</strong> <span id="shiftEndTime"></span></p>
 				</div>
 			</div>
+			
 			<div class="form-group">
-				<label for="dealer_name">Nombre del repartidor</label>
-				<input type="text" id="dealer_name" name="dealer_name" required placeholder="Nombre del dealer" />
+				<label for="outgoing_dealer">🏁 Dealer que sale</label>
+				<input type="text" id="outgoing_dealer" name="outgoing_dealer" value="{{cash.dealer}}" required placeholder="Nombre del dealer que termina" />
 			</div>
+			
 			<div class="form-row">
 				<div class="form-group">
-					<label for="commission">Comisión ($)</label>
+					<label for="commission">💰 Comisión del turno ($)</label>
 					<input type="number" id="commission" name="commission" step="0.01" min="0" value="0" required />
 				</div>
 				<div class="form-group">
-					<label for="tips">Propinas ($)</label>
+					<label for="tips">💵 Propinas del turno ($)</label>
 					<input type="number" id="tips" name="tips" step="0.01" min="0" value="0" required />
 				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="incoming_dealer">🆕 Dealer que entra</label>
+				<input type="text" id="incoming_dealer" name="incoming_dealer" required placeholder="Nombre del nuevo dealer" />
 			</div>
 			<div style="margin-top:1.5rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
 				<button type="button" id="cancelShiftBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
@@ -573,5 +582,50 @@
 		</div>
 	{{/if}}
 </div>
+
+{{!-- Historial de turnos --}}
+{{#if username}}
+<div class="cash-game-container" style="margin-top:2rem;">
+	<h2 style="color:#ffd700;margin-bottom:1rem;">🔄 Historial de Turnos</h2>
+	{{#if shifts}}
+		<div class="table-container">
+			<table class="participants-table">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Dealer Saliente</th>
+						<th>Dealer Entrante</th>
+						<th>Inicio Turno</th>
+						<th>Fin Turno</th>
+						<th>Duración</th>
+						<th>Comisión</th>
+						<th>Propinas</th>
+						<th>Registrado por</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each shifts}}
+						<tr>
+							<td>{{add @index 1}}</td>
+							<td>🏁 {{this.outgoing_dealer}}</td>
+							<td>🆕 {{this.incoming_dealer}}</td>
+							<td>{{formatDateTime this.shift_start}}</td>
+							<td>{{formatDateTime this.shift_end}}</td>
+							<td>{{timeDiff this.shift_start this.shift_end}}</td>
+							<td>${{currency this.commission}}</td>
+							<td>${{currency this.tips}}</td>
+							<td>{{this.recorded_by}}</td>
+						</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		</div>
+	{{else}}
+		<div class="empty-state">
+			<p>No hay cambios de turno registrados aún</p>
+		</div>
+	{{/if}}
+</div>
+{{/if}}
 
 </div>
