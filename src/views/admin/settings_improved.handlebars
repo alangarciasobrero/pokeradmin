@@ -24,39 +24,39 @@
 				<div class="form-grid">
 					<div class="form-field">
 						<label>🥇 1º Lugar (%)</label>
-						<input type="number" name="pos1" value="{{#if pointsData.1}}{{pointsData.1}}{{else}}23{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos1" value="{{#if (lookup pointsData '1')}}{{lookup pointsData '1'}}{{else}}23{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>🥈 2º Lugar (%)</label>
-						<input type="number" name="pos2" value="{{#if pointsData.2}}{{pointsData.2}}{{else}}17{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos2" value="{{#if (lookup pointsData '2')}}{{lookup pointsData '2'}}{{else}}17{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>🥉 3º Lugar (%)</label>
-						<input type="number" name="pos3" value="{{#if pointsData.3}}{{pointsData.3}}{{else}}14{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos3" value="{{#if (lookup pointsData '3')}}{{lookup pointsData '3'}}{{else}}14{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>4º Lugar (%)</label>
-						<input type="number" name="pos4" value="{{#if pointsData.4}}{{pointsData.4}}{{else}}11{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos4" value="{{#if (lookup pointsData '4')}}{{lookup pointsData '4'}}{{else}}11{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>5º Lugar (%)</label>
-						<input type="number" name="pos5" value="{{#if pointsData.5}}{{pointsData.5}}{{else}}9{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos5" value="{{#if (lookup pointsData '5')}}{{lookup pointsData '5'}}{{else}}9{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>6º Lugar (%)</label>
-						<input type="number" name="pos6" value="{{#if pointsData.6}}{{pointsData.6}}{{else}}8{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos6" value="{{#if (lookup pointsData '6')}}{{lookup pointsData '6'}}{{else}}8{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>7º Lugar (%)</label>
-						<input type="number" name="pos7" value="{{#if pointsData.7}}{{pointsData.7}}{{else}}7{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos7" value="{{#if (lookup pointsData '7')}}{{lookup pointsData '7'}}{{else}}7{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>8º Lugar (%)</label>
-						<input type="number" name="pos8" value="{{#if pointsData.8}}{{pointsData.8}}{{else}}6{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos8" value="{{#if (lookup pointsData '8')}}{{lookup pointsData '8'}}{{else}}6{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 					<div class="form-field">
 						<label>9º Lugar (%)</label>
-						<input type="number" name="pos9" value="{{#if pointsData.9}}{{pointsData.9}}{{else}}5{{/if}}" min="0" max="100" step="0.1" required />
+						<input type="number" name="pos9" value="{{#if (lookup pointsData '9')}}{{lookup pointsData '9'}}{{else}}5{{/if}}" min="0" max="100" step="0.1" required />
 					</div>
 				</div>
 				<div class="form-actions">
