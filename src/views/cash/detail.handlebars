@@ -12,8 +12,12 @@
 
     <div class="cash-info-grid">
         <div class="info-card">
-            <span class="info-label">Ciega pequeña</span>
-            <span class="info-value">${{cash.small_blind}}</span>
+            <span class="info-label">Ciega chica</span>
+            <span class="info-value">${{currency cash.small_blind}}</span>
+        </div>
+        <div class="info-card">
+            <span class="info-label">Ciega grande</span>
+            <span class="info-value">${{currency (add cash.small_blind cash.small_blind)}}</span>
         </div>
         <div class="info-card">
             <span class="info-label">Inicio</span>
@@ -37,6 +41,12 @@
             <span class="info-value">{{cash.dealer}}</span>
         </div>
         {{/if}}
+        {{#if cash.default_buyin}}
+        <div class="info-card">
+            <span class="info-label">💰 Caja inicial mínima</span>
+            <span class="info-value">${{currency cash.default_buyin}}</span>
+        </div>
+        {{/if}}
         <div class="info-card highlight">
             <span class="info-label">Comisión total</span>
             <span class="info-value">${{currency cash.total_commission}}</span>
@@ -48,11 +58,11 @@
     </div>
 
 {{#if username}}
+	{{#unless cash.end_datetime}}
 	<div class="cash-actions">
-		{{#unless cash.end_datetime}}
-			<button id="openShiftModal" class="btn btn-primary">🔄 Cambio de Turno</button>
-		{{/unless}}
+		<button id="openShiftModal" class="btn btn-primary" style="background:#ffd700;color:#1a1a1a;font-weight:600;border:2px solid #daa520">🔄 Cambio de Turno</button>
 	</div>
+	{{/unless}}
 
 	<div class="registration-section">
 		<h2>Registrar jugador</h2>
@@ -90,11 +100,11 @@
 				</div>
 				<div class="form-group">
 					<label for="requested_amount">Monto pedido</label>
-					<input type="number" name="requested_amount" id="requested_amount" step="0.01" min="0" value="{{#if cash.default_buyin}}{{cash.default_buyin}}{{/if}}" placeholder="Monto solicitado" />
+					<input type="number" name="requested_amount" id="requested_amount" min="0" value="{{#if cash.default_buyin}}{{cash.default_buyin}}{{/if}}" placeholder="Monto solicitado" />
 				</div>
 				<div class="form-group">
 					<label for="amount_paid">Monto pagado (dejar vacío si es fiado)</label>
-					<input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" value="{{#if cash.default_buyin}}{{cash.default_buyin}}{{/if}}" placeholder="Dejar vacío = FIADO" />
+					<input type="number" name="amount_paid" id="amount_paid" min="0" step="1" placeholder="Dejar vacío = FIADO" />
 				</div>
 				<div class="form-group">
 					<label for="method">Método de pago</label>
@@ -221,6 +231,65 @@
 				} catch (err) {
 					console.error('Error:', err);
 					alert('Error de red al registrar el turno');
+				}
+			});
+		}
+	});
+
+	// Modal de cierre final
+	document.addEventListener('DOMContentLoaded', function() {
+		const cashId = {{cash.id}};
+		const modal = document.getElementById('finalCloseModal');
+		const cancelBtn = document.getElementById('cancelFinalCloseBtn');
+		const form = document.getElementById('finalCloseForm');
+
+		if (cancelBtn && modal) {
+			cancelBtn.addEventListener('click', () => {
+				modal.style.display = 'none';
+				form.reset();
+			});
+		}
+
+		if (form) {
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(form);
+				const commission = parseFloat(formData.get('final_commission') || '0');
+				const tips = parseFloat(formData.get('final_tips') || '0');
+
+				if (commission === 0 && tips === 0) {
+					// Si no hay comisión ni propinas, ir directo al cierre
+					window.location.href = `/admin/games/cash/${cashId}/close`;
+					return;
+				}
+
+				// Registrar el turno final con comisión/propinas
+				const shiftData = {
+					outgoing_dealer: '{{cash.dealer}}',
+					incoming_dealer: '{{cash.dealer}}', // Mismo dealer (solo registra final)
+					commission: commission,
+					tips: tips,
+					recorded_by: '{{username}}'
+				};
+
+				try {
+					const shiftRes = await fetch(`/admin/games/cash/${cashId}/shift`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(shiftData)
+					});
+
+					if (!shiftRes.ok) {
+						const err = await shiftRes.json();
+						alert('Error registrando turno final: ' + (err.error || 'Error desconocido'));
+						return;
+					}
+
+					// Ir a la página de cierre que mostrará totales
+					window.location.href = `/admin/games/cash/${cashId}/close`;
+				} catch (err) {
+					console.error('Error:', err);
+					alert('Error de red al cerrar la mesa');
 				}
 			});
 		}
@@ -482,37 +551,37 @@
 <!-- Modal de cambio de turno -->
 {{#if username}}
 <div id="shiftModal" class="modal" style="display:none;">
-	<div class="modal-content" style="max-width:600px">
+	<div class="modal-content" style="max-width:600px;background:#1a1a1a;color:#fff">
 		<h2 style="margin-top:0;color:#43a047">🔄 Cambio de Turno</h2>
 		<p style="color:#666">Finaliza el turno actual y comienza uno nuevo</p>
 		<form id="shiftForm">
 			<div class="form-group">
-				<label>📅 Turno que finaliza</label>
-				<div style="background:#fff3cd;padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid #ffc107;">
-					<p style="margin:0.25rem 0;"><strong>Dealer:</strong> <span id="currentDealerName">{{cash.dealer}}</span></p>
-					<p style="margin:0.25rem 0;"><strong>Inicio:</strong> <span id="shiftStartTime"></span></p>
-					<p style="margin:0.25rem 0;"><strong>Fin:</strong> <span id="shiftEndTime"></span></p>
+				<label style="color:#fff">📅 Turno que finaliza</label>
+				<div style="background:#fff3cd;padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid #ffc107;color:#000">
+					<p style="margin:0.25rem 0;color:#000"><strong>Dealer:</strong> <span id="currentDealerName">{{cash.dealer}}</span></p>
+					<p style="margin:0.25rem 0;color:#000"><strong>Inicio:</strong> <span id="shiftStartTime"></span></p>
+					<p style="margin:0.25rem 0;color:#000"><strong>Fin:</strong> <span id="shiftEndTime"></span></p>
 				</div>
 			</div>
 			
 			<div class="form-group">
-				<label for="outgoing_dealer">🏁 Dealer que sale</label>
+				<label for="outgoing_dealer" style="color:#fff">🏁 Dealer que sale</label>
 				<input type="text" id="outgoing_dealer" name="outgoing_dealer" value="{{cash.dealer}}" required placeholder="Nombre del dealer que termina" />
 			</div>
 			
 			<div class="form-row">
 				<div class="form-group">
-					<label for="commission">💰 Comisión del turno ($)</label>
-					<input type="number" id="commission" name="commission" step="0.01" min="0" value="0" required />
+				<label for="commission" style="color:#fff">💰 Comisión del turno ($)</label>
+				<input type="number" id="commission" name="commission" min="0" placeholder="0" required />
 				</div>
 				<div class="form-group">
-					<label for="tips">💵 Propinas del turno ($)</label>
-					<input type="number" id="tips" name="tips" step="0.01" min="0" value="0" required />
+				<label for="tips" style="color:#fff">💵 Propinas del turno ($)</label>
+				<input type="number" id="tips" name="tips" min="0" placeholder="0" required />
 				</div>
 			</div>
 			
 			<div class="form-group">
-				<label for="incoming_dealer">🆕 Dealer que entra</label>
+				<label for="incoming_dealer" style="color:#fff">🆕 Dealer que entra</label>
 				<input type="text" id="incoming_dealer" name="incoming_dealer" required placeholder="Nombre del nuevo dealer" />
 			</div>
 			<div style="margin-top:1.5rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
@@ -522,12 +591,46 @@
 		</form>
 	</div>
 </div>
+
+<!-- Modal de cierre final -->
+<div id="finalCloseModal" class="modal" style="display:none;">
+	<div class="modal-content" style="max-width:600px;background:#1a1a1a;color:#fff">
+		<h2 style="margin-top:0;color:#f44336">🔴 Registrar Turno Final</h2>
+		<p style="color:#999">Ingresa la comisión y propinas del último turno antes de cerrar</p>
+		<form id="finalCloseForm">
+			<div class="form-group">
+				<label style="color:#fff">👤 Dealer actual</label>
+				<div style="background:#fff3cd;padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid #ffc107;color:#000">
+					<p style="margin:0.25rem 0;color:#000"><strong>{{cash.dealer}}</strong></p>
+				</div>
+			</div>
+			
+			<div class="form-row">
+				<div class="form-group">
+					<label for="final_commission" style="color:#fff">💰 Comisión final ($)</label>
+					<input type="number" id="final_commission" name="final_commission" min="0" step="1" value="0" />
+				</div>
+				<div class="form-group">
+					<label for="final_tips" style="color:#fff">💵 Propinas finales ($)</label>
+					<input type="number" id="final_tips" name="final_tips" min="0" step="1" value="0" />
+				</div>
+			</div>
+			
+			<p style="color:#ffa726;font-size:0.9rem;margin-top:1rem;">💡 Luego verás los totales acumulados y deudores</p>
+			
+			<div style="margin-top:1.5rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+				<button type="button" id="cancelFinalCloseBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
+				<button type="submit" class="btn btn-danger" style="background:#c62828">✓ Continuar al cierre</button>
+			</div>
+		</form>
+	</div>
+</div>
 {{/if}}
 
 {{#if username}}
 	{{#unless cash.end_datetime}}
 	<div style="margin-top:2rem;padding:1rem;background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.3);border-radius:8px;">
-		<a class="btn btn-danger" href="/admin/games/cash/{{cash.id}}/close" style="background:#c62828">🔴 Cerrar mesa definitivamente</a>
+		<button type="button" class="btn btn-danger" onclick="document.getElementById('finalCloseModal').style.display='block';" style="background:#c62828">🔴 Cerrar mesa definitivamente</button>
 	</div>
 	{{/unless}}
 {{/if}}

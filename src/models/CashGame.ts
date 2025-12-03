@@ -7,18 +7,20 @@ export interface CashGameAttributes {
   small_blind: number;
   start_datetime: Date;
   end_datetime?: Date | null;
+  default_buyin?: number;
   total_commission?: number;
   dealer?: string | null;
   total_tips?: number;
 }
 
-export interface CashGameCreationAttributes extends Optional<CashGameAttributes, 'id' | 'end_datetime' | 'total_commission' | 'dealer' | 'total_tips'> {}
+export interface CashGameCreationAttributes extends Optional<CashGameAttributes, 'id' | 'end_datetime' | 'default_buyin' | 'total_commission' | 'dealer' | 'total_tips'> {}
 
 export class CashGame extends Model<CashGameAttributes, CashGameCreationAttributes> implements CashGameAttributes {
   public id!: number;
   public small_blind!: number;
   public start_datetime!: Date;
   public end_datetime?: Date | null;
+  public default_buyin?: number;
   public total_commission?: number;
   public dealer?: string | null;
   public total_tips?: number;
@@ -45,6 +47,11 @@ CashGame.init(
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+    },
+    default_buyin: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: true,
+      defaultValue: 0,
     },
     total_commission: {
       type: DataTypes.DECIMAL(10,2),

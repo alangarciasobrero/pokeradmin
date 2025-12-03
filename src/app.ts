@@ -28,6 +28,7 @@ import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
 import adminSeasonRoutes from './routes/adminSeasonRoutes';
+import adminCommissionRoutes from './routes/adminCommissionRoutes';
 import profileRoutes from './routes/profileRoutes';
 import statsRoutes from './routes/statsRoutes';
 import publicProfileRoutes from './routes/publicProfileRoutes';
@@ -146,6 +147,17 @@ Handlebars.registerHelper('formatDateTime', function(d: any) {
 	const minutes = String(dt.getMinutes()).padStart(2, '0');
 	return `${day}/${month}/${year} ${hours}:${minutes}`;
 });
+
+// Helper para inputs de hora en formato HH:mm
+Handlebars.registerHelper('formatTimeInput', function(d: any) {
+	if (!d) return '21:00'; // Default hour for tournaments
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return '21:00';
+	const hours = String(dt.getHours()).padStart(2, '0');
+	const minutes = String(dt.getMinutes()).padStart(2, '0');
+	return `${hours}:${minutes}`;
+});
+
 // helper to calculate time difference in hours and minutes
 Handlebars.registerHelper('timeDiff', function(start: any, end: any) {
 	if (!start || !end) return '';
@@ -220,12 +232,12 @@ Handlebars.registerHelper('recordedBy', function(m: any) {
 });
 Handlebars.registerHelper('currency', function(n: any) {
 	if (n === null || n === undefined) return '';
-	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 });
 Handlebars.registerHelper('debtDisplay', function(n: any) {
 	if (n === null || n === undefined) return '';
 	const num = Number(n);
-	const formatted = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const formatted = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 	// Negative amount = user owes money (deuda)
 	if (num < 0) return `<span class="debt-owed" title="El jugador debe dinero">-$${formatted}</span>`;
 	// Positive = user has credit
@@ -326,6 +338,9 @@ app.use('/admin/bonus', adminBonusRoutes);
 
 // Admin seasons management
 app.use('/admin/seasons', adminSeasonRoutes);
+
+// Admin commissions configuration
+app.use('/admin/commissions', adminCommissionRoutes);
 
 // Admin XLSX import UI
 app.use('/admin/imports', adminImportsRoutes);

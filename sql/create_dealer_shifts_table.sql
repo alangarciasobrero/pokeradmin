@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `dealer_shifts` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `cash_game_id` INT NOT NULL,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `cash_game_id` INT UNSIGNED NOT NULL,
   `outgoing_dealer` VARCHAR(100) NOT NULL COMMENT 'Dealer que termina el turno',
   `incoming_dealer` VARCHAR(100) NOT NULL COMMENT 'Dealer que comienza el turno',
   `shift_start` DATETIME NOT NULL COMMENT 'Inicio del turno',

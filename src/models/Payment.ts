@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../services/database';
+import type User from './User';
 
 export interface PaymentAttributes {
   id: number;
@@ -32,6 +33,9 @@ export class Payment extends Model<PaymentAttributes, PaymentCreationAttributes>
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+  
+  // Asociación
+  public readonly user?: User;
 }
 
 Payment.init(
@@ -55,5 +59,11 @@ Payment.init(
     timestamps: true,
   }
 );
+
+// Definir asociación después de que ambos modelos estén cargados
+import('./User').then((UserModule) => {
+  const User = UserModule.default;
+  Payment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+});
 
 export default Payment;

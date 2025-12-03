@@ -1,5 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../services/database';
 
 class DealerShift extends Model {
   public id!: number;

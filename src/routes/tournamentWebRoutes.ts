@@ -116,7 +116,19 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
           const day = parseInt(match[1], 10);
           const month = parseInt(match[2], 10) - 1; // months are 0-indexed
           const year = parseInt(match[3], 10);
-          data[f] = new Date(year, month, day);
+          
+          // If there's a start_time field, parse it and set the time
+          let hours = 21; // Default hour for tournaments
+          let minutes = 0;
+          if (data.start_time) {
+            const timeMatch = String(data.start_time).match(/^(\d{1,2}):(\d{2})$/);
+            if (timeMatch) {
+              hours = parseInt(timeMatch[1], 10);
+              minutes = parseInt(timeMatch[2], 10);
+            }
+          }
+          
+          data[f] = new Date(year, month, day, hours, minutes);
         } else {
           // Fallback to default Date parsing
           const d = new Date(data[f]);

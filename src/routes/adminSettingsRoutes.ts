@@ -253,36 +253,83 @@ router.post('/commissions', requireAdmin, async (req: Request, res: Response) =>
 
 /**
  * GET /admin/games/settings/pools
- * Vista para ver acumulados de pozos (mensual, trimestral, Copa, casa)
+ * Vista para ver acumulados de pozos usando nuevo sistema
  */
 router.get('/pools', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const pools = await CommissionPool.findAll({
-      order: [['created_at', 'DESC']],
+    const { CommissionDestination } = await import('../models/CommissionDestination');
+    const { AccumulatedCommission } = await import('../models/AccumulatedCommission');
+    const { CommissionConfig } = await import('../models/CommissionConfig');
+    const { Season } = await import('../models/Season');
+    const { Tournament } = await import('../models/Tournament');
+    
+    // Get all active destinations
+    const destinations = await CommissionDestination.findAll({
+      where: { is_active: true } as any,
+      include: [
+        { model: Season, as: 'season', required: false },
+        { model: Tournament, as: 'tournament', required: false }
+      ],
+      order: [['created_at', 'ASC']]
     });
-
-    // Group by pool_type and calculate totals
-    const summary: Record<string, { active: number; closed: number; paid: number }> = {
-      monthly: { active: 0, closed: 0, paid: 0 },
-      quarterly: { active: 0, closed: 0, paid: 0 },
-      copa_don_humberto: { active: 0, closed: 0, paid: 0 },
-      house: { active: 0, closed: 0, paid: 0 },
-    };
-
-    for (const p of pools) {
-      const type = (p as any).pool_type;
-      const status = (p as any).status;
-      const amount = Number((p as any).accumulated_amount) || 0;
-      if (summary[type]) {
-        if (status === 'active') summary[type].active += amount;
-        else if (status === 'closed') summary[type].closed += amount;
-        else if (status === 'paid') summary[type].paid += amount;
-      }
+    
+    // Calculate accumulated total for each destination
+    const poolsData = [];
+    
+    for (const dest of destinations) {
+      const destId = (dest as any).id;
+      const name = (dest as any).name;
+      const type = (dest as any).type;
+      const season = (dest as any).season;
+      const tournament = (dest as any).tournament;
+      
+      // Get config percentage
+      const config = await CommissionConfig.findOne({
+        where: { destination_id: destId }
+      });
+      
+      const percentage = config ? Number((config as any).percentage) : 0;
+      
+      // Sum accumulated amounts
+      const accumulated = await AccumulatedCommission.sum('amount', {
+        where: { destination_id: destId }
+      }) || 0;
+      
+      // Get count of contributing tournaments
+      const count = await AccumulatedCommission.count({
+        where: { destination_id: destId },
+        distinct: true,
+        col: 'tournament_id'
+      });
+      
+      poolsData.push({
+        id: destId,
+        name,
+        type,
+        percentage,
+        accumulated: Number(accumulated).toFixed(0),
+        contributingTournaments: count,
+        seasonName: season ? season.name : null,
+        tournamentName: tournament ? tournament.name : null
+      });
     }
+    
+    // Group by type for summary
+    const summary: Record<string, number> = {
+      house: 0,
+      season_ranking: 0,
+      special_tournament: 0
+    };
+    
+    poolsData.forEach((pool: any) => {
+      if (summary[pool.type] !== undefined) {
+        summary[pool.type] += Number(pool.accumulated);
+      }
+    });
 
     res.render('admin/settings/pools', {
       username: req.session.username,
-      pools,
+      poolsData,
       summary,
     });
   } catch (err) {

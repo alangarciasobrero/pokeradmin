@@ -1,0 +1,296 @@
+{{> header_admin}}
+
+<div class="content-wrapper">
+  <div class="page-header">
+    <h1>🎁 Bonus por Asistencia</h1>
+    <p>Estado de asistencia de jugadores y bonificaciones elegibles</p>
+  </div>
+
+  {{#if activeSeason}}
+  <div class="info-card">
+    <strong>Temporada activa:</strong> {{activeSeason.name}}
+    <small>({{formatDate activeSeason.start_date}} - {{formatDate activeSeason.end_date}})</small>
+  </div>
+  {{/if}}
+
+  <div class="bonus-legend">
+    <h3>Criterios de Bonus</h3>
+    <div class="legend-grid">
+      <div class="legend-item">
+        <span class="badge bronze">🥉 Bronce</span>
+        <small>3+ jornadas en última semana</small>
+      </div>
+      <div class="legend-item">
+        <span class="badge silver">🥈 Plata</span>
+        <small>10+ jornadas en el mes actual</small>
+      </div>
+      <div class="legend-item">
+        <span class="badge gold">🥇 Oro</span>
+        <small>28+ jornadas en la temporada</small>
+      </div>
+      <div class="legend-item">
+        <span class="badge diamond">💎 Diamante</span>
+        <small>32+ jornadas en la temporada</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="attendance-table-wrapper">
+    <table class="attendance-table">
+      <thead>
+        <tr>
+          <th>Jugador</th>
+          <th>Total</th>
+          <th>Temporada</th>
+          <th>Mes Actual</th>
+          <th>Última Semana</th>
+          <th>Bonuses Activos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each attendanceData}}
+        <tr>
+          <td>
+            <strong>{{this.fullName}}</strong>
+            <small class="username-small">@{{this.username}}</small>
+          </td>
+          <td class="count-cell">{{this.totalCount}}</td>
+          <td class="count-cell">{{this.seasonCount}}</td>
+          <td class="count-cell">{{this.monthCount}}</td>
+          <td class="count-cell">{{this.weekCount}}</td>
+          <td class="bonuses-cell">{{this.bonuses}}</td>
+        </tr>
+        {{else}}
+        <tr>
+          <td colspan="6" style="text-align:center; padding:2rem; color:#999;">
+            No hay datos de asistencia disponibles
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions-footer">
+    <a href="/admin/bonus/calculate" class="btn-primary">🎁 Calcular y Otorgar Bonus</a>
+    <a href="/admin/games/settings" class="btn-secondary">Volver a Configuración</a>
+  </div>
+</div>
+
+<style>
+.content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.page-header p {
+  color: #7f8c8d;
+  font-size: 1rem;
+}
+
+.info-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.info-card strong {
+  font-size: 1.1rem;
+}
+
+.info-card small {
+  opacity: 0.9;
+  margin-left: 1rem;
+}
+
+.bonus-legend {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bonus-legend h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.badge.bronze {
+  background: linear-gradient(135deg, #cd7f32 0%, #8b4513 100%);
+  color: white;
+}
+
+.badge.silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #808080 100%);
+  color: white;
+}
+
+.badge.gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+  color: white;
+}
+
+.badge.diamond {
+  background: linear-gradient(135deg, #b9f2ff 0%, #0077be 100%);
+  color: white;
+}
+
+.attendance-table-wrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.attendance-table thead {
+  background: #343a40;
+  color: white;
+}
+
+.attendance-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.attendance-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.attendance-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.attendance-table td {
+  padding: 1rem;
+}
+
+.username-small {
+  display: block;
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.count-cell {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #495057;
+}
+
+.bonuses-cell {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.actions-footer {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.btn-secondary {
+  background: white;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.btn-secondary:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+
+  .legend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-table {
+    font-size: 0.85rem;
+  }
+
+  .attendance-table th,
+  .attendance-table td {
+    padding: 0.5rem;
+  }
+
+  .actions-footer {
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+
+{{> footer}}

@@ -126,6 +126,13 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
     const amountPaid = data.amount_paid !== undefined && data.amount_paid !== null && data.amount_paid !== '' ? Number(data.amount_paid) : 0;
     // requested amount (pedido) is a distinct concept for cash games: the amount the player asks to play with
     const requestedAmount = data.requested_amount !== undefined && data.requested_amount !== null && data.requested_amount !== '' ? Number(data.requested_amount) : 0;
+    
+    // Validación: no permitir monto pedido = 0
+    if (requestedAmount <= 0) {
+      if (req.session) req.session.flash = { type: 'error', message: 'El monto pedido debe ser mayor a 0' };
+      return res.redirect(`/admin/games/cash/${id}`);
+    }
+    
     const method = data.method || null;
     const personalAccount = data.personal_account === 'on' || data.personal_account === 'true' || data.personal_account === true;
     const now = new Date();
@@ -142,7 +149,8 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
 
     // Record a payment row for any immediate payment (paid=true only if amountPaid > 0)
     const paidFlag = amountPaid > 0;
-    const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : (method || null);
+    // Si no pagó (amountPaid = 0), method debe ser null para mostrar FIADO
+    const methodWithActor = paidFlag && req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : null;
     const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
     try {
       await Payment.create({ user_id: userId, amount: amountPaid, payment_date: now, source: 'cash', reference_id: participant.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
@@ -179,7 +187,8 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
       small_blind: Number(small_blind),
       start_datetime: new Date(), // Fecha automática actual
       end_datetime: null,
-      total_commission: Number(initial_pot || 0), // Monto inicial del bote
+      default_buyin: Number(initial_pot || 0), // Monto mínimo requerido para sentarse
+      total_commission: 0,
       dealer: dealer || null,
       total_tips: 0
     };
@@ -216,7 +225,7 @@ router.post('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
     
     const payload: any = {
       small_blind: Number(small_blind),
-      total_commission: Number(initial_pot || 0),
+      default_buyin: Number(initial_pot || 0),
       dealer: dealer || null
     };
     
@@ -305,13 +314,22 @@ router.post('/:id/shift', requireAdmin, async (req: Request, res: Response) => {
     // Import DealerShift model
     const DealerShift = (await import('../models/DealerShift')).default;
     
+    // Get the last shift to use its end time as the new shift start
+    const lastShift = await DealerShift.findOne({ 
+      where: { cash_game_id: id }, 
+      order: [['shift_end', 'DESC']] 
+    });
+    
     // Record shift change in history
+    const shiftEndTime = new Date();
+    const shiftStartTime = lastShift ? lastShift.shift_end : cash.start_datetime;
+    
     await DealerShift.create({
       cash_game_id: id,
       outgoing_dealer: outgoing_dealer || cash.dealer,
       incoming_dealer: incoming_dealer,
-      shift_start: cash.start_datetime || new Date(),
-      shift_end: new Date(),
+      shift_start: shiftStartTime,
+      shift_end: shiftEndTime,
       commission: commissionAmount,
       tips: tipsAmount,
       recorded_by: recorded_by || req.session?.username || null

@@ -2,13 +2,53 @@ import { Request, Response } from 'express';
 import CashGameRepository from '../repositories/CashGameRepository';
 import Payment from '../models/Payment';
 import User from '../models/User';
+import { Op } from 'sequelize';
 
 export async function renderCloseForm(req: Request, res: Response) {
   const id = Number(req.params.id);
   try {
     const cash = await CashGameRepository.findById(id);
     if (!cash) return res.status(404).send('Cash game no encontrado');
-    res.render('admin/cash_close', { cash, username: req.session?.username });
+    
+    // Calcular totales de todos los turnos
+    const DealerShift = (await import('../models/DealerShift')).default;
+    const shifts = await DealerShift.findAll({ 
+      where: { cash_game_id: id },
+      order: [['shift_end', 'ASC']]
+    });
+    
+    const totalCommission = shifts.reduce((sum, shift) => sum + Number(shift.commission || 0), 0);
+    const totalTips = shifts.reduce((sum, shift) => sum + Number(shift.tips || 0), 0);
+    
+    // Obtener pagos con deuda (source = 'cash_entry')
+    const payments = await Payment.findAll({
+      where: { 
+        source: 'cash_entry',
+        reference_id: id
+      },
+      include: [{ model: User, as: 'user' }],
+      order: [['payment_date', 'ASC']]
+    });
+    
+    // Filtrar solo los que tienen deuda
+    const debtors = payments
+      .map(p => ({
+        username: p.user?.username || 'Desconocido',
+        fullName: p.user?.full_name || '',
+        requested: Number(p.amount || 0),
+        paid: Number(p.paid_amount || 0),
+        debt: Number(p.amount || 0) - Number(p.paid_amount || 0)
+      }))
+      .filter(d => d.debt > 0);
+    
+    res.render('admin/cash_close', { 
+      cash, 
+      username: req.session?.username,
+      totalCommission,
+      totalTips,
+      debtors,
+      shifts
+    });
   } catch (err) {
     console.error('Error rendering close form', err);
     res.status(500).send('Error');
@@ -51,7 +91,7 @@ export async function handleClosePost(req: Request, res: Response) {
     }
 
     req.session!.flash = { type: 'success', message: 'Mesa cerrada y pagos registrados' };
-    res.redirect(`/admin/games/cash/${id}`);
+    res.redirect('/admin/dashboard');
   } catch (err) {
     console.error('Error closing cash game', err);
     res.status(500).send('Error cerrando mesa');
