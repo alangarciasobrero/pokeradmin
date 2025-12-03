@@ -28,7 +28,6 @@ import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
 import adminSeasonRoutes from './routes/adminSeasonRoutes';
-import adminCommissionRoutes from './routes/adminCommissionRoutes';
 import profileRoutes from './routes/profileRoutes';
 import statsRoutes from './routes/statsRoutes';
 import publicProfileRoutes from './routes/publicProfileRoutes';
@@ -338,9 +337,6 @@ app.use('/admin/bonus', adminBonusRoutes);
 
 // Admin seasons management
 app.use('/admin/seasons', adminSeasonRoutes);
-
-// Admin commissions configuration
-app.use('/admin/commissions', adminCommissionRoutes);
 
 // Admin XLSX import UI
 app.use('/admin/imports', adminImportsRoutes);

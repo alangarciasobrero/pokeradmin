@@ -179,75 +179,173 @@ router.post('/language', requireAdmin, async (req: Request, res: Response) => {
 
 /**
  * GET /admin/games/settings/commissions
- * Vista para configurar porcentajes de comisión y destinos
+ * Vista para configurar porcentajes de comisión y destinos (nuevo sistema)
  */
 router.get('/commissions', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Load current commission settings
-    const settings = await Setting.findAll({
-      where: {
-        key: ['commission_total_pct', 'commission_quarterly_pct', 'commission_monthly_pct', 'commission_copa_pct', 'commission_house_pct']
-      } as any
+    const { CommissionDestination } = await import('../models/CommissionDestination');
+    const { CommissionConfig } = await import('../models/CommissionConfig');
+    const { AccumulatedCommission } = await import('../models/AccumulatedCommission');
+    const { Season } = await import('../models/Season');
+    const { Tournament } = await import('../models/Tournament');
+    
+    // Get all active destinations
+    const destinations = await CommissionDestination.findAll({
+      where: { is_active: true } as any,
+      include: [
+        { model: Season, as: 'season', required: false },
+        { model: Tournament, as: 'tournament', required: false }
+      ],
+      order: [['created_at', 'ASC']]
     });
-
-    const config: Record<string, any> = {
-      total: 20,
-      quarterly: 1,
-      monthly: 1,
-      copa: 1,
-      house: 17,
-    };
-
-    for (const s of settings) {
-      const key = (s as any).key;
-      const val = Number((s as any).value) || 0;
-      if (key === 'commission_total_pct') config.total = val;
-      if (key === 'commission_quarterly_pct') config.quarterly = val;
-      if (key === 'commission_monthly_pct') config.monthly = val;
-      if (key === 'commission_copa_pct') config.copa = val;
-      if (key === 'commission_house_pct') config.house = val;
+    
+    // Load configs and totals for each destination
+    const destinationsData = [];
+    let totalPercentage = 0;
+    
+    for (const dest of destinations) {
+      const destId = (dest as any).id;
+      const config = await CommissionConfig.findOne({ where: { destination_id: destId } });
+      const percentage = config ? Number((config as any).percentage) : 0;
+      totalPercentage += percentage;
+      
+      const accumulated = await AccumulatedCommission.sum('amount', {
+        where: { destination_id: destId }
+      }) || 0;
+      
+      destinationsData.push({
+        id: destId,
+        name: (dest as any).name,
+        type: (dest as any).type,
+        percentage,
+        accumulated: Number(accumulated).toFixed(0),
+        season: (dest as any).season,
+        tournament: (dest as any).tournament
+      });
     }
+    
+    // Get active seasons and tournaments for the form
+    const seasons = await Season.findAll({
+      where: { is_active: true } as any,
+      order: [['start_date', 'DESC']]
+    });
+    
+    const tournaments = await Tournament.findAll({
+      where: { status: 'open' } as any,
+      order: [['start_date', 'DESC']],
+      limit: 20
+    });
 
     res.render('admin/settings/commissions', {
       username: req.session.username,
-      config,
+      destinations: destinationsData,
+      totalPercentage,
+      seasons,
+      tournaments
     });
   } catch (err) {
     console.error('Error loading commission settings:', err);
-    res.status(500).send('Error cargando configuración');
+    res.status(500).send('Error cargando configuración de comisiones');
   }
 });
 
 /**
- * POST /admin/games/settings/commissions
- * Actualizar configuración de comisiones
+ * POST /admin/games/settings/commissions/destination
+ * Crear nuevo destino de comisión
  */
-router.post('/commissions', requireAdmin, async (req: Request, res: Response) => {
+router.post('/commissions/destination', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { commission_rate, commission_min, commission_max } = req.body;
+    const { CommissionDestination } = await import('../models/CommissionDestination');
+    const { name, type, season_id, tournament_id } = req.body;
+    
+    await CommissionDestination.create({
+      name,
+      type,
+      season_id: season_id || null,
+      tournament_id: tournament_id || null,
+      is_active: true
+    } as any);
+    
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Destino creado' };
+    res.redirect('/admin/games/settings/commissions');
+  } catch (err) {
+    console.error('Error creating destination:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error creando destino' };
+    res.redirect('/admin/games/settings/commissions');
+  }
+});
 
-    const updates = [
-      { key: 'commission_total_pct', value: String(commission_rate || 20), description: 'Porcentaje de comisión sobre el buy-in' },
-      { key: 'commission_min', value: String(commission_min || 0), description: 'Comisión mínima por jugador' },
-      { key: 'commission_max', value: String(commission_max || 0), description: 'Comisión máxima por jugador' },
-    ];
-
-    for (const u of updates) {
-      const [setting, created] = await Setting.findOrCreate({
-        where: { key: u.key } as any,
-        defaults: { key: u.key, value: u.value, description: u.description } as any,
-      });
-      if (!created) {
-        await Setting.update({ value: u.value }, { where: { key: u.key } as any });
+/**
+ * POST /admin/games/settings/commissions/config
+ * Actualizar porcentaje de un destino
+ */
+router.post('/commissions/config', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { CommissionConfig } = await import('../models/CommissionConfig');
+    const { CommissionDestination } = await import('../models/CommissionDestination');
+    const { destination_id, percentage } = req.body;
+    
+    const pct = Number(percentage);
+    if (pct < 0 || pct > 100) {
+      if (req.session) req.session.flash = { type: 'error', message: 'Porcentaje debe estar entre 0 y 100' };
+      return res.redirect('/admin/games/settings/commissions');
+    }
+    
+    // Check total doesn't exceed 100%
+    const allDestinations = await CommissionDestination.findAll({ where: { is_active: true } as any });
+    let total = 0;
+    for (const dest of allDestinations) {
+      const destId = (dest as any).id;
+      if (destId === Number(destination_id)) {
+        total += pct;
+      } else {
+        const config = await CommissionConfig.findOne({ where: { destination_id: destId } });
+        if (config) total += Number((config as any).percentage);
       }
     }
-
-    if (req.session) req.session.flash = { type: 'success', message: '✅ Comisiones actualizadas' };
-    res.redirect('/admin/games/settings');
+    
+    if (total > 100) {
+      if (req.session) req.session.flash = { type: 'error', message: `Total de porcentajes (${total}%) excede 100%` };
+      return res.redirect('/admin/games/settings/commissions');
+    }
+    
+    // Update or create config
+    const [config, created] = await CommissionConfig.findOrCreate({
+      where: { destination_id } as any,
+      defaults: { destination_id, percentage: pct } as any
+    });
+    
+    if (!created) {
+      await CommissionConfig.update({ percentage: pct }, { where: { destination_id } as any });
+    }
+    
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Porcentaje actualizado' };
+    res.redirect('/admin/games/settings/commissions');
   } catch (err) {
-    console.error('Error updating commission settings:', err);
-    if (req.session) req.session.flash = { type: 'error', message: 'Error actualizando comisiones' };
-    res.redirect('/admin/games/settings');
+    console.error('Error updating config:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error actualizando porcentaje' };
+    res.redirect('/admin/games/settings/commissions');
+  }
+});
+
+/**
+ * POST /admin/games/settings/commissions/destination/:id/delete
+ * Desactivar un destino
+ */
+router.post('/commissions/destination/:id/delete', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { CommissionDestination } = await import('../models/CommissionDestination');
+    await CommissionDestination.update(
+      { is_active: false },
+      { where: { id: req.params.id } as any }
+    );
+    
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Destino desactivado' };
+    res.redirect('/admin/games/settings/commissions');
+  } catch (err) {
+    console.error('Error deleting destination:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error desactivando destino' };
+    res.redirect('/admin/games/settings/commissions');
   }
 });
 
