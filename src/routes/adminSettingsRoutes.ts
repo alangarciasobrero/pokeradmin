@@ -230,15 +230,15 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
         type: (dest as any).type,
         percentage,
         accumulated: Number(accumulated).toFixed(0),
-        season: season ? { id: (season as any).id, name: (season as any).name } : null,
+        season: season ? { id: (season as any).id, name: (season as any).nombre } : null,
         tournament: tournament ? { id: (tournament as any).id, name: (tournament as any).name } : null
       });
     }
     
     // Get active seasons and tournaments for the form
     const seasons = await Season.findAll({
-      where: { is_active: true } as any,
-      order: [['start_date', 'DESC']]
+      where: { estado: 'activa' } as any,
+      order: [['fecha_inicio', 'DESC']]
     });
     
     const tournaments = await Tournament.findAll({
