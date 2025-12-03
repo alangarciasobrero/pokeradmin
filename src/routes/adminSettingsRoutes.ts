@@ -189,22 +189,21 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
     const { Season } = await import('../models/Season');
     const { Tournament } = await import('../models/Tournament');
     
-    // Get all active destinations
+    // Get all active destinations (sin includes para evitar errores de asociación)
     const destinations = await CommissionDestination.findAll({
       where: { is_active: true } as any,
-      include: [
-        { model: Season, as: 'season', required: false },
-        { model: Tournament, as: 'tournament', required: false }
-      ],
       order: [['created_at', 'ASC']]
     });
     
-    // Load configs and totals for each destination
+    // Load configs, totals, and related data for each destination
     const destinationsData = [];
     let totalPercentage = 0;
     
     for (const dest of destinations) {
       const destId = (dest as any).id;
+      const seasonId = (dest as any).season_id;
+      const tournamentId = (dest as any).tournament_id;
+      
       const config = await CommissionConfig.findOne({ where: { destination_id: destId } });
       const percentage = config ? Number((config as any).percentage) : 0;
       totalPercentage += percentage;
@@ -213,14 +212,26 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
         where: { destination_id: destId }
       }) || 0;
       
+      // Load related season/tournament if needed
+      let season = null;
+      let tournament = null;
+      
+      if (seasonId) {
+        season = await Season.findByPk(seasonId);
+      }
+      
+      if (tournamentId) {
+        tournament = await Tournament.findByPk(tournamentId);
+      }
+      
       destinationsData.push({
         id: destId,
         name: (dest as any).name,
         type: (dest as any).type,
         percentage,
         accumulated: Number(accumulated).toFixed(0),
-        season: (dest as any).season,
-        tournament: (dest as any).tournament
+        season: season ? { id: (season as any).id, name: (season as any).name } : null,
+        tournament: tournament ? { id: (tournament as any).id, name: (tournament as any).name } : null
       });
     }
     
@@ -239,13 +250,13 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
     res.render('admin/settings/commissions', {
       username: req.session.username,
       destinations: destinationsData,
-      totalPercentage,
+      totalPercentage: totalPercentage.toFixed(2),
       seasons,
       tournaments
     });
   } catch (err) {
     console.error('Error loading commission settings:', err);
-    res.status(500).send('Error cargando configuración de comisiones');
+    res.status(500).send('Error cargando configuración de comisiones: ' + (err as Error).message);
   }
 });
 
