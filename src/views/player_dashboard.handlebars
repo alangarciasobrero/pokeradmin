@@ -32,6 +32,46 @@
 		</div>
 	</div>
 
+	<!-- Panel de deudas personales -->
+	{{#if userDebts.pending_debt}}
+		<div class="section debt-section">
+			<div class="debt-alert">
+				<div class="debt-header">
+					<span class="debt-icon">💳</span>
+					<h2>Estado de Cuenta</h2>
+				</div>
+				<div class="debt-content">
+					<div class="debt-summary">
+						<div class="debt-main">
+							<span class="debt-label">Saldo Pendiente:</span>
+							<span class="debt-amount">${{currency userDebts.pending_debt}}</span>
+						</div>
+						<div class="debt-details">
+							<span class="debt-detail">Total adeudado: ${{currency userDebts.total_debt}}</span>
+							<span class="debt-detail">Total pagado: ${{currency userDebts.total_paid}}</span>
+							<span class="debt-detail">{{userDebts.debt_count}} pago(s) pendiente(s)</span>
+						</div>
+					</div>
+					<div class="debt-actions">
+						<a href="/my-activity" class="btn-debt-detail">📋 Ver detalle completo</a>
+						<a href="/contact" class="btn-debt-pay">💵 Consultar pago</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	{{else}}
+		<div class="section balance-ok-section">
+			<div class="balance-ok">
+				<span class="balance-icon">✅</span>
+				<div class="balance-content">
+					<h3>¡Sin deudas pendientes!</h3>
+					<p>Tu cuenta está al día</p>
+					<a href="/my-activity" class="btn-view-activity">📋 Ver mi historial</a>
+				</div>
+			</div>
+		</div>
+	{{/if}}
+
 	<!-- Torneos destacados / pinned -->
 	{{#if pinnedTournaments.length}}
 		<div class="section">
@@ -328,6 +368,173 @@
 	background: rgba(57, 73, 171, 0.3);
 	border-color: #7B93FF;
 	transform: translateY(-2px);
+}
+
+/* Debt Section Styles */
+.debt-section, .balance-ok-section {
+	margin-bottom: 2.5rem;
+}
+
+.debt-alert {
+	background: linear-gradient(135deg, rgba(244, 67, 54, 0.15) 0%, rgba(255, 152, 0, 0.15) 100%);
+	border: 2px solid rgba(255, 152, 0, 0.4);
+	border-radius: 12px;
+	padding: 2rem;
+	box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+}
+
+.debt-header {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.debt-icon {
+	font-size: 2.5rem;
+}
+
+.debt-header h2 {
+	margin: 0;
+	color: #ff9800;
+	font-size: 1.5rem;
+}
+
+.debt-content {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.debt-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.debt-main {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1.5rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 152, 0, 0.3);
+	border-radius: 8px;
+}
+
+.debt-label {
+	font-size: 1.2rem;
+	color: #dfe6ff;
+}
+
+.debt-amount {
+	font-size: 2rem;
+	font-weight: 700;
+	color: #ff5252;
+}
+
+.debt-details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	padding: 1rem;
+	background: rgba(0, 0, 0, 0.2);
+	border-radius: 8px;
+}
+
+.debt-detail {
+	color: #dfe6ff;
+	font-size: 0.95rem;
+}
+
+.debt-actions {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.btn-debt-detail, .btn-debt-pay {
+	padding: 0.875rem 2rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	display: inline-block;
+	text-align: center;
+}
+
+.btn-debt-detail {
+	background: rgba(33, 150, 243, 0.2);
+	border: 2px solid #2196f3;
+	color: #64b5f6;
+}
+
+.btn-debt-detail:hover {
+	background: rgba(33, 150, 243, 0.3);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.btn-debt-pay {
+	background: rgba(76, 175, 80, 0.2);
+	border: 2px solid #4caf50;
+	color: #81c784;
+}
+
+.btn-debt-pay:hover {
+	background: rgba(76, 175, 80, 0.3);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.balance-ok {
+	background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(67, 160, 71, 0.15) 100%);
+	border: 2px solid rgba(76, 175, 80, 0.4);
+	border-radius: 12px;
+	padding: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+	box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.balance-icon {
+	font-size: 3rem;
+}
+
+.balance-content {
+	flex: 1;
+}
+
+.balance-content h3 {
+	margin: 0 0 0.5rem 0;
+	color: #4caf50;
+	font-size: 1.3rem;
+}
+
+.balance-content p {
+	margin: 0 0 1rem 0;
+	color: #dfe6ff;
+}
+
+.btn-view-activity {
+	padding: 0.75rem 1.5rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: all 0.3s ease;
+	display: inline-block;
+	background: rgba(33, 150, 243, 0.2);
+	border: 2px solid #2196f3;
+	color: #64b5f6;
+}
+
+.btn-view-activity:hover {
+	background: rgba(33, 150, 243, 0.3);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
 .section {
