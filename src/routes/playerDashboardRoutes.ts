@@ -149,25 +149,18 @@ router.get('/my-activity', requireAuth, async (req: Request, res: Response) => {
 			return res.redirect('/admin/dashboard');
 		}
 
-		// Obtener todos los pagos del usuario
+		// Obtener todos los pagos del usuario con nombres de eventos
 		const payments = await sequelize.query(`
 			SELECT 
 				p.*,
-				CASE 
-					WHEN p.type = 'tournament' THEN t.tournament_name
-					WHEN p.type = 'cash' THEN CONCAT('Mesa Cash #', c.id)
-					ELSE p.description
-				END as event_name,
-				CASE 
-					WHEN p.type = 'tournament' THEN t.start_date
-					WHEN p.type = 'cash' THEN c.start_datetime
-					ELSE p.created_at
-				END as event_date
+				t.tournament_name as event_name,
+				t.start_date as event_date,
+				'tournament' as event_type
 			FROM payments p
-			LEFT JOIN tournaments t ON p.type = 'tournament' AND p.reference_id IN (SELECT id FROM registrations WHERE tournament_id = t.id)
-			LEFT JOIN cash_games c ON p.type = 'cash' AND p.reference_id = c.id
+			LEFT JOIN registrations r ON p.reference_id = r.tournament_id AND p.user_id = r.user_id
+			LEFT JOIN tournaments t ON r.tournament_id = t.id
 			WHERE p.user_id = :userId
-			ORDER BY p.created_at DESC
+			ORDER BY p.payment_date DESC
 		`, {
 			replacements: { userId },
 			type: (sequelize as any).QueryTypes.SELECT
@@ -181,15 +174,17 @@ router.get('/my-activity', requireAuth, async (req: Request, res: Response) => {
 				t.start_date,
 				t.buy_in,
 				t.end_date,
+				res.position,
 				CASE 
-					WHEN r.position = 1 THEN '🥇'
-					WHEN r.position = 2 THEN '🥈'
-					WHEN r.position = 3 THEN '🥉'
-					WHEN r.position IS NOT NULL THEN CONCAT('#', r.position)
+					WHEN res.position = 1 THEN '🥇'
+					WHEN res.position = 2 THEN '🥈'
+					WHEN res.position = 3 THEN '🥉'
+					WHEN res.position IS NOT NULL THEN CONCAT('#', res.position)
 					ELSE 'En curso'
 				END as position_display
 			FROM registrations r
 			JOIN tournaments t ON r.tournament_id = t.id
+			LEFT JOIN results res ON res.tournament_id = t.id AND res.player_id = r.user_id
 			WHERE r.user_id = :userId
 			ORDER BY t.start_date DESC
 		`, {
@@ -203,12 +198,10 @@ router.get('/my-activity', requireAuth, async (req: Request, res: Response) => {
 				cp.*,
 				c.start_datetime,
 				c.end_datetime,
-				c.stakes,
-				c.dealer,
 				(cp.final_stack - cp.buy_in - COALESCE(cp.rebuys, 0)) as profit
 			FROM cash_participants cp
 			JOIN cash_games c ON cp.cash_game_id = c.id
-			WHERE cp.user_id = :userId
+			WHERE cp.player_id = :userId
 			ORDER BY c.start_datetime DESC
 		`, {
 			replacements: { userId },
