@@ -52,11 +52,11 @@
 
             <!-- Modal for close registrations (preview only) -->
             <div id="registrationsModal" class="modal" style="display:none;">
-                <div class="modal-content" style="max-width:700px">
-                    <h2 style="margin-top:0;color:#f57c00">🔒 Cerrar Inscripciones</h2>
-                    <p style="color:#666;margin-top:0">Información del pozo y cálculos del torneo</p>
+                <div class="modal-content" style="max-width:700px;background:#1e1e1e;color:#fff">
+                    <h2 style="margin-top:0;color:#ff9800">🔒 Cerrar Inscripciones</h2>
+                    <p style="color:#bbb;margin-top:0">Información del pozo y cálculos del torneo</p>
                     <div id="registrationsModalBody">Cargando...</div>
-                    <div style="margin-top:1rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+                    <div style="margin-top:1rem;padding:1rem;background:#2a2a2a;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
                         <button id="cancelRegistrationsBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
                         <button id="confirmCloseRegistrationsBtn" class="btn btn-primary" style="background:#f57c00;font-weight:bold">✓ Cerrar Inscripciones</button>
                     </div>
@@ -65,11 +65,11 @@
 
             <!-- Modal for finalize tournament (with positions) -->
             <div id="finalizeModal" class="modal" style="display:none;">
-                <div class="modal-content" style="max-width:900px">
-                    <h2 style="margin-top:0;color:#1976d2">🏁 Finalizar Torneo - Asignar Posiciones y Premios</h2>
-                    <p style="color:#666;margin-top:0">Asigna las posiciones finales de cada jugador y los premios correspondientes</p>
+                <div class="modal-content" style="max-width:900px;background:#1e1e1e;color:#fff">
+                    <h2 style="margin-top:0;color:#64b5f6">🏁 Finalizar Torneo - Asignar Posiciones y Premios</h2>
+                    <p style="color:#bbb;margin-top:0">Asigna las posiciones finales de cada jugador y los premios correspondientes</p>
                     <div id="finalizeModalBody">Cargando...</div>
-                    <div style="margin-top:1rem;padding:1rem;background:#f5f5f5;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
+                    <div style="margin-top:1rem;padding:1rem;background:#2a2a2a;border-radius:6px;display:flex;gap:1rem;justify-content:flex-end">
                         <button id="cancelFinalizeBtn" class="btn" style="background:#757575;color:white">Cancelar</button>
                         <button id="confirmFinalizeBtn" class="btn btn-primary" style="background:#2e7d32;font-weight:bold">✓ Confirmar y Finalizar Torneo</button>
                     </div>
@@ -80,7 +80,7 @@
                 .modal { 
                     position: fixed; 
                     inset: 0; 
-                    background: rgba(0,0,0,0.7); 
+                    background: rgba(0,0,0,0.85); 
                     display:flex; 
                     align-items:center; 
                     justify-content:center; 
@@ -88,13 +88,13 @@
                     padding: 1rem;
                 }
                 .modal-content { 
-                    background: var(--card-bg, white); 
+                    background: #1e1e1e; 
                     padding: 1.5rem; 
                     border-radius: 8px; 
                     max-width: 900px; 
                     width: 100%; 
-                    color: inherit;
-                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                    color: #fff;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
                     max-height: 90vh;
                     overflow-y: auto;
                 }
