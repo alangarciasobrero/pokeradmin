@@ -217,4 +217,125 @@ router.post('/calculate', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /admin/bonus/attendance-calendar
+ * Vista de calendario mensual con asistencia de jugadores
+ */
+router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { Registration } = await import('../models/Registration');
+    const { Tournament } = await import('../models/Tournament');
+    const sequelize = (await import('../services/database')).default;
+    
+    // Get month and year from query params (default to current)
+    const now = new Date();
+    const year = parseInt(req.query.year as string) || now.getFullYear();
+    const month = parseInt(req.query.month as string) || now.getMonth() + 1; // 1-12
+    
+    // Calculate date range for the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59); // Last day of month
+    
+    // Get all players
+    const users = await User.findAll({ 
+      where: { is_player: true } as any,
+      order: [['username', 'ASC']]
+    });
+    
+    // Get all registrations for the month with tournament dates
+    const registrations = await sequelize.query(`
+      SELECT 
+        r.user_id,
+        u.username,
+        u.full_name,
+        DATE(t.start_date) as tournament_date,
+        t.tournament_name,
+        t.id as tournament_id,
+        t.buy_in
+      FROM registrations r
+      JOIN tournaments t ON r.tournament_id = t.id
+      JOIN users u ON r.user_id = u.id
+      WHERE DATE(t.start_date) >= :startDate 
+        AND DATE(t.start_date) <= :endDate
+        AND u.is_player = 1
+      ORDER BY t.start_date ASC, u.username ASC
+    `, {
+      replacements: { 
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
+      },
+      type: (sequelize as any).QueryTypes.SELECT
+    });
+    
+    // Build calendar data structure
+    const daysInMonth = endDate.getDate();
+    const firstDayOfWeek = startDate.getDay(); // 0 = Sunday
+    
+    // Group registrations by date and user
+    const attendanceByDate: any = {};
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      attendanceByDate[dateKey] = {};
+    }
+    
+    (registrations as any[]).forEach((reg: any) => {
+      const dateKey = reg.tournament_date.split('T')[0]; // Get date part only
+      if (!attendanceByDate[dateKey][reg.user_id]) {
+        attendanceByDate[dateKey][reg.user_id] = {
+          username: reg.username,
+          full_name: reg.full_name,
+          tournaments: []
+        };
+      }
+      attendanceByDate[dateKey][reg.user_id].tournaments.push({
+        name: reg.tournament_name,
+        id: reg.tournament_id,
+        buy_in: reg.buy_in
+      });
+    });
+    
+    // Calculate stats
+    const totalTournaments = await Tournament.count({
+      where: {
+        start_date: { $gte: startDate, $lte: endDate } as any
+      }
+    });
+    
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    
+    res.render('admin/bonus/attendance_calendar', {
+      username: req.session.username,
+      users: users.map((u: any) => ({
+        id: u.id,
+        username: u.username,
+        full_name: u.full_name
+      })),
+      attendanceByDate,
+      year,
+      month,
+      monthName: monthNames[month - 1],
+      daysInMonth,
+      firstDayOfWeek,
+      totalTournaments,
+      prevMonth,
+      prevYear,
+      nextMonth,
+      nextYear,
+      currentMonth: now.getMonth() + 1,
+      currentYear: now.getFullYear()
+    });
+  } catch (err) {
+    console.error('Error loading attendance calendar:', err);
+    res.status(500).send('Error cargando calendario de asistencias');
+  }
+});
+
 export default router;

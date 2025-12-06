@@ -270,6 +270,29 @@ Handlebars.registerHelper('lt', function(a: any, b: any) {
 	try { return Number(a) < Number(b); } catch (e) { return false; }
 });
 
+Handlebars.registerHelper('and', function(a: any, b: any) {
+	return a && b;
+});
+
+Handlebars.registerHelper('repeat', function(n: number, options: any) {
+	let result = '';
+	for (let i = 0; i < n; i++) {
+		result += options.fn(i);
+	}
+	return result;
+});
+
+Handlebars.registerHelper('dateKey', function(year: number, month: number, day: number) {
+	return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+});
+
+Handlebars.registerHelper('isToday', function(year: number, month: number, day: number) {
+	const today = new Date();
+	return today.getFullYear() === year && 
+	       today.getMonth() + 1 === month && 
+	       today.getDate() === day;
+});
+
 // map numeric action types to labels for templates
 Handlebars.registerHelper('actionLabel', function(v: any) {
 	const n = Number(v);
