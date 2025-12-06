@@ -1060,5 +1060,129 @@
 	.btn-secondary {
 		width: 100%;
 	}
+
+	.tournaments-grid {
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+
+	.section-header {
+		flex-direction: column;
+		gap: 0.5rem;
+		align-items: flex-start;
+	}
+}
+
+@media (max-width: 480px) {
+	.container {
+		padding: 1rem;
+	}
+
+	.welcome-card {
+		padding: 1rem;
+	}
+
+	.welcome-card h1 {
+		font-size: 1.5rem;
+	}
+
+	.quick-stats {
+		grid-template-columns: 1fr;
+		gap: 0.75rem;
+	}
+
+	.stat-card {
+		padding: 1rem;
+	}
+
+	.stat-value {
+		font-size: 1.8rem;
+	}
+
+	.debt-main {
+		flex-direction: column;
+		gap: 1rem;
+		align-items: flex-start;
+	}
+
+	.debt-amount {
+		font-size: 1.5rem;
+	}
+
+	.debt-details {
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.tournament-card {
+		padding: 1rem;
+	}
+
+	.tournament-header h3 {
+		font-size: 1.1rem;
+	}
+
+	.tournament-meta {
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.tournament-tags {
+		flex-wrap: wrap;
+	}
+
+	.tournament-stats {
+		grid-template-columns: 1fr;
+		gap: 0.75rem;
+	}
+
+	.btn-debt-detail {
+		font-size: 0.9rem;
+		padding: 0.75rem 1.5rem;
+	}
+}
+
+@media (max-width: 375px) {
+	.container {
+		padding: 0.75rem;
+	}
+
+	.welcome-card h1 {
+		font-size: 1.25rem;
+	}
+
+	.stat-label {
+		font-size: 0.8rem;
+	}
+
+	.stat-value {
+		font-size: 1.5rem;
+	}
+
+	.debt-alert {
+		padding: 1rem;
+	}
+
+	.debt-icon {
+		font-size: 2rem;
+	}
+
+	.debt-header h2 {
+		font-size: 1.2rem;
+	}
+
+	.tournament-card {
+		padding: 0.75rem;
+	}
+
+	.section-title {
+		font-size: 1.2rem;
+	}
+
+	.btn-primary,
+	.btn-secondary {
+		padding: 0.75rem 1rem;
+		font-size: 0.9rem;
+	}
 }
 </style>
