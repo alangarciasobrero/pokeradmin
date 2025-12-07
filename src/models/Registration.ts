@@ -59,3 +59,10 @@ Registration.init(
     timestamps: false,
   }
 );
+
+// Define associations after model initialization
+import { Tournament } from './Tournament';
+import { User } from './User';
+
+Registration.belongsTo(Tournament, { foreignKey: 'tournament_id', as: 'tournament' });
+Registration.belongsTo(User, { foreignKey: 'user_id', as: 'user' });

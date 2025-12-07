@@ -2,6 +2,9 @@ import { Router, Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { requireAdmin } from '../middleware/requireAuth';
 import { User } from '../models/User';
+import { Registration } from '../models/Registration';
+import { Tournament } from '../models/Tournament';
+import { Season } from '../models/Season';
 import bonusService from '../services/bonusService';
 
 const router = Router();
@@ -12,9 +15,6 @@ const router = Router();
  */
 router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { Registration } = await import('../models/Registration');
-    const { Tournament } = await import('../models/Tournament');
-    const { Season } = await import('../models/Season');
     
     // Get active season
     const activeSeason = await Season.findOne({ 
