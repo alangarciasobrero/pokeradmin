@@ -291,16 +291,15 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
       });
     }
     
-    // Get active seasons and tournaments for the form
+    // Get all seasons and recent tournaments for the form
     const seasons = await Season.findAll({
-      where: { estado: 'activa' } as any,
-      order: [['fecha_inicio', 'DESC']]
+      order: [['fecha_inicio', 'DESC']],
+      limit: 10
     });
     
     const tournaments = await Tournament.findAll({
-      where: { registration_open: true } as any,
       order: [['start_date', 'DESC']],
-      limit: 20
+      limit: 30
     });
 
     res.render('admin/settings/commissions', {

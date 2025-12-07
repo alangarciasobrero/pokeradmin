@@ -26,9 +26,7 @@
         <div class="card-header">
           <h3>{{this.name}}</h3>
           <span class="type-badge type-{{this.type}}">
-            {{#if (eq this.type 'house')}}🏠 Casa{{/if}}
-            {{#if (eq this.type 'season_ranking')}}🏆 Ranking{{/if}}
-            {{#if (eq this.type 'special_tournament')}}⭐ Especial{{/if}}
+            {{#if (eq this.type 'house')}}🏠 Casa{{else}}⭐ Premio{{/if}}
           </span>
         </div>
         
@@ -80,34 +78,9 @@
         
         <div class="form-group">
           <label>Tipo:</label>
-          <select name="type" id="typeSelect" required>
+          <select name="type" required>
             <option value="house">🏠 Casa</option>
-            <option value="season_ranking">🏆 Ranking de Temporada</option>
-            <option value="special_tournament">⭐ Torneo Especial</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row" id="seasonRow" style="display:none;">
-        <div class="form-group">
-          <label>Temporada:</label>
-          <select name="season_id">
-            <option value="">Ninguna</option>
-            {{#each seasons}}
-            <option value="{{this.id}}">{{this.name}}</option>
-            {{/each}}
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row" id="tournamentRow" style="display:none;">
-        <div class="form-group">
-          <label>Torneo:</label>
-          <select name="tournament_id">
-            <option value="">Ninguno</option>
-            {{#each tournaments}}
-            <option value="{{this.id}}">{{this.name}} - {{formatDate this.start_date}}</option>
-            {{/each}}
+            <option value="special_tournament">⭐ Premio Especial</option>
           </select>
         </div>
       </div>
@@ -204,8 +177,7 @@
 }
 
 .type-house { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
-.type-season_ranking { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
-.type-special_tournament { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+.type-special_tournament { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 700; }
 
 .detail {
   font-size: 0.9rem;
@@ -419,13 +391,5 @@
   }
 }
 </style>
-
-<script>
-document.getElementById('typeSelect').addEventListener('change', function() {
-  const type = this.value;
-  document.getElementById('seasonRow').style.display = type === 'season_ranking' ? 'block' : 'none';
-  document.getElementById('tournamentRow').style.display = type === 'special_tournament' ? 'block' : 'none';
-});
-</script>
 
 {{> footer}}
