@@ -17,8 +17,8 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
     
     // Get active season
     const activeSeason = await Season.findOne({ 
-      where: { is_active: true } as any,
-      order: [['start_date', 'DESC']] 
+      where: { estado: 'activa' } as any,
+      order: [['fecha_inicio', 'DESC']] 
     });
     
     const seasonId = activeSeason ? (activeSeason as any).id : null;
