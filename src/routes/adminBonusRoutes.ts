@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { Op } from 'sequelize';
 import { requireAdmin } from '../middleware/requireAuth';
 import { User } from '../models/User';
 import bonusService from '../services/bonusService';
@@ -67,7 +68,7 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
           model: Tournament.unscoped(),
           as: 'tournament',
           where: { 
-            start_date: { $gte: monthStart, $lte: monthEnd } as any
+            start_date: { [Op.gte]: monthStart, [Op.lte]: monthEnd }
           },
           required: true,
           attributes: []
@@ -92,7 +93,7 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
           model: Tournament.unscoped(),
           as: 'tournament',
           where: { 
-            start_date: { $gte: lastMonday, $lte: lastSunday } as any
+            start_date: { [Op.gte]: lastMonday, [Op.lte]: lastSunday }
           },
           required: true
         }],
@@ -299,7 +300,7 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
     // Calculate stats
     const totalTournaments = await Tournament.count({
       where: {
-        start_date: { $gte: startDate, $lte: endDate } as any
+        start_date: { [Op.gte]: startDate, [Op.lte]: endDate }
       }
     });
     
