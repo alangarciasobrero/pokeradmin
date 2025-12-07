@@ -11,9 +11,42 @@ import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import sequelize from '../services/database';
 import commissionService from '../services/commissionService';
 import bonusService from '../services/bonusService';
+import { Op } from 'sequelize';
+import Setting from '../models/Setting';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
+
+// Helper to load tournament points configuration from database
+async function loadPointsConfig() {
+  const settings = await Setting.findAll({
+    where: {
+      key: ['personal_buyin_points', 'personal_reentry_points', 'weekday_buyin_points', 'weekday_reentry_points', 'friday_buyin_points', 'friday_reentry_points']
+    } as any
+  });
+  
+  const config = {
+    personalBuyin: 100,
+    personalReentry: 100,
+    weekdayBuyin: 150,
+    weekdayReentry: 100,
+    fridayBuyin: 200,
+    fridayReentry: 100
+  };
+  
+  for (const s of settings) {
+    const key = (s as any).key;
+    const val = Number((s as any).value) || 0;
+    if (key === 'personal_buyin_points') config.personalBuyin = val;
+    if (key === 'personal_reentry_points') config.personalReentry = val;
+    if (key === 'weekday_buyin_points') config.weekdayBuyin = val;
+    if (key === 'weekday_reentry_points') config.weekdayReentry = val;
+    if (key === 'friday_buyin_points') config.fridayBuyin = val;
+    if (key === 'friday_reentry_points') config.fridayReentry = val;
+  }
+  
+  return config;
+}
 
 // use central requireAdmin middleware imported above
 
@@ -443,20 +476,26 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     const regs = await Registration.findAll({ where: { tournament_id: id } });
     const regIds = regs.map(r => r.id);
 
-    // sum actual money for this tournament: consider payments with reference_id in regIds
-    const payments = await Payment.findAll({ where: { reference_id: regIds } as any });
+    // sum expected money for this tournament: consider all amounts regardless of payment status
+    // because even if a player is "fiado" (credit), the organizer absorbs that cost
+    const payments = await Payment.findAll({ where: { reference_id: { [Op.in]: regIds } } });
     let pot = 0;
     const perUser: Record<number, { paid: number; expected: number }> = {};
     for (const r of regs) perUser[(r as any).user_id] = { paid: 0, expected: 0 };
     for (const p of payments) {
       const pid = Number((p as any).user_id);
+      const amount = Number((p as any).amount || 0);
       const paid = Number((p as any).paid_amount || 0) || (Number((p as any).amount || 0) * ((p as any).paid ? 1 : 0));
-      if (!isNaN(paid) && paid > 0) {
-        pot += paid;
-        if (perUser[pid]) perUser[pid].paid += paid;
+      
+      // Add expected amount to pot (regardless of payment status)
+      if (!isNaN(amount) && amount > 0) {
+        pot += amount;
+        if (perUser[pid]) perUser[pid].expected += amount;
       }
-      if (!isNaN(Number((p as any).amount))) {
-        if (perUser[pid]) perUser[pid].expected += Number((p as any).amount || 0);
+      
+      // Track what was actually paid
+      if (!isNaN(paid) && paid > 0) {
+        if (perUser[pid]) perUser[pid].paid += paid;
       }
     }
 
@@ -502,16 +541,35 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       { position: 9, percentage: 5 }
     ];
 
-    // Calculate total ranking points (number of boxes * points per box based on day)
+    // Calculate total ranking points for tournament pool
     const tournamentDate = new Date((t as any).start_date);
-    const totalBoxes = regs.length; // cada inscripción es una caja
-    const boxPoints = bonusService.calculateBoxPoints(tournamentDate, totalBoxes);
+    
+    // Count buy-ins and re-entries
+    const buyinCount = regs.filter(r => (r as any).action_type === 1 || !(r as any).action_type).length;
+    const reentryCount = regs.filter(r => (r as any).action_type === 2).length;
+    
+    // Load points configuration from database
+    const pointsConfig = await loadPointsConfig();
+    
+    // Calculate tournament points pool (to distribute among top 9)
+    const poolPoints = bonusService.calculateTournamentPointsPool(
+      tournamentDate,
+      buyinCount,
+      reentryCount,
+      (t as any).double_points || false,
+      {
+        weekdayBuyin: pointsConfig.weekdayBuyin,
+        weekdayReentry: pointsConfig.weekdayReentry,
+        fridayBuyin: pointsConfig.fridayBuyin,
+        fridayReentry: pointsConfig.fridayReentry
+      }
+    );
     
     // Calculate points per position for final table
     const rankingPointsDistribution = rankingPointsPercentages.map(rp => ({
       position: rp.position,
       percentage: rp.percentage,
-      points: Math.round(boxPoints * (rp.percentage / 100))
+      points: Math.round(poolPoints * (rp.percentage / 100))
     }));
 
     // participant summary
@@ -711,30 +769,12 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
     // ✨ NUEVO: Guardar posiciones en tabla Result
     if (positions && Array.isArray(positions)) {
       try {
-        // Load points table for ranking points calculation
-        const fs = await import('fs');
-        let pointsTable: Record<string, number> = {};
-        try {
-          const pointsRaw = fs.readFileSync('points_table.json', 'utf-8');
-          const pointsData = JSON.parse(pointsRaw);
-          if (pointsData.points && Array.isArray(pointsData.points)) {
-            pointsData.points.forEach((pts: number, idx: number) => {
-              pointsTable[(idx + 1).toString()] = pts;
-            });
-          }
-        } catch (err) {
-          console.error('[adminTournament] Error loading points_table.json:', err);
-        }
-
         // Create Result records for each position
         for (const pos of positions) {
           const userId = Number(pos.user_id);
           const position = Number(pos.position);
           if (!userId || !position) continue;
 
-          // Calculate ranking points based on position
-          const rankingPoints = pointsTable[position.toString()] || 0;
-          
           // Determine if final table (positions 1-9)
           const finalTable = position <= 9;
           
@@ -742,12 +782,12 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
           const userPrize = (prizes || []).find((p: any) => Number(p.user_id) === userId);
           const prizeAmount = userPrize ? Number(userPrize.amount) : 0;
 
-          // Create or update Result record
+          // Create or update Result record (points will be distributed separately)
           await Result.create({
             tournament_id: id,
             user_id: userId,
             position: position,
-            points: rankingPoints,
+            points: 0, // Points distributed via HistoricalPoint
             final_table: finalTable,
             prize_amount: prizeAmount,
             bounty_count: 0 // TODO: collect bounties if applicable
@@ -775,11 +815,68 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
       // No fallar el cierre si la distribución falla
     }
 
-    // ✨ Calcular y distribuir puntos por cajas a mesa final
+    // Load points configuration from database
+    const pointsConfig = await loadPointsConfig();
+
+    // ✨ Distribuir puntos personales (configurables)
+    try {
+      for (const reg of regs) {
+        const userId = Number((reg as any).user_id);
+        const actionType = (reg as any).action_type;
+        
+        // Puntos por presencia (buy-in)
+        if (actionType === 1 || !actionType) {
+          await HistoricalPoint.create({
+            record_date: new Date(),
+            user_id: userId,
+            season_id: 1,
+            tournament_id: id,
+            result_id: null,
+            action_type: 'attendance',
+            description: `Puntos por presencia (buy-in): ${pointsConfig.personalBuyin}`,
+            points: pointsConfig.personalBuyin,
+          } as any);
+        }
+        
+        // Puntos por re-entry
+        if (actionType === 2) {
+          await HistoricalPoint.create({
+            record_date: new Date(),
+            user_id: userId,
+            season_id: 1,
+            tournament_id: id,
+            result_id: null,
+            action_type: 'reentry',
+            description: `Puntos por re-entry: ${pointsConfig.personalReentry}`,
+            points: pointsConfig.personalReentry,
+          } as any);
+        }
+      }
+    } catch (err) {
+      console.error('[adminTournament] Error distributing personal points:', err);
+    }
+
+    // ✨ Calcular y distribuir pozo de puntos a mesa final
     try {
       const tournamentDate = new Date((t as any).start_date);
-      const totalBoxes = regs.length; // cada inscripción es una caja
-      const boxPoints = bonusService.calculateBoxPoints(tournamentDate, totalBoxes);
+      
+      // Count buy-ins and re-entries
+      const buyinCount = regs.filter(r => (r as any).action_type === 1 || !(r as any).action_type).length;
+      const reentryCount = regs.filter(r => (r as any).action_type === 2).length;
+      
+      // Calculate tournament points pool
+      const poolPoints = bonusService.calculateTournamentPointsPool(
+        tournamentDate,
+        buyinCount,
+        reentryCount,
+        (t as any).double_points || false,
+        {
+          weekdayBuyin: pointsConfig.weekdayBuyin,
+          weekdayReentry: pointsConfig.weekdayReentry,
+          fridayBuyin: pointsConfig.fridayBuyin,
+          fridayReentry: pointsConfig.fridayReentry
+        }
+      );
       
       // Obtener usuarios de mesa final desde los Results recién creados
       const results = await Result.findAll({ 
@@ -789,7 +886,7 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
       const finalTableUserIds = results.map(r => Number((r as any).user_id));
       
       if (finalTableUserIds.length > 0) {
-        await bonusService.distributeBoxPointsToFinalTable(id, boxPoints, finalTableUserIds);
+        await bonusService.distributeBoxPointsToFinalTable(id, poolPoints, finalTableUserIds);
       }
     } catch (err) {
       console.error('[adminTournament] Error distributing box points:', err);

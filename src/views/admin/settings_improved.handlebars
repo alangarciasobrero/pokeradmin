@@ -86,6 +86,70 @@
 			</div>
 		</div>
 
+		{{!-- Sección: Sistema de Puntos por Torneo --}}
+		<div class="settings-card">
+			<div class="card-icon">⭐</div>
+			<h2>Sistema de Puntos por Torneo</h2>
+			<p class="card-description">Configura los puntos del pozo del torneo y personales</p>
+			
+			<form method="post" action="/admin/games/settings/tournament-points" class="settings-form">
+				<h3 style="margin-top: 0; color: #ffd700;">🎁 Puntos Personales (Directos)</h3>
+				<div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+					<div class="form-field">
+						<label>👤 Presencia (Buy-in)</label>
+						<input type="number" name="personal_buyin" value="{{config.personal_buyin_points}}" min="0" step="10" required />
+						<small>Puntos que recibe cada jugador por participar</small>
+					</div>
+					<div class="form-field">
+						<label>🔄 Re-entry</label>
+						<input type="number" name="personal_reentry" value="{{config.personal_reentry_points}}" min="0" step="10" required />
+						<small>Puntos adicionales por cada re-entry</small>
+					</div>
+				</div>
+
+				<hr style="margin: 20px 0; border: 1px solid #333;">
+
+				<h3 style="color: #4a9eff;">🏆 Pozo del Torneo (Top 9)</h3>
+				<p style="font-size: 0.9rem; color: #888; margin-bottom: 15px;">
+					Este pozo se distribuye entre los 9 finalistas según los porcentajes configurados arriba
+				</p>
+
+				<div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+					<div class="form-field">
+						<label>📅 Lunes/Miércoles - Buy-in</label>
+						<input type="number" name="weekday_buyin" value="{{config.weekday_buyin_points}}" min="0" step="10" required />
+						<small>Puntos al pozo por buy-in</small>
+					</div>
+					<div class="form-field">
+						<label>📅 Lunes/Miércoles - Re-entry</label>
+						<input type="number" name="weekday_reentry" value="{{config.weekday_reentry_points}}" min="0" step="10" required />
+						<small>Puntos al pozo por re-entry</small>
+					</div>
+					<div class="form-field">
+						<label>🎉 Viernes - Buy-in</label>
+						<input type="number" name="friday_buyin" value="{{config.friday_buyin_points}}" min="0" step="10" required />
+						<small>Puntos al pozo por buy-in</small>
+					</div>
+					<div class="form-field">
+						<label>🎉 Viernes - Re-entry</label>
+						<input type="number" name="friday_reentry" value="{{config.friday_reentry_points}}" min="0" step="10" required />
+						<small>Puntos al pozo por re-entry</small>
+					</div>
+				</div>
+
+				<div class="info-box" style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-top: 15px;">
+					<h4 style="margin: 0 0 10px 0; color: #ffd700;">ℹ️ Doble Ranking</h4>
+					<p style="margin: 0; font-size: 0.9rem; color: #ccc;">
+						Cuando un torneo tiene <strong>doble ranking</strong> activado, solo se duplican los puntos de <strong>buy-in</strong> que van al pozo. Los puntos personales y de re-entry NO se duplican.
+					</p>
+				</div>
+
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary">💾 Guardar Puntos Torneo</button>
+				</div>
+			</form>
+		</div>
+
 		{{!-- Sección: Configuración General --}}
 		<div class="settings-card">
 			<div class="card-icon">🎮</div>

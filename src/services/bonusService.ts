@@ -261,6 +261,52 @@ export async function checkAndAwardBlackBonus(userId: number, seasonStart: Date,
  * Lunes (1) y Miércoles (3): 150 pts por caja
  * Viernes (5): 200 pts por caja
  */
+/**
+ * Calcula el pozo de puntos del torneo que se distribuirá entre top 9
+ * @param tournamentDate - Fecha del torneo para determinar día de la semana
+ * @param buyinCount - Cantidad de buy-ins (inscripciones iniciales)
+ * @param reentryCount - Cantidad de re-entries
+ * @param doublePoints - Si el torneo tiene doble ranking activado
+ * @param config - Configuración opcional de puntos (si no se pasa, usa defaults)
+ * @returns Total de puntos del pozo a distribuir
+ */
+export function calculateTournamentPointsPool(
+  tournamentDate: Date, 
+  buyinCount: number, 
+  reentryCount: number,
+  doublePoints: boolean,
+  config?: {
+    weekdayBuyin?: number,
+    weekdayReentry?: number,
+    fridayBuyin?: number,
+    fridayReentry?: number
+  }
+): number {
+  const dayOfWeek = tournamentDate.getDay();
+  const isFriday = dayOfWeek === 5;
+  
+  // Puntos base por buy-in según día (usar config o defaults)
+  const buyinBasePoints = isFriday 
+    ? (config?.fridayBuyin || 200) 
+    : (config?.weekdayBuyin || 150);
+  
+  // Si es doble ranking, el buy-in vale el doble
+  const buyinPoints = doublePoints ? (buyinBasePoints * 2) : buyinBasePoints;
+  
+  // Re-entries según día (usar config o defaults)
+  const reentryPoints = isFriday
+    ? (config?.fridayReentry || 100)
+    : (config?.weekdayReentry || 100);
+  
+  // Calcular pozo total
+  const totalPoolPoints = (buyinCount * buyinPoints) + (reentryCount * reentryPoints);
+  
+  return totalPoolPoints;
+}
+
+/**
+ * DEPRECATED - Usar calculateTournamentPointsPool en su lugar
+ */
 export function calculateBoxPoints(tournamentDate: Date, totalBoxes: number): number {
   const dayOfWeek = tournamentDate.getDay();
   const pointsPerBox = (dayOfWeek === 5) ? 200 : 150; // Viernes=200, Lunes/Miércoles=150
@@ -277,13 +323,12 @@ export async function distributeBoxPointsToFinalTable(
   tournamentId: number,
   totalBoxPoints: number,
   finalTableUserIds: number[],
-  percentages: number[] = [20, 18, 16, 14, 12, 10, 6, 4] // Ejemplo: top 8 de mesa final
+  percentages: number[] = [23, 17, 14, 11, 9, 8, 7, 6, 5] // Mesa final completa (top 9) - suma 100%
 ): Promise<void> {
   if (finalTableUserIds.length === 0) return;
 
-  // Normalizar porcentajes para que sumen 100
-  const sum = percentages.reduce((s, p) => s + p, 0);
-  const normalized = percentages.map(p => (p / sum) * 100);
+  // Usar porcentajes directamente ya que suman 100%
+  const normalized = percentages;
 
   for (let i = 0; i < Math.min(finalTableUserIds.length, normalized.length); i++) {
     const userId = finalTableUserIds[i];
@@ -312,5 +357,6 @@ export default {
   checkAndAwardDiamondBonus,
   checkAndAwardBlackBonus,
   calculateBoxPoints,
+  calculateTournamentPointsPool,
   distributeBoxPointsToFinalTable,
 };

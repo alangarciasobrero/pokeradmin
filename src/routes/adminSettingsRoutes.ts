@@ -35,7 +35,14 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   // Load commission settings
   const settings = await Setting.findAll({
     where: {
-      key: ['commission_total_pct', 'commission_min', 'commission_max', 'default_buyin', 'default_reentry', 'default_bounty', 'default_blind_levels', 'language']
+      key: [
+        'commission_total_pct', 'commission_min', 'commission_max', 
+        'default_buyin', 'default_reentry', 'default_bounty', 'default_blind_levels', 
+        'language',
+        'personal_buyin_points', 'personal_reentry_points',
+        'weekday_buyin_points', 'weekday_reentry_points',
+        'friday_buyin_points', 'friday_reentry_points'
+      ]
     } as any
   });
 
@@ -47,7 +54,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     default_reentry: 5000,
     default_bounty: 500,
     default_blind_levels: '25/50',
-    language: 'es'
+    language: 'es',
+    personal_buyin_points: 100,
+    personal_reentry_points: 100,
+    weekday_buyin_points: 150,
+    weekday_reentry_points: 100,
+    friday_buyin_points: 200,
+    friday_reentry_points: 100
   };
 
   for (const s of settings) {
@@ -141,6 +154,49 @@ router.post('/general', requireAdmin, async (req: Request, res: Response) => {
     return res.redirect('/admin/games/settings');
   } catch (err: any) {
     console.error('Error saving general config:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
+    return res.redirect('/admin/games/settings');
+  }
+});
+
+/**
+ * POST /admin/games/settings/tournament-points
+ * Actualizar configuración de puntos del torneo
+ */
+router.post('/tournament-points', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { 
+      personal_buyin, 
+      personal_reentry, 
+      weekday_buyin, 
+      weekday_reentry, 
+      friday_buyin, 
+      friday_reentry 
+    } = req.body;
+
+    const updates = [
+      { key: 'personal_buyin_points', value: String(personal_buyin || 100), description: 'Puntos personales por buy-in' },
+      { key: 'personal_reentry_points', value: String(personal_reentry || 100), description: 'Puntos personales por re-entry' },
+      { key: 'weekday_buyin_points', value: String(weekday_buyin || 150), description: 'Puntos al pozo por buy-in (L/M)' },
+      { key: 'weekday_reentry_points', value: String(weekday_reentry || 100), description: 'Puntos al pozo por re-entry (L/M)' },
+      { key: 'friday_buyin_points', value: String(friday_buyin || 200), description: 'Puntos al pozo por buy-in (Viernes)' },
+      { key: 'friday_reentry_points', value: String(friday_reentry || 100), description: 'Puntos al pozo por re-entry (Viernes)' },
+    ];
+
+    for (const u of updates) {
+      const [setting, created] = await Setting.findOrCreate({
+        where: { key: u.key } as any,
+        defaults: { key: u.key, value: u.value, description: u.description } as any,
+      });
+      if (!created) {
+        await Setting.update({ value: u.value }, { where: { key: u.key } as any });
+      }
+    }
+
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Sistema de puntos actualizado correctamente' };
+    return res.redirect('/admin/games/settings');
+  } catch (err: any) {
+    console.error('Error saving tournament points config:', err);
     if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
     return res.redirect('/admin/games/settings');
   }
