@@ -286,8 +286,8 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
         type: (dest as any).type,
         percentage,
         accumulated: Number(accumulated).toFixed(0),
-        season: season ? { id: (season as any).id, name: (season as any).nombre } : null,
-        tournament: tournament ? { id: (tournament as any).id, name: (tournament as any).name } : null
+        season: season ? { id: (season as any).id, nombre: (season as any).nombre } : null,
+        tournament: tournament ? { id: (tournament as any).id, name: (tournament as any).tournament_name } : null
       });
     }
     

@@ -31,7 +31,7 @@
         </div>
         
         {{#if this.season}}
-        <p class="detail">📅 Temporada: {{this.season.name}}</p>
+        <p class="detail">📅 Temporada: {{this.season.nombre}}</p>
         {{/if}}
         
         {{#if this.tournament}}
@@ -78,9 +78,21 @@
         
         <div class="form-group">
           <label>Tipo:</label>
-          <select name="type" required>
+          <select name="type" id="typeSelect" required>
             <option value="house">🏠 Casa</option>
             <option value="special_tournament">⭐ Premio Especial</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row" id="seasonRow" style="display:none;">
+        <div class="form-group">
+          <label>📅 Temporada (opcional):</label>
+          <select name="season_id">
+            <option value="">-- Sin temporada --</option>
+            {{#each seasons}}
+            <option value="{{this.id}}">{{this.nombre}} ({{#if (eq this.estado 'activa')}}✅ Activa{{else}}{{this.estado}}{{/if}})</option>
+            {{/each}}
           </select>
         </div>
       </div>
@@ -391,5 +403,12 @@
   }
 }
 </style>
+
+<script>
+document.getElementById('typeSelect').addEventListener('change', function() {
+  const seasonRow = document.getElementById('seasonRow');
+  seasonRow.style.display = this.value === 'special_tournament' ? 'block' : 'none';
+});
+</script>
 
 {{> footer}}
