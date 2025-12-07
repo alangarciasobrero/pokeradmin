@@ -13,6 +13,7 @@ import commissionService from '../services/commissionService';
 import bonusService from '../services/bonusService';
 import { Op } from 'sequelize';
 import Setting from '../models/Setting';
+import { HistoricalPoint } from '../models/HistoricalPoint';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
@@ -604,8 +605,8 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       prizePool, 
       defaultPrizes, 
       participants,
-      totalBoxes,
-      boxPoints,
+      totalBoxes: buyinCount + reentryCount,
+      boxPoints: poolPoints,
       rankingPointsDistribution
     });
   } catch (e) {
