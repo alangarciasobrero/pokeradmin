@@ -298,7 +298,7 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
     });
     
     const tournaments = await Tournament.findAll({
-      where: { status: 'open' } as any,
+      where: { registration_open: true } as any,
       order: [['start_date', 'DESC']],
       limit: 20
     });

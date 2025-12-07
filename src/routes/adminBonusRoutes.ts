@@ -283,6 +283,10 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
     
     (registrations as any[]).forEach((reg: any) => {
       const dateKey = reg.tournament_date.split('T')[0]; // Get date part only
+      if (!attendanceByDate[dateKey]) {
+        // Skip registrations outside the current month
+        return;
+      }
       if (!attendanceByDate[dateKey][reg.user_id]) {
         attendanceByDate[dateKey][reg.user_id] = {
           username: reg.username,
