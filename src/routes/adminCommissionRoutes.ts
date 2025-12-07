@@ -16,7 +16,12 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       where: { is_active: true },
       include: [
         { model: Season, as: 'season', required: false },
-        { model: Tournament, as: 'tournament', required: false }
+        { 
+          model: Tournament.unscoped(), 
+          as: 'tournament', 
+          required: false,
+          attributes: ['id', 'buy_in', 'start_date']
+        }
       ],
       order: [['type', 'ASC'], ['name', 'ASC']]
     });

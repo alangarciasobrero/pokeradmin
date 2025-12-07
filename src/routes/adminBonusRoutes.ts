@@ -47,10 +47,11 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
       if (seasonId) {
         seasonCount = await Registration.count({
           include: [{
-            model: Tournament,
+            model: Tournament.unscoped(),
             as: 'tournament',
             where: { season_id: seasonId },
-            required: true
+            required: true,
+            attributes: []
           }],
           where: { user_id: userId }
         });
@@ -63,12 +64,13 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
       
       const monthCount = await Registration.count({
         include: [{
-          model: Tournament,
+          model: Tournament.unscoped(),
           as: 'tournament',
           where: { 
             start_date: { $gte: monthStart, $lte: monthEnd } as any
           },
-          required: true
+          required: true,
+          attributes: []
         }],
         where: { user_id: userId }
       });
@@ -87,7 +89,7 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
       
       const weekCount = await Registration.count({
         include: [{
-          model: Tournament,
+          model: Tournament.unscoped(),
           as: 'tournament',
           where: { 
             start_date: { $gte: lastMonday, $lte: lastSunday } as any
@@ -339,3 +341,4 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
 });
 
 export default router;
+

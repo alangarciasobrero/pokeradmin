@@ -220,10 +220,31 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
 router.get('/new', requireAdmin, async (req: Request, res: Response) => {
   // Post to the admin POST handler so the browser receives a redirect instead of raw JSON
   const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
+  
+  // Load default values from settings
+  const settings = await Setting.findAll({
+    where: {
+      key: ['default_buyin', 'default_reentry', 'default_bounty', 'default_blind_levels']
+    } as any
+  });
+  
+  const defaults: any = {};
+  for (const s of settings) {
+    const key = (s as any).key;
+    const val = (s as any).value;
+    defaults[key] = val;
+  }
+  
   res.render('tournaments/form', { 
     formTitle: 'Nuevo Torneo (Admin)', 
     formAction: '/admin/games/tournaments/new',
-    seasons 
+    seasons,
+    tournament: {
+      buy_in: defaults.default_buyin || 5000,
+      re_entry: defaults.default_reentry || 5000,
+      knockout_bounty: defaults.default_bounty || 500,
+      blind_levels: defaults.default_blind_levels || '25/50'
+    }
   });
 });
 
