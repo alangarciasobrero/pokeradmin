@@ -88,11 +88,21 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   // Integrate historical_points: sum all points from historical_points table per user
   const historicalPoints = await HistoricalPoint.findAll();
   const historicalByUser: Record<number, number> = {};
+  const bonusByUser: Record<number, number> = {};
+  
   for (const hp of historicalPoints) {
     const uid = Number((hp as any).user_id);
     const pts = Number((hp as any).points) || 0;
+    const reason = String((hp as any).reason || '');
+    
     if (!historicalByUser[uid]) historicalByUser[uid] = 0;
     historicalByUser[uid] += pts;
+    
+    // Track bonus points separately (attendance bonuses)
+    if (reason.toLowerCase().includes('asistencia') || reason.toLowerCase().includes('bonus')) {
+      if (!bonusByUser[uid]) bonusByUser[uid] = 0;
+      bonusByUser[uid] += pts;
+    }
   }
 
   // Merge historical points into leaderboard
@@ -138,6 +148,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       total_points: l.total_points,
       total_winnings: l.total_winnings,
       historical_points: historicalByUser[l.user_id] || 0,
+      bonus_points: bonusByUser[l.user_id] || 0,
       attendance_count: attendanceByUser[l.user_id] || 0,
       final_tables: finalTablesByUser[l.user_id] || 0,
       wins: winsByUser[l.user_id] || 0,

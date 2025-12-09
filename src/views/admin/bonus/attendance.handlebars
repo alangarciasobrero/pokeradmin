@@ -3,15 +3,18 @@
 <div class="content-wrapper">
   <div class="page-header">
     <h1>🎁 Bonus por Asistencia</h1>
-    <p>Estado de asistencia de jugadores y bonificaciones elegibles</p>
+    {{#if activeSeason}}
+    <div class="season-badge">
+      <span class="season-icon">🏆</span>
+      <div class="season-info">
+        <strong>{{activeSeason.name}}</strong>
+        <small>{{formatDate activeSeason.start_date}} - {{formatDate activeSeason.end_date}}</small>
+      </div>
+    </div>
+    {{else}}
+    <p class="no-season">⚠️ No hay temporada activa</p>
+    {{/if}}
   </div>
-
-  {{#if activeSeason}}
-  <div class="info-card">
-    <strong>Temporada activa:</strong> {{activeSeason.name}}
-    <small>({{formatDate activeSeason.start_date}} - {{formatDate activeSeason.end_date}})</small>
-  </div>
-  {{/if}}
 
   <div class="bonus-legend">
     <h3>Criterios de Bonus</h3>
@@ -83,44 +86,63 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  color: #e0e0e0;
 }
 
 .page-header {
   margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .page-header h1 {
   font-size: 2rem;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
+  margin: 0;
+  color: #FFD700;
 }
 
-.page-header p {
-  color: #7f8c8d;
-  font-size: 1rem;
+.season-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
 }
 
-.info-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
+.season-icon {
+  font-size: 1.5rem;
 }
 
-.info-card strong {
+.season-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.season-info strong {
+  color: #FFD700;
   font-size: 1.1rem;
 }
 
-.info-card small {
-  opacity: 0.9;
-  margin-left: 1rem;
+.season-info small {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.no-season {
+  color: #ff6b6b;
+  font-size: 1rem;
+  margin: 0;
 }
 
 .bonus-legend {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.05);
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -128,7 +150,7 @@
 .bonus-legend h3 {
   margin-top: 0;
   margin-bottom: 1rem;
-  color: #495057;
+  color: #FFD700;
 }
 
 .legend-grid {
@@ -141,6 +163,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.legend-item small {
+  color: #aaa;
+  font-size: 0.85rem;
 }
 
 .badge {
@@ -173,9 +200,9 @@
 
 .attendance-table-wrapper {
   overflow-x: auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: rgba(30, 30, 30, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .attendance-table {
@@ -184,8 +211,8 @@
 }
 
 .attendance-table thead {
-  background: #343a40;
-  color: white;
+  background: rgba(255, 215, 0, 0.15);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
 }
 
 .attendance-table th {
@@ -195,23 +222,26 @@
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #FFD700;
 }
 
 .attendance-table tbody tr {
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
 }
 
 .attendance-table tbody tr:hover {
-  background: #f8f9fa;
+  background: rgba(255, 215, 0, 0.08);
 }
 
 .attendance-table td {
   padding: 1rem;
+  color: #e0e0e0;
 }
 
 .username-small {
   display: block;
-  color: #6c757d;
+  color: #888;
   font-size: 0.85rem;
   margin-top: 0.25rem;
 }
@@ -220,11 +250,11 @@
   text-align: center;
   font-weight: 600;
   font-size: 1.1rem;
-  color: #495057;
+  color: #FFD700;
 }
 
 .bonuses-cell {
-  color: #28a745;
+  color: #5dd879;
   font-weight: 500;
 }
 
@@ -237,32 +267,34 @@
 
 .btn-primary, .btn-secondary {
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
+  display: inline-block;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  color: #000;
 }
 
 .btn-secondary {
-  background: white;
-  color: #495057;
-  border: 2px solid #dee2e6;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-secondary:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 @media (max-width: 768px) {

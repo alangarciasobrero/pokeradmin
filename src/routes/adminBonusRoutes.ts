@@ -121,7 +121,11 @@ router.get('/attendance', requireAdmin, async (req: Request, res: Response) => {
     res.render('admin/bonus/attendance', {
       username: req.session.username,
       attendanceData,
-      activeSeason
+      activeSeason: activeSeason ? {
+        name: (activeSeason as any).nombre,
+        start_date: (activeSeason as any).fecha_inicio,
+        end_date: (activeSeason as any).fecha_fin
+      } : null
     });
   } catch (err) {
     console.error('Error loading attendance data:', err);

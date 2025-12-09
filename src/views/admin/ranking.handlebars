@@ -50,6 +50,15 @@
                   <small>torneos</small>
                 </div>
               </div>
+              {{#if this.bonus_points}}
+              <div class="stat-item bonus-stat">
+                <span class="stat-icon">🎁</span>
+                <div class="stat-value">
+                  <strong>+{{this.bonus_points}}</strong>
+                  <small>bonus</small>
+                </div>
+              </div>
+              {{/if}}
               <div class="stat-item">
                 <span class="stat-icon">🎯</span>
                 <div class="stat-value">
@@ -205,6 +214,21 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+.stat-item.bonus-stat {
+  background: rgba(255, 215, 0, 0.1);
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+.stat-item.bonus-stat .stat-icon {
+  font-size: 1.3rem;
+}
+.stat-item.bonus-stat .stat-value strong {
+  color: #FFD700;
+}
+.stat-item.bonus-stat .stat-value small {
+  color: rgba(255, 215, 0, 0.8);
 }
 .stat-icon {
   font-size: 1.5rem;

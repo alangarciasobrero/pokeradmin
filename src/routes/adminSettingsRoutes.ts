@@ -244,6 +244,11 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
     const { AccumulatedCommission } = await import('../models/AccumulatedCommission');
     const { Season } = await import('../models/Season');
     const { Tournament } = await import('../models/Tournament');
+    const { Setting } = await import('../models/Setting');
+    
+    // Get commission rate from settings (default 20%)
+    const commissionRateSetting = await Setting.findOne({ where: { key: 'commission_rate' } });
+    const commissionRate = commissionRateSetting ? Number((commissionRateSetting as any).value) : 20;
     
     // Get all active destinations (sin includes para evitar errores de asociación)
     const destinations = await CommissionDestination.findAll({
@@ -306,12 +311,51 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
       username: req.session.username,
       destinations: destinationsData,
       totalPercentage: totalPercentage.toFixed(2),
+      commissionRate,
       seasons,
       tournaments
     });
   } catch (err) {
     console.error('Error loading commission settings:', err);
     res.status(500).send('Error cargando configuración de comisiones: ' + (err as Error).message);
+  }
+});
+
+/**
+ * POST /admin/games/settings/commissions/rate
+ * Guardar porcentaje de comisión total
+ */
+router.post('/commissions/rate', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { Setting } = await import('../models/Setting');
+    const { commission_rate } = req.body;
+    
+    const rate = Number(commission_rate);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      if (req.session) req.session.flash = { type: 'error', message: 'Tasa debe estar entre 0% y 100%' };
+      return res.redirect('/admin/games/settings/commissions');
+    }
+    
+    // Update or create setting
+    const [setting] = await Setting.findOrCreate({
+      where: { key: 'commission_rate' },
+      defaults: { 
+        key: 'commission_rate', 
+        value: String(rate),
+        description: 'Porcentaje de comisión tomado del buy-in'
+      } as any
+    });
+    
+    if (setting) {
+      await setting.update({ value: String(rate) } as any);
+    }
+    
+    if (req.session) req.session.flash = { type: 'success', message: `✅ Tasa de comisión actualizada a ${rate}%` };
+    res.redirect('/admin/games/settings/commissions');
+  } catch (err) {
+    console.error('Error saving commission rate:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error guardando tasa' };
+    res.redirect('/admin/games/settings/commissions');
   }
 });
 

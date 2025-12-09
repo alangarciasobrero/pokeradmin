@@ -255,6 +255,10 @@ Handlebars.registerHelper('subtract', function(a: number, b: number) {
 	return Number(a) - Number(b);
 });
 
+Handlebars.registerHelper('multiply', function(a: number, b: number) {
+	return Number(a) * Number(b);
+});
+
 Handlebars.registerHelper('lte', function(a: any, b: any) {
 	try { return Number(a) <= Number(b); } catch (e) { return false; }
 });
