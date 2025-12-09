@@ -52,16 +52,28 @@
       </thead>
       <tbody>
         {{#each attendanceData}}
-        <tr>
+        <tr class="player-row" data-username="{{this.username}}">
           <td>
-            <strong>{{this.fullName}}</strong>
-            <small class="username-small">@{{this.username}}</small>
+            <a href="#" class="player-link" onclick="togglePlayerDetail('{{this.username}}'); return false;">
+              <strong>{{this.fullName}}</strong>
+              <small class="username-small">@{{this.username}}</small>
+            </a>
           </td>
           <td class="count-cell">{{this.totalCount}}</td>
           <td class="count-cell">{{this.seasonCount}}</td>
           <td class="count-cell">{{this.monthCount}}</td>
           <td class="count-cell">{{this.weekCount}}</td>
           <td class="bonuses-cell">{{this.bonuses}}</td>
+        </tr>
+        <tr class="player-detail-row" id="detail-{{this.username}}" style="display:none;">
+          <td colspan="6">
+            <div class="player-detail-content">
+              <h4>📋 Torneos de la temporada - {{this.fullName}}</h4>
+              <div class="tournaments-list" id="tournaments-{{this.username}}">
+                <div class="loading">Cargando...</div>
+              </div>
+            </div>
+          </td>
         </tr>
         {{else}}
         <tr>
@@ -74,9 +86,13 @@
     </table>
   </div>
 
+  <div class="info-box">
+    <strong>ℹ️ Cómo funcionan los bonus:</strong>
+    <p>Los bonus se otorgan automáticamente al cerrar cada torneo según la asistencia acumulada del jugador. No es necesario calcularlos manualmente.</p>
+  </div>
+
   <div class="actions-footer">
-    <a href="/admin/bonus/calculate" class="btn-primary">🎁 Calcular y Otorgar Bonus</a>
-    <a href="/admin/bonus/attendance-calendar" class="btn-secondary">📅 Calendario de Asistencias</a>
+    <a href="/admin/bonus/attendance-calendar" class="btn-primary">📅 Calendario de Asistencias</a>
     <a href="/admin/games/settings" class="btn-secondary">Volver a Configuración</a>
   </div>
 </div>
@@ -246,6 +262,82 @@
   margin-top: 0.25rem;
 }
 
+.player-link {
+  color: #FFD700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.player-link:hover {
+  color: #FFF;
+  text-decoration: underline;
+}
+
+.player-row {
+  cursor: pointer;
+}
+
+.player-row:hover {
+  background: rgba(255, 215, 0, 0.1) !important;
+}
+
+.player-detail-row {
+  background: rgba(255, 215, 0, 0.05) !important;
+}
+
+.player-detail-content {
+  padding: 1.5rem;
+  border-top: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.player-detail-content h4 {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.tournaments-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tournament-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #FFD700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tournament-name {
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.tournament-date {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.tournament-position {
+  color: #FFD700;
+  font-size: 0.9rem;
+}
+
+.tournament-position strong {
+  color: #FFF;
+  font-size: 1.1rem;
+}
+
+.loading {
+  text-align: center;
+  color: #aaa;
+  padding: 1rem;
+}
+
 .count-cell {
   text-align: center;
   font-weight: 600;
@@ -256,6 +348,24 @@
 .bonuses-cell {
   color: #5dd879;
   font-weight: 500;
+}
+
+.info-box {
+  background: rgba(33, 150, 243, 0.1);
+  border: 2px solid rgba(33, 150, 243, 0.3);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-box strong {
+  color: #64B5F6;
+  font-size: 1.05rem;
+}
+
+.info-box p {
+  color: #e0e0e0;
+  margin: 0.5rem 0 0 0;
 }
 
 .actions-footer {
@@ -325,5 +435,49 @@
   }
 }
 </style>
+
+<script>
+const loadedDetails = {};
+
+async function togglePlayerDetail(username) {
+  const detailRow = document.getElementById('detail-' + username);
+  
+  if (detailRow.style.display === 'none') {
+    detailRow.style.display = 'table-row';
+    
+    // Load tournaments if not loaded yet
+    if (!loadedDetails[username]) {
+      const container = document.getElementById('tournaments-' + username);
+      try {
+        const response = await fetch('/admin/bonus/player-tournaments/' + username);
+        const data = await response.json();
+        
+        if (data.tournaments && data.tournaments.length > 0) {
+          container.innerHTML = data.tournaments.map(t => `
+            <div class="tournament-item">
+              <div>
+                <div class="tournament-name">🏆 ${t.name}</div>
+                <div class="tournament-date">${t.date}</div>
+              </div>
+              <div class="tournament-position">
+                ${t.position ? `Posición: <strong>${t.position}º</strong>` : 'Participó'}
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<div class="loading">No hay torneos registrados</div>';
+        }
+        
+        loadedDetails[username] = true;
+      } catch (err) {
+        console.error('Error loading tournaments:', err);
+        container.innerHTML = '<div class="loading">Error cargando torneos</div>';
+      }
+    }
+  } else {
+    detailRow.style.display = 'none';
+  }
+}
+</script>
 
 {{> footer}}

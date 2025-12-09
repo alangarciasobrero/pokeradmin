@@ -349,5 +349,79 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
   }
 });
 
+/**
+ * GET /admin/bonus/player-tournaments/:username
+ * API: Obtener torneos de un jugador en la temporada activa
+ */
+router.get('/player-tournaments/:username', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    
+    // Get user by username
+    const user = await User.findOne({ where: { username } as any });
+    if (!user) {
+      return res.json({ tournaments: [] });
+    }
+    
+    const userId = (user as any).id;
+    
+    // Get active season
+    const activeSeason = await Season.findOne({ 
+      where: { estado: 'activa' } as any,
+      order: [['fecha_inicio', 'DESC']] 
+    });
+    
+    if (!activeSeason) {
+      return res.json({ tournaments: [] });
+    }
+    
+    const seasonStart = new Date((activeSeason as any).fecha_inicio);
+    const seasonEnd = new Date((activeSeason as any).fecha_fin);
+    
+    // Get registrations for this user in the season
+    const registrations = await Registration.findAll({
+      where: {
+        user_id: userId,
+        registered_at: {
+          [Op.gte]: seasonStart,
+          [Op.lte]: seasonEnd
+        }
+      } as any,
+      order: [['registered_at', 'DESC']]
+    });
+    
+    // Get tournament details and results
+    const tournaments = [];
+    for (const reg of registrations) {
+      const tournamentId = (reg as any).tournament_id;
+      const tournament = await Tournament.findByPk(tournamentId);
+      
+      if (tournament) {
+        // Try to find result/position
+        const { Result } = await import('../models/Result');
+        const result = await Result.findOne({
+          where: {
+            tournament_id: tournamentId,
+            user_id: userId
+          } as any
+        });
+        
+        const position = result ? (result as any).position : null;
+        
+        tournaments.push({
+          name: (tournament as any).tournament_name,
+          date: new Date((tournament as any).start_date).toLocaleDateString('es-AR'),
+          position
+        });
+      }
+    }
+    
+    res.json({ tournaments });
+  } catch (err) {
+    console.error('Error loading player tournaments:', err);
+    res.status(500).json({ error: 'Error cargando torneos' });
+  }
+});
+
 export default router;
 
