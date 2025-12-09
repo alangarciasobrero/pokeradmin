@@ -21,6 +21,12 @@
 			<span>🏆 {{totalTournaments}} torneos este mes</span>
 			<span>👥 {{users.length}} jugadores activos</span>
 		</div>
+		{{#unless totalTournaments}}
+		<div class="empty-month-message">
+			<p>⚠️ No hay torneos registrados en este mes</p>
+			<p>Los días con torneos se verán destacados en <span style="color: #5dd879;">verde</span>, y podrás ver qué jugadores participaron cada día.</p>
+		</div>
+		{{/unless}}
 	</div>
 
 	<div class="calendar-grid">
@@ -122,35 +128,40 @@
 	margin: 0;
 	min-width: 200px;
 	text-align: center;
-	color: #34495e;
+	color: #FFD700;
+	font-size: 1.8em;
+	text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
 }
 
 .btn-nav {
 	padding: 8px 16px;
-	background: #3498db;
-	color: white;
+	background: rgba(255, 215, 0, 0.2);
+	color: #FFD700;
 	text-decoration: none;
-	border-radius: 4px;
-	transition: background 0.3s;
+	border-radius: 6px;
+	transition: all 0.3s;
 	font-weight: 500;
+	border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 .btn-nav:hover {
-	background: #2980b9;
+	background: rgba(255, 215, 0, 0.3);
+	border-color: rgba(255, 215, 0, 0.5);
 }
 
 .btn-today {
 	padding: 8px 16px;
-	background: #27ae60;
-	color: white;
+	background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+	color: #1a1a1a;
 	text-decoration: none;
-	border-radius: 4px;
-	transition: background 0.3s;
-	font-weight: 500;
+	border-radius: 6px;
+	transition: all 0.3s;
+	font-weight: 600;
 }
 
 .btn-today:hover {
-	background: #229954;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
 }
 
 .calendar-stats {
@@ -158,10 +169,34 @@
 	justify-content: center;
 	gap: 40px;
 	padding: 15px;
-	background: #ecf0f1;
+	background: rgba(255, 215, 0, 0.15);
+	border: 2px solid rgba(255, 215, 0, 0.4);
 	border-radius: 8px;
-	font-size: 1.1em;
-	font-weight: 500;
+	font-size: 1.2em;
+	font-weight: 600;
+	color: #FFD700;
+	text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.empty-month-message {
+	margin-top: 1.5rem;
+	padding: 1.5rem;
+	background: rgba(255, 152, 0, 0.1);
+	border: 2px solid rgba(255, 152, 0, 0.3);
+	border-radius: 12px;
+	text-align: center;
+}
+
+.empty-month-message p {
+	color: #e0e0e0;
+	font-size: 1.1rem;
+	margin: 0.5rem 0;
+}
+
+.empty-month-message p:first-child {
+	color: #FFA500;
+	font-weight: 600;
+	font-size: 1.2rem;
 }
 
 .calendar-grid {
