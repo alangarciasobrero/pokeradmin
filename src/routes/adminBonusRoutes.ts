@@ -378,25 +378,26 @@ router.get('/player-tournaments/:username', requireAdmin, async (req: Request, r
     const seasonStart = new Date((activeSeason as any).fecha_inicio);
     const seasonEnd = new Date((activeSeason as any).fecha_fin);
     
-    // Get registrations for this user in the season
+    // Get all registrations for this user
     const registrations = await Registration.findAll({
       where: {
-        user_id: userId,
-        registered_at: {
-          [Op.gte]: seasonStart,
-          [Op.lte]: seasonEnd
-        }
-      } as any,
-      order: [['registered_at', 'DESC']]
+        user_id: userId
+      } as any
     });
     
-    // Get tournament details and results
+    // Get tournament details and filter by season dates
     const tournaments = [];
     for (const reg of registrations) {
       const tournamentId = (reg as any).tournament_id;
       const tournament = await Tournament.findByPk(tournamentId);
       
+      // Filter by tournament date, not registration date
       if (tournament) {
+        const tournamentDate = new Date((tournament as any).start_date);
+        if (tournamentDate < seasonStart || tournamentDate > seasonEnd) {
+          continue; // Skip tournaments outside the season
+        }
+        
         // Try to find result/position
         const { Result } = await import('../models/Result');
         const result = await Result.findOne({
