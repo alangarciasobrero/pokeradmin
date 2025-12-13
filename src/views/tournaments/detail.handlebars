@@ -193,6 +193,44 @@
                                 html += '<p style="color:#aaa;font-size:0.9rem">Se distribuirán entre los primeros 9 lugares al finalizar el torneo</p>';
                                 html += '</div>';
 
+                                // Tabla detallada de distribución
+                                html += '<details style="margin-top:1rem;background:rgba(255,255,255,0.03);padding:1rem;border-radius:6px;border:1px solid rgba(255,255,255,0.1);" open>';
+                                html += '<summary style="cursor:pointer;font-weight:600;color:#FFD700;padding:0.5rem;margin-bottom:1rem;">📊 Ver distribución detallada de premios y puntos</summary>';
+                                html += '<div style="overflow-x:auto;">';
+                                html += '<table style="width:100%;border-collapse:collapse;margin-top:1rem;">';
+                                html += '<thead><tr style="background:rgba(255,255,255,0.05);">';
+                                html += '<th style="padding:0.75rem;text-align:left;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Posición</th>';
+                                html += '<th style="padding:0.75rem;text-align:right;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Premio ($)</th>';
+                                html += '<th style="padding:0.75rem;text-align:right;color:#2196F3;border-bottom:2px solid rgba(33,150,243,0.3);">Puntos</th>';
+                                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">% Premio</th>';
+                                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">% Puntos</th>';
+                                html += '</tr></thead><tbody>';
+
+                                // Combinar prizes y points en una sola tabla
+                                const maxPos = Math.max(
+                                    (j.defaultPrizes || []).length,
+                                    (j.rankingPointsDistribution || []).length
+                                );
+
+                                for (let i = 0; i < maxPos; i++) {
+                                    const prize = (j.defaultPrizes || [])[i];
+                                    const points = (j.rankingPointsDistribution || [])[i];
+                                    
+                                    if (prize && prize.amount > 0 || points && points.points > 0) {
+                                        const pos = i + 1;
+                                        const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
+                                        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
+                                        html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
+                                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">\\$${prize ? prize.amount.toFixed(2) : '0.00'}</td>`;
+                                        html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${points ? points.points : 0}</td>`;
+                                        html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${prize ? prize.percentage : 0}%</td>`;
+                                        html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${points ? points.percentage : 0}%</td>`;
+                                        html += '</tr>';
+                                    }
+                                }
+
+                                html += '</tbody></table></div></details>';
+
                                 html += '</div>';
                                 if (registrationsBody) registrationsBody.innerHTML = html;
                             } catch (e) {
@@ -475,96 +513,6 @@
                     })();
                 </script>
 </div>
-
-    {{!-- Desglose de premios y puntos (visible después de cerrar inscripciones) --}}
-    {{#unless tournament.registration_open}}
-    <div id="prizeBreakdown" style="background:linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(33, 150, 243, 0.1));border:2px solid rgba(76, 175, 80, 0.3);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
-        <h2 style="color:#4CAF50;margin-top:0;display:flex;align-items:center;gap:0.5rem;">
-            <svg style="width:28px;height:28px;" viewBox="0 0 24 24" fill="#4CAF50"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-            Información del Torneo
-        </h2>
-        <div id="breakdownContent" style="display:none;">
-            <p style="color:#ddd;margin-bottom:1.5rem;font-size:0.95rem;">⏳ Cargando información del torneo...</p>
-        </div>
-    </div>
-    <script>
-        // Cargar desglose de premios y puntos
-        (async function(){
-            try {
-                const res = await fetch('/admin/games/tournaments/{{tournament.id}}/preview-close');
-                const data = await res.json();
-                const content = document.getElementById('breakdownContent');
-                if (!content) return;
-
-                // Construir HTML del desglose
-                let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-bottom:1.5rem;">';
-                
-                // Card de Premios
-                html += '<div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:8px;padding:1rem;">';
-                html += '<h3 style="color:#FFD700;margin:0 0 1rem 0;font-size:1.1rem;display:flex;align-items:center;gap:0.5rem;">💰 Premios en Efectivo</h3>';
-                html += `<p style="color:#FFD700;font-size:1.8rem;font-weight:700;margin:0 0 0.5rem 0;">\\$${data.totalPrizePool.toLocaleString()}</p>`;
-                html += '<p style="color:#999;font-size:0.85rem;margin:0;">Pozo total para premios</p>';
-                html += '</div>';
-                
-                // Card de Puntos
-                html += '<div style="background:rgba(33,150,243,0.05);border:1px solid rgba(33,150,243,0.2);border-radius:8px;padding:1rem;">';
-                html += '<h3 style="color:#2196F3;margin:0 0 1rem 0;font-size:1.1rem;display:flex;align-items:center;gap:0.5rem;">⭐ Puntos de Ranking</h3>';
-                html += `<p style="color:#2196F3;font-size:1.8rem;font-weight:700;margin:0 0 0.5rem 0;">${data.totalPoints.toLocaleString()} pts</p>`;
-                html += '<p style="color:#999;font-size:0.85rem;margin:0;">Pozo total de puntos</p>';
-                html += '</div>';
-                
-                // Card de Inscriptos
-                html += '<div style="background:rgba(156,39,176,0.05);border:1px solid rgba(156,39,176,0.2);border-radius:8px;padding:1rem;">';
-                html += '<h3 style="color:#9C27B0;margin:0 0 1rem 0;font-size:1.1rem;display:flex;align-items:center;gap:0.5rem;">👥 Jugadores</h3>';
-                html += `<p style="color:#9C27B0;font-size:1.8rem;font-weight:700;margin:0 0 0.5rem 0;">${data.totalRegistrations}</p>`;
-                html += '<p style="color:#999;font-size:0.85rem;margin:0;">Inscripciones totales</p>';
-                html += '</div>';
-
-                html += '</div>';
-
-                // Tabla de distribución de premios
-                html += '<details style="margin-top:1rem;" open>';
-                html += '<summary style="cursor:pointer;font-weight:600;color:#FFD700;padding:0.5rem;background:rgba(255,215,0,0.05);border-radius:6px;margin-bottom:1rem;">📊 Ver distribución detallada de premios y puntos</summary>';
-                html += '<div style="overflow-x:auto;">';
-                html += '<table style="width:100%;border-collapse:collapse;margin-top:1rem;">';
-                html += '<thead><tr style="background:rgba(255,255,255,0.05);">';
-                html += '<th style="padding:0.75rem;text-align:left;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Posición</th>';
-                html += '<th style="padding:0.75rem;text-align:right;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Premio ($)</th>';
-                html += '<th style="padding:0.75rem;text-align:right;color:#2196F3;border-bottom:2px solid rgba(33,150,243,0.3);">Puntos</th>';
-                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">% Premio</th>';
-                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">% Puntos</th>';
-                html += '</tr></thead><tbody>';
-
-                // Mostrar distribución para cada posición
-                data.distribution.forEach((item, idx) => {
-                    if (item.prize > 0 || item.points > 0) {
-                        const pos = idx + 1;
-                        const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
-                        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
-                        html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
-                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">\\$${item.prize.toLocaleString()}</td>`;
-                        html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${item.points.toLocaleString()}</td>`;
-                        html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${item.prizePercent}%</td>`;
-                        html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${item.pointsPercent}%</td>`;
-                        html += '</tr>';
-                    }
-                });
-
-                html += '</tbody></table></div></details>';
-
-                content.innerHTML = html;
-                content.style.display = 'block';
-            } catch (err) {
-                console.error('Error cargando desglose:', err);
-                const content = document.getElementById('breakdownContent');
-                if (content) {
-                    content.innerHTML = '<p style="color:#f44336;">❌ Error al cargar la información del torneo</p>';
-                    content.style.display = 'block';
-                }
-            }
-        })();
-    </script>
-    {{/unless}}
 
     {{!-- Inline registration form for admins --}}
     {{#isAdmin role}}
