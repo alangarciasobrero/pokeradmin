@@ -1,0 +1,377 @@
+<div class="daily-commission-report">
+	<div class="report-header">
+		<h1>💰 Reporte de Comisión Diaria</h1>
+		<p class="report-date">📅 {{formatDate date}}</p>
+		<a href="/admin/dashboard" class="back-link">← Volver al Dashboard</a>
+	</div>
+
+	<div class="summary-cards">
+		<div class="summary-card tournaments">
+			<div class="card-icon">🏆</div>
+			<div class="card-content">
+				<span class="card-label">Torneos</span>
+				<span class="card-value">${{currency totalTournaments}}</span>
+				<span class="card-detail">{{tournamentData.length}} torneos</span>
+			</div>
+		</div>
+		<div class="summary-card cash">
+			<div class="card-icon">🎰</div>
+			<div class="card-content">
+				<span class="card-label">Mesas Cash</span>
+				<span class="card-value">${{currency totalCash}}</span>
+				<span class="card-detail">{{cashData.length}} mesas</span>
+			</div>
+		</div>
+		<div class="summary-card total">
+			<div class="card-icon">💵</div>
+			<div class="card-content">
+				<span class="card-label">Total del Día</span>
+				<span class="card-value">${{currency grandTotal}}</span>
+				<span class="card-detail">Comisión bruta</span>
+			</div>
+		</div>
+	</div>
+
+	{{#if tournamentData.length}}
+	<div class="report-section">
+		<h2>🏆 Comisiones de Torneos</h2>
+		<div class="table-container">
+			<table class="report-table">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Nombre del Torneo</th>
+						<th>Buy-in</th>
+						<th>Hora Inicio</th>
+						<th>Comisión</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each tournamentData}}
+					<tr>
+						<td>{{this.id}}</td>
+						<td><a href="/admin/games/tournaments/{{this.id}}" class="tournament-link">{{this.name}}</a></td>
+						<td>${{currency this.buy_in}}</td>
+						<td>{{formatTime this.start_time}}</td>
+						<td class="commission-amount">${{currency this.commission}}</td>
+					</tr>
+					{{/each}}
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="4" class="total-label">Subtotal Torneos</td>
+						<td class="total-amount">${{currency ../totalTournaments}}</td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+	</div>
+	{{else}}
+	<div class="report-section">
+		<h2>🏆 Comisiones de Torneos</h2>
+		<div class="empty-state">
+			<span class="empty-icon">🏆</span>
+			<p>No hay comisiones de torneos hoy</p>
+		</div>
+	</div>
+	{{/if}}
+
+	{{#if cashData.length}}
+	<div class="report-section">
+		<h2>🎰 Comisiones de Mesas Cash</h2>
+		<div class="table-container">
+			<table class="report-table">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th>Mesa</th>
+						<th>Dealer</th>
+						<th>Hora Inicio</th>
+						<th>Comisión</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each cashData}}
+					<tr>
+						<td>{{this.id}}</td>
+						<td><a href="/admin/games/cash/{{this.id}}" class="cash-link">{{this.name}}</a></td>
+						<td>{{this.dealer}}</td>
+						<td>{{formatTime this.start_time}}</td>
+						<td class="commission-amount">${{currency this.commission}}</td>
+					</tr>
+					{{/each}}
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="4" class="total-label">Subtotal Mesas Cash</td>
+						<td class="total-amount">${{currency ../totalCash}}</td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+	</div>
+	{{else}}
+	<div class="report-section">
+		<h2>🎰 Comisiones de Mesas Cash</h2>
+		<div class="empty-state">
+			<span class="empty-icon">🎰</span>
+			<p>No hay comisiones de mesas cash hoy</p>
+		</div>
+	</div>
+	{{/if}}
+</div>
+
+<style>
+.daily-commission-report {
+	max-width: 1400px;
+	margin: 2rem auto;
+	padding: 0 2rem;
+}
+
+.report-header {
+	text-align: center;
+	margin-bottom: 3rem;
+}
+
+.report-header h1 {
+	color: #FFD700;
+	font-size: 2.5rem;
+	margin: 0 0 0.5rem 0;
+}
+
+.report-date {
+	color: #dfe6ff;
+	font-size: 1.2rem;
+	margin: 0 0 1rem 0;
+}
+
+.back-link {
+	display: inline-block;
+	color: #7B93FF;
+	text-decoration: none;
+	font-weight: 600;
+	margin-top: 1rem;
+	transition: color 0.3s ease;
+}
+
+.back-link:hover {
+	color: #FFD700;
+}
+
+.summary-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 2rem;
+	margin-bottom: 3rem;
+}
+
+.summary-card {
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+	padding: 2rem;
+	border-radius: 16px;
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.03);
+	transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.summary-card.tournaments {
+	border-color: rgba(123, 147, 255, 0.3);
+	background: rgba(123, 147, 255, 0.05);
+}
+
+.summary-card.cash {
+	border-color: rgba(67, 160, 71, 0.3);
+	background: rgba(67, 160, 71, 0.05);
+}
+
+.summary-card.total {
+	border-color: rgba(255, 215, 0, 0.3);
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.card-icon {
+	font-size: 3.5rem;
+}
+
+.card-content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.card-label {
+	color: rgba(255, 255, 255, 0.7);
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.card-value {
+	color: #FFD700;
+	font-size: 2rem;
+	font-weight: 700;
+}
+
+.card-detail {
+	color: rgba(255, 255, 255, 0.6);
+	font-size: 0.85rem;
+}
+
+.report-section {
+	margin-bottom: 3rem;
+}
+
+.report-section h2 {
+	color: #FFD700;
+	font-size: 1.8rem;
+	margin: 0 0 1.5rem 0;
+	padding-bottom: 0.5rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+.table-container {
+	overflow-x: auto;
+	border-radius: 12px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.report-table {
+	width: 100%;
+	border-collapse: collapse;
+	background: rgba(255, 255, 255, 0.03);
+}
+
+.report-table thead {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.report-table th {
+	color: #FFD700;
+	padding: 1rem;
+	text-align: left;
+	font-weight: 600;
+	text-transform: uppercase;
+	font-size: 0.85rem;
+	letter-spacing: 0.5px;
+}
+
+.report-table tbody tr {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	transition: background 0.2s ease;
+}
+
+.report-table tbody tr:hover {
+	background: rgba(255, 215, 0, 0.05);
+}
+
+.report-table td {
+	padding: 1rem;
+	color: #dfe6ff;
+}
+
+.tournament-link,
+.cash-link {
+	color: #7B93FF;
+	text-decoration: none;
+	font-weight: 600;
+	transition: color 0.3s ease;
+}
+
+.tournament-link:hover,
+.cash-link:hover {
+	color: #FFD700;
+}
+
+.commission-amount {
+	color: #66BB6A;
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+
+.report-table tfoot {
+	background: rgba(255, 215, 0, 0.1);
+	border-top: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.report-table tfoot td {
+	padding: 1.25rem 1rem;
+	font-weight: 600;
+}
+
+.total-label {
+	color: #FFD700;
+	text-align: right;
+	text-transform: uppercase;
+	font-size: 0.95rem;
+	letter-spacing: 0.5px;
+}
+
+.total-amount {
+	color: #FFD700;
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 3rem;
+	background: rgba(255, 255, 255, 0.03);
+	border-radius: 12px;
+	border: 2px dashed rgba(255, 255, 255, 0.1);
+}
+
+.empty-icon {
+	font-size: 4rem;
+	display: block;
+	margin-bottom: 1rem;
+}
+
+.empty-state p {
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 1.1rem;
+	margin: 0;
+}
+
+@media (max-width: 768px) {
+	.daily-commission-report {
+		padding: 0 1rem;
+	}
+	
+	.report-header h1 {
+		font-size: 1.8rem;
+	}
+	
+	.summary-cards {
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+	
+	.summary-card {
+		padding: 1.5rem;
+	}
+	
+	.card-icon {
+		font-size: 2.5rem;
+	}
+	
+	.card-value {
+		font-size: 1.5rem;
+	}
+	
+	.report-table {
+		font-size: 0.85rem;
+	}
+	
+	.report-table th,
+	.report-table td {
+		padding: 0.75rem 0.5rem;
+	}
+}
+</style>

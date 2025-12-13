@@ -20,11 +20,11 @@
 					<span class="stat-label">Jugadores Activos</span>
 				</div>
 				{{#if financialTotals}}
-				<div class="quick-stat">
+				<a href="/admin/reports/daily-commission" class="quick-stat clickable" style="text-decoration: none; cursor: pointer;">
 					<span class="stat-icon">💰</span>
 					<span class="stat-value">{{currency financialTotals.totalCommission}}</span>
-					<span class="stat-label">Comisión del Día</span>
-				</div>
+					<span class="stat-label">Comisión del Día 👉</span>
+				</a>
 				{{/if}}
 			</div>
 			<div class="quick-actions">
@@ -190,6 +190,12 @@
 	transform: translateY(-4px);
 	border-color: rgba(255, 215, 0, 0.3);
 	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.quick-stat.clickable:hover {
+	background: rgba(255, 215, 0, 0.1);
+	border-color: rgba(255, 215, 0, 0.5);
+	box-shadow: 0 6px 16px rgba(255, 215, 0, 0.3);
 }
 
 .quick-stat .stat-icon {

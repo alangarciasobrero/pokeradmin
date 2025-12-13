@@ -28,6 +28,7 @@ import adminPaymentRoutes from './routes/adminPaymentRoutes';
 import adminDebtorsRoutes from './routes/adminDebtorsRoutes';
 import adminBonusRoutes from './routes/adminBonusRoutes';
 import adminSeasonRoutes from './routes/adminSeasonRoutes';
+import adminReportsRoutes from './routes/adminReportsRoutes';
 import profileRoutes from './routes/profileRoutes';
 import statsRoutes from './routes/statsRoutes';
 import publicProfileRoutes from './routes/publicProfileRoutes';
@@ -156,6 +157,16 @@ Handlebars.registerHelper('formatDateTime', function(d: any) {
 	const hours = String(dt.getHours()).padStart(2, '0');
 	const minutes = String(dt.getMinutes()).padStart(2, '0');
 	return `${day}/${month}/${year} ${hours}:${minutes}`;
+});
+
+// Helper para mostrar solo la hora HH:mm
+Handlebars.registerHelper('formatTime', function(d: any) {
+	if (!d) return '';
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return '';
+	const hours = String(dt.getHours()).padStart(2, '0');
+	const minutes = String(dt.getMinutes()).padStart(2, '0');
+	return `${hours}:${minutes}`;
 });
 
 // Helper para inputs de hora en formato HH:mm
@@ -379,6 +390,9 @@ app.use('/admin/bonus', adminBonusRoutes);
 
 // Admin seasons management
 app.use('/admin/seasons', adminSeasonRoutes);
+
+// Admin reports  
+app.use('/admin/reports', adminReportsRoutes);
 
 // Admin XLSX import UI
 app.use('/admin/imports', adminImportsRoutes);
