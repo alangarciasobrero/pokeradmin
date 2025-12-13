@@ -514,6 +514,103 @@
                 </script>
 </div>
 
+    {{!-- Desglose visible para todos cuando inscripciones están cerradas --}}
+    {{#unless tournament.registration_open}}
+    <div id="tournamentBreakdown" style="background:linear-gradient(135deg, rgba(76, 175, 80, 0.08), rgba(33, 150, 243, 0.08));border:2px solid rgba(76, 175, 80, 0.3);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+        <h2 style="color:#4CAF50;margin-top:0;display:flex;align-items:center;gap:0.5rem;">
+            <svg style="width:28px;height:28px;" viewBox="0 0 24 24" fill="#4CAF50"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            💰 Información del Torneo (Inscripciones Cerradas)
+        </h2>
+        <div id="breakdownContent">
+            <p style="color:#ddd;margin-bottom:1rem;font-size:0.95rem;">⏳ Cargando información...</p>
+        </div>
+    </div>
+    <script>
+        // Cargar y mostrar información del torneo
+        (async function(){
+            try {
+                const res = await fetch('/admin/games/tournaments/{{tournament.id}}/preview-close');
+                const data = await res.json();
+                const content = document.getElementById('breakdownContent');
+                if (!content) return;
+
+                let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem;">';
+                
+                // Card: Pozo total
+                html += '<div style="background:rgba(76,175,80,0.15);border:2px solid rgba(76,175,80,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';
+                html += '<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">💵 Pozo Total</div>';
+                html += `<div style="font-size:2rem;font-weight:700;color:#4CAF50;">\\$${data.pot.toLocaleString()}</div>`;
+                html += `<div style="font-size:0.85rem;color:#999;margin-top:0.5rem;">${data.totalBoxes} cajas</div>`;
+                html += '</div>';
+                
+                // Card: Comisión
+                html += '<div style="background:rgba(255,152,0,0.15);border:2px solid rgba(255,152,0,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';
+                html += '<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">💼 Comisión (20%)</div>';
+                html += `<div style="font-size:2rem;font-weight:700;color:#FF9800;">\\$${data.commissionAmount.toLocaleString()}</div>`;
+                html += '<div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">';
+                html += `Casa: \\$${data.commissionHouse.toLocaleString()}<br>`;
+                html += `Temp: \\$${data.commissionSeason.toLocaleString()} | Anual: \\$${data.commissionAnnual.toLocaleString()}`;
+                html += '</div></div>';
+                
+                // Card: Premios
+                html += '<div style="background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';
+                html += '<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">🏆 Premios</div>';
+                html += `<div style="font-size:2rem;font-weight:700;color:#FFD700;">\\$${data.prizePool.toLocaleString()}</div>`;
+                html += '<div style="font-size:0.85rem;color:#999;margin-top:0.5rem;">A repartir (Top 20)</div>';
+                html += '</div>';
+                
+                // Card: Puntos
+                html += '<div style="background:rgba(33,150,243,0.15);border:2px solid rgba(33,150,243,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';
+                html += '<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">⭐ Puntos</div>';
+                html += `<div style="font-size:2rem;font-weight:700;color:#2196F3;">${data.boxPoints.toLocaleString()}</div>`;
+                html += '<div style="font-size:0.85rem;color:#999;margin-top:0.5rem;">Mesa final (Top 9)</div>';
+                html += '</div>';
+                
+                html += '</div>';
+
+                // Tabla detallada
+                html += '<details style="background:rgba(255,255,255,0.03);padding:1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.1);">';
+                html += '<summary style="cursor:pointer;font-weight:600;color:#FFD700;padding:0.5rem;margin-bottom:1rem;">📊 Ver distribución detallada</summary>';
+                html += '<div style="overflow-x:auto;">';
+                html += '<table style="width:100%;border-collapse:collapse;margin-top:1rem;">';
+                html += '<thead><tr style="background:rgba(255,255,255,0.05);">';
+                html += '<th style="padding:0.75rem;text-align:left;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Pos</th>';
+                html += '<th style="padding:0.75rem;text-align:right;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Premio ($)</th>';
+                html += '<th style="padding:0.75rem;text-align:right;color:#2196F3;border-bottom:2px solid rgba(33,150,243,0.3);">Puntos</th>';
+                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">%</th>';
+                html += '</tr></thead><tbody>';
+
+                const maxPos = Math.min(20, data.defaultPrizes.length);
+                for (let i = 0; i < maxPos; i++) {
+                    const prize = data.defaultPrizes[i];
+                    const points = data.rankingPointsDistribution[i];
+                    
+                    if (prize && (prize.amount > 0 || (points && points.points > 0))) {
+                        const pos = i + 1;
+                        const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
+                        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
+                        html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
+                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">\\$${prize.amount.toFixed(2)} <span style="color:#999;font-size:0.85rem;">(${prize.percentage}%)</span></td>`;
+                        html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${points ? points.points : 0} <span style="color:#999;font-size:0.85rem;">${points ? '(' + points.percentage + '%)' : ''}</span></td>`;
+                        html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${prize.percentage}%</td>`;
+                        html += '</tr>';
+                    }
+                }
+
+                html += '</tbody></table></div></details>';
+
+                content.innerHTML = html;
+            } catch (err) {
+                console.error('Error cargando desglose:', err);
+                const content = document.getElementById('breakdownContent');
+                if (content) {
+                    content.innerHTML = '<p style="color:#f44336;">❌ Error al cargar información</p>';
+                }
+            }
+        })();
+    </script>
+    {{/unless}}
+
     {{!-- Inline registration form for admins --}}
     {{#isAdmin role}}
     <div class="tournament-registrations">

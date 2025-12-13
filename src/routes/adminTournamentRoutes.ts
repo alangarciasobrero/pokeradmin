@@ -564,11 +564,13 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     // Load prize distribution percentages from database
     const prizePercentages = await loadPrizeDistributionConfig();
     
-    const paidPlayers = Object.values(perUser).filter(x => x.paid > 0).length;
+    // Generate prizes for all registered players (up to top 20)
+    // Even if they didn't pay ("fiado"), they played and can win
+    const totalPlayers = regs.length;
     const defaultPrizes: Array<{ position: number; amount: number; percentage: number }> = [];
     
-    // Generate prizes for top 20 or number of paid players, whichever is less
-    const prizesCount = Math.min(20, paidPlayers);
+    // Generate prizes for top 20 or total players, whichever is less
+    const prizesCount = Math.min(20, totalPlayers);
     for (let i = 0; i < prizesCount; i++) {
       const position = i + 1;
       const percentage = prizePercentages[i] || 0;

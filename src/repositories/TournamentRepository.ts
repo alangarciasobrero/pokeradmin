@@ -1,6 +1,5 @@
 import { Tournament } from '../models/Tournament';
 import { Season } from '../models/Season';
-import { Op } from 'sequelize';
 
 /**
  * Repositorio para la entidad Tournament
@@ -8,16 +7,14 @@ import { Op } from 'sequelize';
  */
 export class TournamentRepository {
     /**
-     * Obtiene todos los torneos activos (sin end_date o con inscripciones abiertas)
+     * Obtiene todos los torneos activos (sin finalizar - end_date es null)
+     * Incluye torneos con inscripciones cerradas pero aún en curso
      * @returns Promise<Tournament[]>
      */
     async getAll(): Promise<Tournament[]> {
         return Tournament.findAll({
             where: {
-                [Op.or]: [
-                    { end_date: null },
-                    { registration_open: true }
-                ]
+                end_date: null  // Solo torneos sin finalizar
             },
             order: [['start_date', 'DESC']]
         });
