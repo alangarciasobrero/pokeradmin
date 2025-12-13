@@ -635,6 +635,35 @@
 		font-size: 0.85rem;
 	}
 }
+
+.quick-pay-btn {
+	background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+	color: white;
+	border: none;
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.quick-pay-btn:hover:not(:disabled) {
+	background: linear-gradient(135deg, #388e3c 0%, #43a047 100%);
+	box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+	transform: translateY(-1px);
+}
+
+.quick-pay-btn:disabled {
+	background: #555;
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.actions-cell {
+	text-align: center;
+}
 </style>
 
 <!-- Modal de cambio de turno -->
@@ -740,6 +769,7 @@
 						<th>Entrada</th>
 						<th>Salida</th>
 						<th>Admin</th>
+						<th>Acciones</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -756,14 +786,23 @@
 									User #{{this.user_id}}
 								{{/if}}
 							</td>
-							<td class="text-center">{{this.seat_number}}</td>
-							<td class="amount-cell">${{currency this.requested_amount}}</td>
-							<td class="amount-cell highlight">${{currency this.amount_paid}}</td>
-							<td>{{methodLabel this.method}}</td>
-							<td>{{formatDateTime this.joined_at}}</td>
-							<td>{{#if this.left_at}}{{formatDateTime this.left_at}}{{else}}<span class="text-success">En mesa</span>{{/if}}</td>
-							<td class="admin-cell">{{this.recorded_by}}</td>
-						</tr>
+						<td class="text-center">{{this.seat_number}}</td>
+						<td class="amount-cell">${{currency this.requested_amount}}</td>
+						<td class="amount-cell highlight">${{currency this.amount_paid}}</td>
+						<td>{{methodLabel this.method}}</td>
+						<td>{{formatDateTime this.joined_at}}</td>
+						<td>{{#if this.left_at}}{{formatDateTime this.left_at}}{{else}}<span class="text-success">En mesa</span>{{/if}}</td>
+					<td class="admin-cell">{{this.recorded_by}}</td>
+					<td class="actions-cell">
+						{{#if ../umap.[this.user_id]}}
+							<button class="quick-pay-btn" 
+									data-user-id="{{this.user_id}}" 
+									data-username="{{../umap.[this.user_id].username}}">
+								💰 Pagar
+							</button>
+						{{/if}}
+					</td>
+				</tr>
 					{{/each}}
 				</tbody>
 			</table>
@@ -821,3 +860,5 @@
 {{/if}}
 
 </div>
+
+<script src="/js/quickpay-modal.js"></script>

@@ -243,9 +243,9 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59); // Last day of month
     
-    // Get all players
+    // Get all users (players)
     const users = await User.findAll({ 
-      where: { is_player: true } as any,
+      where: { role: 'user' } as any,
       order: [['username', 'ASC']]
     });
     
@@ -264,7 +264,7 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
       JOIN users u ON r.user_id = u.id
       WHERE DATE(t.start_date) >= :startDate 
         AND DATE(t.start_date) <= :endDate
-        AND u.is_player = 1
+        AND u.role = 'user'
       ORDER BY t.start_date ASC, u.username ASC
     `, {
       replacements: { 
@@ -278,6 +278,9 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
     const daysInMonth = endDate.getDate();
     const firstDayOfWeek = startDate.getDay(); // 0 = Sunday
     
+    console.log(`[Calendar] Loading ${year}-${month}: ${registrations.length} registrations found`);
+    console.log(`[Calendar] Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
     // Group registrations by date and user
     const attendanceByDate: any = {};
     for (let day = 1; day <= daysInMonth; day++) {
@@ -287,7 +290,9 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
     
     (registrations as any[]).forEach((reg: any) => {
       const dateKey = reg.tournament_date.split('T')[0]; // Get date part only
+      console.log(`[Calendar] Processing: ${dateKey} - ${reg.username} - ${reg.tournament_name}`);
       if (!attendanceByDate[dateKey]) {
+        console.log(`[Calendar] Skipping ${dateKey} - outside month range`);
         // Skip registrations outside the current month
         return;
       }
@@ -304,6 +309,10 @@ router.get('/attendance-calendar', requireAdmin, async (req: Request, res: Respo
         buy_in: reg.buy_in
       });
     });
+    
+    console.log(`[Calendar] attendanceByDate keys:`, Object.keys(attendanceByDate).filter(k => Object.keys(attendanceByDate[k]).length > 0));
+    console.log(`[Calendar] Sample day 2025-12-01:`, JSON.stringify(attendanceByDate['2025-12-01'], null, 2));
+    console.log(`[Calendar] Sample day 2025-12-05:`, JSON.stringify(attendanceByDate['2025-12-05'], null, 2));
     
     // Calculate stats
     const totalTournaments = await Tournament.count({

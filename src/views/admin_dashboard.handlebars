@@ -117,15 +117,15 @@
 				<span class="debtors-count">{{debtorsToday.length}} pendientes</span>
 			</div>
 			<div class="debtors-grid">
-				{{#each debtorsToday}}
-					<div class="debtor-card">
-						<div class="debtor-info">
-							<span class="debtor-name">{{this.name}}</span>
-							<span class="debtor-amount">💰 {{currency this.amountDue}}</span>
-						</div>
-						<a href="/admin/users/{{this.userId}}" class="btn-debtor">Ver perfil</a>
+			{{#each debtorsToday}}
+				<div class="debtor-card">
+					<div class="debtor-info">
+						<span class="debtor-name">{{this.name}}</span>
+						<span class="debtor-amount">💰 {{currency this.amountDue}}</span>
 					</div>
-				{{/each}}
+					<a href="/admin/users/{{this.userId}}/ledger" class="btn-debtor">Ver perfil</a>
+				</div>
+			{{/each}}
 			</div>
 		</div>
 	{{else}}

@@ -34,6 +34,40 @@ export class PaymentRepository {
     return arr;
   }
 
+  /**
+   * Get total debt for a user across all dates
+   */
+  async getTotalDebtByUserId(userId: number): Promise<number> {
+    const payments = await Payment.findAll({ where: { user_id: userId } });
+    let totalDebt = 0;
+    for (const p of payments) {
+      const amt = Number(p.amount || 0);
+      const paid = Number((p.paid_amount as any) || 0);
+      const due = Math.max(0, amt - paid);
+      totalDebt += due;
+    }
+    return totalDebt;
+  }
+
+  /**
+   * Get all debtors (across all dates)
+   */
+  async getAllDebtors() {
+    const payments = await Payment.findAll();
+    const map = new Map<number, number>();
+    for (const p of payments) {
+      const amt = Number(p.amount || 0);
+      const paid = Number((p.paid_amount as any) || 0);
+      const due = Math.max(0, amt - paid);
+      if (due > 0) {
+        map.set(p.user_id, (map.get(p.user_id) || 0) + due);
+      }
+    }
+    const arr: Array<{ userId: number; amountDue: number }> = [];
+    for (const [userId, amountDue] of map.entries()) arr.push({ userId, amountDue });
+    return arr;
+  }
+
   // fallback: list recent payments
   async findRecent(limit = 50) {
     return Payment.findAll({ order: [['payment_date','DESC']], limit });

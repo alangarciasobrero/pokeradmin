@@ -1,27 +1,36 @@
 <div class="debtors-modern">
   <div class="page-header">
-    <h1>⚠️ Deudores</h1>
+    <h1>⚠️ {{#if showAll}}Todos los Deudores{{else}}{{#if date}}Deudores Diarios{{else}}Deudores de Hoy{{/if}}{{/if}}</h1>
   </div>
 
   <div class="filters-section">
     <form method="get" action="/admin/debtors" class="filter-form">
       <div class="form-group">
-        <label for="date">📅 Filtrar por fecha:</label>
-        <input type="text" id="date" name="date" value="{{formatDate date}}" placeholder="dd/mm/yyyy" class="date-input" />
+        <label for="date">📅 Fecha específica:</label>
+        <input type="date" id="date" name="date" value="{{#if date}}{{formatDateISO date}}{{/if}}" class="date-input" />
       </div>
       <div class="form-group">
         <label for="username">👤 Usuario:</label>
         <input type="text" id="username" name="username" value="{{filters.username}}" placeholder="Buscar por nombre..." class="text-input" />
       </div>
-      <button type="submit" class="btn-filter">🔍 Filtrar</button>
-      <a href="/admin/debtors" class="btn-clear">🔄 Limpiar</a>
+      <button type="submit" class="btn-filter">🔍 Filtrar por fecha</button>
+      <a href="/admin/debtors?all=true" class="btn-all">📊 Ver todos los deudores</a>
+      <a href="/admin/debtors" class="btn-clear">📅 Deudores de hoy</a>
     </form>
   </div>
 
   {{#if rows.length}}
     <div class="summary-bar">
-      <span class="summary-label">Total de deudas:</span>
-      <span class="summary-amount">💰 {{currency totalDebt}}</span>
+      {{#if showAll}}
+        <span class="summary-label">Deuda total acumulada:</span>
+        <span class="summary-amount">💰 {{currency grandTotalDebt}}</span>
+      {{else}}
+        <span class="summary-label">Deuda {{#if date}}del día{{else}}de hoy{{/if}}:</span>
+        <span class="summary-amount">💰 {{currency totalDebt}}</span>
+        <span class="summary-separator">|</span>
+        <span class="summary-label">Deuda total:</span>
+        <span class="summary-amount">💰 {{currency grandTotalDebt}}</span>
+      {{/if}}
       <span class="summary-count">({{rows.length}} deudores)</span>
     </div>
     
@@ -31,16 +40,22 @@
           <tr>
             <th class="sortable" data-sort="username">Username <span class="sort-icon">⇅</span></th>
             <th class="sortable" data-sort="fullname">Nombre Completo <span class="sort-icon">⇅</span></th>
-            <th class="sortable" data-sort="debt">Deuda <span class="sort-icon">⇅</span></th>
+            {{#unless showAll}}
+            <th class="sortable" data-sort="debt">Deuda {{#if date}}del Día{{else}}de Hoy{{/if}} <span class="sort-icon">⇅</span></th>
+            {{/unless}}
+            <th class="sortable" data-sort="totalDebt">Deuda Total <span class="sort-icon">⇅</span></th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="debtorsTableBody">
           {{#each rows}}
-            <tr data-username="{{this.user.username}}" data-fullname="{{this.user.full_name}}" data-debt="{{this.amountDue}}">
+            <tr data-username="{{this.user.username}}" data-fullname="{{this.user.full_name}}" data-debt="{{this.amountDue}}" data-totaldebt="{{this.totalDebt}}">
               <td class="username-cell">{{this.user.username}}</td>
               <td class="fullname-cell">{{this.user.full_name}}</td>
+              {{#unless ../showAll}}
               <td class="debt-cell">${{currency this.amountDue}}</td>
+              {{/unless}}
+              <td class="debt-cell total-debt">${{currency this.totalDebt}}</td>
               <td class="actions-cell">
                 <a class="btn-ledger" href="/admin/users/{{this.user.id}}/ledger">
                   📊 Libro mayor
@@ -83,7 +98,7 @@
         let aVal = a.dataset[sortKey];
         let bVal = b.dataset[sortKey];
         
-        if (sortKey === 'debt') {
+        if (sortKey === 'debt' || sortKey === 'totaldebt') {
           aVal = parseFloat(aVal);
           bVal = parseFloat(bVal);
         } else {
@@ -174,6 +189,24 @@
   transform: translateY(-2px);
 }
 
+.btn-all {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, rgba(107, 178, 255, 0.2), rgba(107, 178, 255, 0.1));
+  border: 2px solid #6BB2FF;
+  border-radius: 8px;
+  color: #6BB2FF;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.btn-all:hover {
+  background: linear-gradient(135deg, rgba(107, 178, 255, 0.3), rgba(107, 178, 255, 0.15));
+  transform: translateY(-2px);
+}
+
 .btn-clear {
   padding: 0.75rem 2rem;
   background: rgba(255, 255, 255, 0.05);
@@ -199,9 +232,10 @@
   padding: 1.5rem;
   margin-bottom: 2rem;
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   font-size: 1.2rem;
 }
 
@@ -219,6 +253,12 @@
 .summary-count {
   color: rgba(255, 255, 255, 0.7);
   font-style: italic;
+}
+
+.summary-separator {
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 300;
+  font-size: 1.5rem;
 }
 
 .table-container {
@@ -278,6 +318,19 @@
 .username-cell {
   font-weight: 700;
   color: #FFD700;
+}
+
+.debt-cell {
+  font-weight: 700;
+  color: #FF6B6B;
+}
+
+.debt-cell.total-debt {
+  font-weight: 800;
+  color: #FFD700;
+  font-size: 1.1em;
+  background: rgba(255, 215, 0, 0.1);
+}
 }
 
 .debt-cell {

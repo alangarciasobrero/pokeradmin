@@ -133,6 +133,7 @@
       modal = document.createElement('div');
       modal.id = 'ta-quickcreate-modal';
       modal.className = 'ta-modal';
+      modal.style.display = 'none'; // Inicialmente oculto
       const content = document.createElement('div'); content.className = 'ta-modal-content';
       content.innerHTML = `<h3>Crear usuario rápido</h3>
         <div class="ta-quickcreate-form">

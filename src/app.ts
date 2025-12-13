@@ -134,6 +134,17 @@ Handlebars.registerHelper('formatDateInput', function(d: any) {
 	return `${day}/${month}/${year}`;
 });
 
+// Helper para inputs date HTML5 (formato YYYY-MM-DD)
+Handlebars.registerHelper('formatDateISO', function(d: any) {
+	if (!d) return '';
+	const dt = new Date(d);
+	if (isNaN(dt.getTime())) return '';
+	const year = dt.getFullYear();
+	const month = String(dt.getMonth() + 1).padStart(2, '0');
+	const day = String(dt.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
+});
+
 Handlebars.registerHelper('formatDateTime', function(d: any) {
 	if (!d) return '';
 	const dt = new Date(d);

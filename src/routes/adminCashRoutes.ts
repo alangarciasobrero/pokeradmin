@@ -71,12 +71,27 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
       const requestPayment = payments.find((pay: any) => pay.source === 'cash_request');
       const cashPayment = payments.find((pay: any) => pay.source === 'cash');
       
+      // Calculate total debt for this user (for quick pay button)
+      const allUserPayments = await Payment.findAll({ where: { user_id: p.user_id } });
+      const totalDebt = allUserPayments.reduce((sum: number, pay: any) => {
+        const amt = Number(pay.amount) || 0;
+        const paid = Number(pay.paid_amount) || 0;
+        return sum + (amt - paid);
+      }, 0);
+      
+      // Check if user has personal account (cuenta_personal payments)
+      const personalAccountPayment = await Payment.findOne({ 
+        where: { user_id: p.user_id, source: 'cuenta_personal' } 
+      });
+      
       return {
         ...p.get({ plain: true }),
         requested_amount: requestPayment ? Number(requestPayment.amount) : 0,
         amount_paid: cashPayment ? Number(cashPayment.paid_amount || 0) : 0,
         method: cashPayment ? cashPayment.method : null,
-        recorded_by: cashPayment ? cashPayment.recorded_by_name : null
+        recorded_by: cashPayment ? cashPayment.recorded_by_name : null,
+        debt: totalDebt,
+        personal_account: personalAccountPayment ? true : false
       };
     }));
     
