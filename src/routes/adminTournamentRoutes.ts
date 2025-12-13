@@ -609,7 +609,8 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
         full_name: user ? (user as any).full_name : null,
         paid: perUser[uid] ? perUser[uid].paid : 0, 
         expected: perUser[uid] ? perUser[uid].expected : 0,
-        position: (r as any).position || null
+        position: (r as any).position || null,
+        registration_date: (r as any).registration_date || null
       };
     });
 

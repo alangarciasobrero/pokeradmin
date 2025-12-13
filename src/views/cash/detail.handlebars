@@ -66,7 +66,8 @@
 
 	<div class="registration-section">
 		<h2>Registrar jugador</h2>
-		<form method="post" action="/admin/games/cash/{{cash.id}}/register" class="cash-form">
+		<div id="regSuccessMsg" style="display:none;padding:1rem;margin-bottom:1rem;background:rgba(76,175,80,0.15);border:2px solid #4CAF50;border-radius:8px;color:#4CAF50;font-weight:600;">✅ Jugador registrado exitosamente</div>
+		<form method="post" action="/admin/games/cash/{{cash.id}}/register" class="cash-form" id="cashRegForm">
 			<div class="form-row">
 				<div class="form-group full-width">
 					<label for="user_search_input">Usuario</label>
@@ -231,6 +232,55 @@
 				} catch (err) {
 					console.error('Error:', err);
 					alert('Error de red al registrar el turno');
+				}
+			});
+		}
+
+		// Prevenir scroll al registrar jugador
+		const cashRegForm = document.getElementById('cashRegForm');
+		const regSuccessMsg = document.getElementById('regSuccessMsg');
+		
+		if (cashRegForm && regSuccessMsg) {
+			cashRegForm.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const formData = new FormData(cashRegForm);
+				const submitBtn = cashRegForm.querySelector('button[type="submit"]');
+				
+				try {
+					if (submitBtn) submitBtn.disabled = true;
+					
+					const res = await fetch(cashRegForm.action, {
+						method: 'POST',
+						body: formData
+					});
+
+					if (res.ok || res.redirected) {
+						// Mostrar mensaje de éxito sin recargar
+						regSuccessMsg.style.display = 'block';
+						cashRegForm.reset();
+						
+						// Limpiar hidden user_id
+						const userIdField = document.getElementById('user_id');
+						if (userIdField) userIdField.value = '';
+						
+						// Ocultar mensaje después de 3 segundos
+						setTimeout(() => {
+							regSuccessMsg.style.display = 'none';
+						}, 3000);
+						
+						// Recargar la tabla de participantes sin hacer scroll
+						setTimeout(() => {
+							window.location.reload();
+						}, 1000);
+					} else {
+						const error = await res.text();
+						alert('Error al registrar: ' + error);
+					}
+				} catch (err) {
+					console.error('Error:', err);
+					alert('Error de red al registrar jugador');
+				} finally {
+					if (submitBtn) submitBtn.disabled = false;
 				}
 			});
 		}

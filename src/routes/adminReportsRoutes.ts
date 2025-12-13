@@ -67,18 +67,22 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
       };
     });
 
-    // Procesar datos de cash
-    const cashData = cashCommissions.map((p: any) => {
+    // Procesar datos de cash - agrupar por mesa para evitar duplicados
+    const cashDataMap = new Map();
+    cashCommissions.forEach((p: any) => {
       const cashGame = cashGamesMap.get(p.reference_id);
-      return {
-        id: p.reference_id,
-        name: `Mesa Cash #${p.reference_id}`,
-        dealer: cashGame?.dealer || 'N/A',
-        start_time: cashGame?.start_datetime,
-        commission: Number(p.amount || 0),
-        payment_date: p.payment_date
-      };
+      if (!cashDataMap.has(p.reference_id)) {
+        cashDataMap.set(p.reference_id, {
+          id: p.reference_id,
+          name: `Mesa Cash #${p.reference_id}`,
+          dealer: cashGame?.dealer || 'N/A',
+          start_time: cashGame?.start_datetime,
+          commission: Number(p.amount || 0),
+          payment_date: p.payment_date
+        });
+      }
     });
+    const cashData = Array.from(cashDataMap.values());
 
     const totalTournaments = tournamentData.reduce((sum, t) => sum + t.commission, 0);
     const totalCash = cashData.reduce((sum, c) => sum + c.commission, 0);

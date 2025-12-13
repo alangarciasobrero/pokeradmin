@@ -171,26 +171,26 @@
                                 let html = '<div style="max-height:60vh;overflow-y:auto;padding:0.5rem">';
                                 
                                 // Summary section
-                                html += '<div style="background:#f8f9fa;padding:1.5rem;border-radius:6px;margin-bottom:1rem">';
-                                html += `<h4 style="margin-top:0">💰 Resumen Financiero</h4>`;
-                                html += `<p style="font-size:1.1rem"><strong>Pozo total:</strong> <span style="font-size:1.5rem;color:#2e7d32;font-weight:bold">$${(j.pot||0).toFixed(2)}</span></p>`;
-                                html += `<p><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
-                                html += '<div style="background:#fff3e0;padding:1rem;border-radius:4px;margin:1rem 0">';
-                                html += '<p style="margin:0;font-weight:bold">💼 Comisiones (Total 20%):</p>';
+                                html += '<div style="background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.1)">';
+                                html += `<h4 style="margin-top:0;color:#FFD700">💰 Resumen Financiero</h4>`;
+                                html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo total:</strong> <span style="font-size:1.5rem;color:#4CAF50;font-weight:bold">$${(j.pot||0).toFixed(2)}</span></p>`;
+                                html += `<p style="color:#ddd"><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
+                                html += '<div style="background:rgba(255,215,0,0.1);padding:1rem;border-radius:4px;margin:1rem 0;border:1px solid rgba(255,215,0,0.2)">';
+                                html += '<p style="margin:0;font-weight:bold;color:#FFD700">💼 Comisiones (Total 20%):</p>';
                                 html += '<div style="margin-left:1rem;margin-top:0.5rem">';
-                                html += `<p style="margin:0.25rem 0">🏢 Casa (18%): $${(j.commissionHouse||0).toFixed(2)}</p>`;
-                                html += `<p style="margin:0.25rem 0">🏆 Ranking Temporada (1%): $${(j.commissionSeason||0).toFixed(2)}</p>`;
-                                html += `<p style="margin:0.25rem 0">⭐ Ranking Anual (1%): $${(j.commissionAnnual||0).toFixed(2)}</p>`;
-                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid #ddd;font-weight:bold">Total comisión: $${(j.commissionAmount||0).toFixed(2)}</p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa (18%): <span style="color:#4CAF50;font-weight:bold">$${(j.commissionHouse||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada (1%): <span style="color:#4CAF50;font-weight:bold">$${(j.commissionSeason||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual (1%): <span style="color:#4CAF50;font-weight:bold">$${(j.commissionAnnual||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);font-weight:bold;color:#FFD700">Total comisión: $${(j.commissionAmount||0).toFixed(2)}</p>`;
                                 html += '</div></div>';
-                                html += `<p style="font-size:1.1rem"><strong>Pozo para premios:</strong> <span style="font-size:1.5rem;color:#1976d2;font-weight:bold">$${(j.prizePool||0).toFixed(2)}</span></p>`;
+                                html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo para premios:</strong> <span style="font-size:1.5rem;color:#64B5F6;font-weight:bold">$${(j.prizePool||0).toFixed(2)}</span></p>`;
                                 html += '</div>';
                                 
                                 // Ranking points info
-                                html += '<div style="background:#e3f2fd;padding:1.5rem;border-radius:6px;margin-bottom:1rem">';
-                                html += `<h4 style="margin-top:0">🏆 Puntos de Ranking</h4>`;
-                                html += `<p><strong>Total puntos a repartir:</strong> <span style="font-size:1.5rem;color:#1565c0;font-weight:bold">${j.boxPoints || 0} pts</span></p>`;
-                                html += '<p style="color:#666;font-size:0.9rem">Se distribuirán entre los primeros 9 lugares al finalizar el torneo</p>';
+                                html += '<div style="background:rgba(100,181,246,0.1);padding:1.5rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(100,181,246,0.3)">';
+                                html += `<h4 style="margin-top:0;color:#64B5F6">🏆 Puntos de Ranking</h4>`;
+                                html += `<p style="color:#fff"><strong>Total puntos a repartir:</strong> <span style="font-size:1.5rem;color:#FFD700;font-weight:bold">${j.boxPoints || 0} pts</span></p>`;
+                                html += '<p style="color:#aaa;font-size:0.9rem">Se distribuirán entre los primeros 9 lugares al finalizar el torneo</p>';
                                 html += '</div>';
 
                                 html += '</div>';
@@ -207,41 +207,57 @@
                                 let html = '<div style="max-height:70vh;overflow-y:auto;padding:0.5rem">';
                                 
                                 // Summary section
-                                html += '<div style="background:#f8f9fa;padding:1rem;border-radius:6px;margin-bottom:1rem">';
-                                html += `<h4 style="margin-top:0">💰 Resumen Financiero</h4>`;
-                                html += `<p><strong>Pozo total:</strong> <span id="modalPot" style="font-size:1.2rem;color:#2e7d32">$${(j.pot||0).toFixed(2)}</span></p>`;
-                                html += `<p><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
-                                html += '<div style="background:#fff3e0;padding:0.75rem;border-radius:4px;margin:0.5rem 0">';
-                                html += '<p style="margin:0"><strong>💼 Comisiones (Total 20%):</strong></p>';
+                                html += '<div style="background:rgba(255,255,255,0.05);padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.1)">';
+                                html += `<h4 style="margin-top:0;color:#FFD700">💰 Resumen Financiero</h4>`;
+                                html += `<p style="color:#fff"><strong>Pozo total:</strong> <span id="modalPot" style="font-size:1.2rem;color:#4CAF50;font-weight:bold">$${(j.pot||0).toFixed(2)}</span></p>`;
+                                html += `<p style="color:#ddd"><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
+                                html += '<div style="background:rgba(255,215,0,0.1);padding:0.75rem;border-radius:4px;margin:0.5rem 0;border:1px solid rgba(255,215,0,0.2)">';
+                                html += '<p style="margin:0;color:#FFD700"><strong>💼 Comisiones (Total 20%):</strong></p>';
                                 html += '<div style="margin-left:1rem;margin-top:0.5rem">';
-                                html += `<p style="margin:0.25rem 0">🏢 Casa: ${j.commissionHousePct || 18}% = <span id="commissionHouse">$${(j.commissionHouse||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0">🏆 Ranking Temporada: ${j.commissionSeasonPct || 1}% = <span id="commissionSeason">$${(j.commissionSeason||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0">⭐ Ranking Anual: ${j.commissionAnnualPct || 1}% = <span id="commissionAnnual">$${(j.commissionAnnual||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid #ddd"><strong>Total comisión:</strong> <span id="commissionAmount">$${(j.commissionAmount||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa: ${j.commissionHousePct || 18}% = <span id="commissionHouse" style="color:#4CAF50;font-weight:bold">$${(j.commissionHouse||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada: ${j.commissionSeasonPct || 1}% = <span id="commissionSeason" style="color:#4CAF50;font-weight:bold">$${(j.commissionSeason||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual: ${j.commissionAnnualPct || 1}% = <span id="commissionAnnual" style="color:#4CAF50;font-weight:bold">$${(j.commissionAnnual||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);color:#FFD700"><strong>Total comisión:</strong> <span id="commissionAmount">$${(j.commissionAmount||0).toFixed(2)}</span></p>`;
                                 html += '</div></div>';
-                                html += `<p><strong>Pozo para premios:</strong> <span id="modalPrizePool" style="font-size:1.2rem;color:#1976d2">$${(j.prizePool||0).toFixed(2)}</span></p>`;
+                                html += `<p style="color:#fff"><strong>Pozo para premios:</strong> <span id="modalPrizePool" style="font-size:1.2rem;color:#64B5F6;font-weight:bold">$${(j.prizePool||0).toFixed(2)}</span></p>`;
                                 html += '</div>';
 
                                 // Ranking points section
-                                html += '<div style="background:#e3f2fd;padding:1rem;border-radius:6px;margin-bottom:1rem">';
-                                html += `<h4 style="margin-top:0">🏆 Puntos de Ranking (Mesa Final - Top 9)</h4>`;
-                                html += `<p><strong>Total puntos a repartir:</strong> <span style="font-size:1.2rem;color:#1565c0">${j.boxPoints || 0} pts</span></p>`;
+                                html += '<div style="background:rgba(100,181,246,0.1);padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(100,181,246,0.3)">';
+                                html += `<h4 style="margin-top:0;color:#64B5F6">🏆 Puntos de Ranking (Mesa Final - Top 9)</h4>`;
+                                html += `<p style="color:#fff"><strong>Total puntos a repartir:</strong> <span style="font-size:1.2rem;color:#FFD700;font-weight:bold">${j.boxPoints || 0} pts</span></p>`;
                                 html += '<table style="width:100%;border-collapse:collapse;margin-top:0.5rem">';
-                                html += '<tr style="background:#1976d2;color:white"><th style="padding:0.5rem;text-align:left">Pos</th><th style="padding:0.5rem;text-align:right">%</th><th style="padding:0.5rem;text-align:right">Puntos</th><th style="padding:0.5rem;text-align:left">Jugador</th></tr>';
+                                html += '<tr style="background:rgba(100,181,246,0.3);color:#fff"><th style="padding:0.5rem;text-align:left">Pos</th><th style="padding:0.5rem;text-align:right">%</th><th style="padding:0.5rem;text-align:right">Puntos</th><th style="padding:0.5rem;text-align:left">Jugador</th></tr>';
                                 const parts = j.participants || [];
+                                
                                 // Create a map of position -> user_id from existing positions
                                 const positionMap = {};
-                                parts.forEach(p => {
-                                    if (p.position) positionMap[p.position] = p.user_id;
-                                });
+                                const hasExplicitPositions = parts.some(p => p.position);
+                                
+                                if (hasExplicitPositions) {
+                                    // Usar posiciones explícitas guardadas
+                                    parts.forEach(p => {
+                                        if (p.position) positionMap[p.position] = p.user_id;
+                                    });
+                                } else {
+                                    // Auto-asignar por orden de registro (primero registrado = 1°, segundo = 2°, etc.)
+                                    const sortedByRegistration = parts.slice().sort((a, b) => {
+                                        const dateA = new Date(a.registration_date || 0);
+                                        const dateB = new Date(b.registration_date || 0);
+                                        return dateA - dateB;
+                                    });
+                                    sortedByRegistration.forEach((p, idx) => {
+                                        positionMap[idx + 1] = p.user_id;
+                                    });
+                                }
                                 
                                 (j.rankingPointsDistribution || []).forEach(rp => {
                                     const preselectedUser = positionMap[rp.position] || "";
-                                    html += `<tr style="border-bottom:1px solid #ddd">`;
-                                    html += `<td style="padding:0.5rem"><strong>${rp.position}º</strong></td>`;
-                                    html += `<td style="padding:0.5rem;text-align:right">${rp.percentage}%</td>`;
-                                    html += `<td style="padding:0.5rem;text-align:right;color:#1565c0"><strong>${rp.points}</strong></td>`;
-                                    html += `<td style="padding:0.5rem"><select class="rankingUser" data-pos="${rp.position}" style="width:100%;padding:0.25rem"><option value="">-- asignar jugador --</option>`;
+                                    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02)">`;
+                                    html += `<td style="padding:0.5rem;color:#FFD700"><strong>${rp.position}º</strong></td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right;color:#ddd">${rp.percentage}%</td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right;color:#64B5F6"><strong>${rp.points}</strong></td>`;
+                                    html += `<td style="padding:0.5rem"><select class="rankingUser" data-pos="${rp.position}" style="width:100%;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px"><option value="">-- asignar jugador --</option>`;
                                     parts.forEach(u => { 
                                         const selected = (u.user_id == preselectedUser) ? " selected" : "";
                                         html += `<option value="${u.user_id}"${selected}>${u.username}${u.full_name ? " (" + u.full_name + ")" : ""}</option>`; 
@@ -252,18 +268,20 @@
                                 html += '</div>';
 
                                 // Prizes section
-                                html += '<div style="background:#fff3e0;padding:1rem;border-radius:6px;margin-bottom:1rem">';
-                                html += '<h4 style="margin-top:0">💵 Premios en Efectivo (Top 20)</h4>';
+                                html += '<div style="background:rgba(76,175,80,0.1);padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(76,175,80,0.3)">';
+                                html += '<h4 style="margin-top:0;color:#4CAF50">💵 Premios en Efectivo (Top 20)</h4>';
                                 html += '<div style="max-height:300px;overflow-y:auto">';
                                 html += '<table style="width:100%;border-collapse:collapse">';
-                                html += '<tr style="background:#f57c00;color:white"><th style="padding:0.5rem;text-align:left">Pos</th><th style="padding:0.5rem;text-align:right">%</th><th style="padding:0.5rem;text-align:right">Monto ($)</th><th style="padding:0.5rem;text-align:left">Jugador</th></tr>';
+                                html += '<tr style="background:rgba(76,175,80,0.3);color:#fff"><th style="padding:0.5rem;text-align:left">Pos</th><th style="padding:0.5rem;text-align:right">%</th><th style="padding:0.5rem;text-align:right">Monto ($)</th><th style="padding:0.5rem;text-align:left">Jugador</th></tr>';
+                                
+                                // Reusar el mismo positionMap creado anteriormente para premios
                                 (j.defaultPrizes||[]).forEach(p => {
                                     const preselectedUser = positionMap[p.position] || "";
-                                    html += `<tr style="border-bottom:1px solid #ddd">`;
-                                    html += `<td style="padding:0.5rem"><strong>${p.position}º</strong></td>`;
-                                    html += `<td style="padding:0.5rem;text-align:right">${p.percentage}%</td>`;
-                                    html += `<td style="padding:0.5rem;text-align:right"><input class="prizeAmt" data-pos="${p.position}" value="${(p.amount||0).toFixed(2)}" style="width:6rem;padding:0.25rem"></td>`;
-                                    html += `<td style="padding:0.5rem"><select class="prizeUser" data-pos="${p.position}" style="width:100%;padding:0.25rem"><option value="">-- asignar jugador --</option>`;
+                                    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02)">`;
+                                    html += `<td style="padding:0.5rem;color:#FFD700"><strong>${p.position}º</strong></td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right;color:#ddd">${p.percentage}%</td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right"><input class="prizeAmt" data-pos="${p.position}" value="${(p.amount||0).toFixed(2)}" style="width:6rem;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;text-align:right"></td>`;
+                                    html += `<td style="padding:0.5rem"><select class="prizeUser" data-pos="${p.position}" style="width:100%;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px"><option value="">-- asignar jugador --</option>`;
                                     parts.forEach(u => { 
                                         const selected = (u.user_id == preselectedUser) ? " selected" : "";
                                         html += `<option value="${u.user_id}"${selected}>${u.username}${u.full_name ? " (" + u.full_name + ")" : ""}</option>`; 
@@ -272,7 +290,7 @@
                                 });
                                 html += '</table>';
                                 html += '</div>';
-                                html += '<div id="prizeTotals" style="margin-top:0.5rem;padding:0.5rem;background:white;border-radius:4px"></div>';
+                                html += '<div id="prizeTotals" style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,255,255,0.05);border-radius:4px;color:#fff;border:1px solid rgba(255,255,255,0.1)"></div>';
                                 html += '</div>';
 
                                 html += '</div>';
@@ -462,6 +480,7 @@
     {{#isAdmin role}}
     <div class="tournament-registrations">
         <h2>📝 Registrar jugador en torneo</h2>
+        <div id="tournamentRegSuccessMsg" style="display:none;padding:1rem;margin-bottom:1rem;background:rgba(76,175,80,0.15);border:2px solid #4CAF50;border-radius:8px;color:#4CAF50;font-weight:600;">✅ Jugador registrado exitosamente</div>
         <form method="post" action="/admin/games/tournaments/{{tournament.id}}/register" id="tournamentRegForm" style="background:rgba(255,255,255,0.03);padding:1.5rem;border-radius:12px;border:1px solid rgba(255,255,255,0.1);">
             
             {{!-- Sección 1: Buscar o crear jugador --}}
@@ -632,20 +651,22 @@
                     });
                 }
 
-                // Validación de buy-in duplicado
+                // Validación de buy-in duplicado y prevenir scroll
                 const form = document.getElementById('tournamentRegForm');
                 const actionTypeSelect = document.getElementById('action_type');
                 const userIdInput = document.getElementById('user_id');
+                const successMsg = document.getElementById('tournamentRegSuccessMsg');
 
                 if (form) {
                     form.addEventListener('submit', async (e) => {
+                        e.preventDefault(); // Siempre prevenir el submit default
+                        
                         const actionType = actionTypeSelect ? actionTypeSelect.value : '';
                         const userId = userIdInput ? userIdInput.value : '';
+                        const submitBtn = form.querySelector('button[type="submit"]');
 
-                        // Solo validar si es Buy-in (action_type = 1)
+                        // Validar si es Buy-in (action_type = 1)
                         if (actionType === '1' && userId) {
-                            e.preventDefault();
-                            
                             try {
                                 const response = await fetch(`/admin/registrations/check-buyin?tournament_id={{tournament.id}}&user_id=${userId}`);
                                 const data = await response.json();
@@ -654,16 +675,48 @@
                                     alert('⚠️ Este jugador ya tiene un Buy-in registrado en este torneo.\n\nSolo puede haber UN buy-in por jugador. Si quieres agregar una reentrada, selecciona "Re-entry" en el tipo de acción.');
                                     return;
                                 }
-                                
-                                // Si no existe, enviar el formulario
-                                form.submit();
                             } catch (err) {
                                 console.error('Error validando buy-in:', err);
-                                // En caso de error, permitir envío (no bloquear)
-                                form.submit();
                             }
                         }
-                        // Si no es buy-in o no hay userId, dejar que se envíe normalmente
+                        
+                        // Enviar con fetch para evitar scroll
+                        try {
+                            if (submitBtn) submitBtn.disabled = true;
+                            
+                            const formData = new FormData(form);
+                            const res = await fetch(form.action, {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (res.ok || res.redirected) {
+                                // Mostrar mensaje de éxito
+                                if (successMsg) {
+                                    successMsg.style.display = 'block';
+                                    setTimeout(() => {
+                                        successMsg.style.display = 'none';
+                                    }, 3000);
+                                }
+                                
+                                // Resetear formulario
+                                form.reset();
+                                if (userIdInput) userIdInput.value = '';
+                                
+                                // Recargar sin scroll
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                const error = await res.text();
+                                alert('Error al registrar: ' + error);
+                            }
+                        } catch (err) {
+                            console.error('Error:', err);
+                            alert('Error de red al registrar jugador');
+                        } finally {
+                            if (submitBtn) submitBtn.disabled = false;
+                        }
                     });
                 }
             })();
