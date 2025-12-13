@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import CashGameRepository from '../repositories/CashGameRepository';
+import CashParticipantRepository from '../repositories/CashParticipantRepository';
 import Payment from '../models/Payment';
 import User from '../models/User';
 import { Op } from 'sequelize';
@@ -20,26 +21,54 @@ export async function renderCloseForm(req: Request, res: Response) {
     const totalCommission = shifts.reduce((sum, shift) => sum + Number(shift.commission || 0), 0);
     const totalTips = shifts.reduce((sum, shift) => sum + Number(shift.tips || 0), 0);
     
-    // Obtener pagos con deuda (source = 'cash_entry')
-    const payments = await Payment.findAll({
+    // Obtener participantes de esta mesa
+    const participants = await CashParticipantRepository.findByCashGame(id);
+    const participantIds = participants.map(p => p.id);
+    
+    // Obtener pagos con deuda (source = 'cash_request' - el monto pedido)
+    const requestPayments = await Payment.findAll({
       where: { 
-        source: 'cash_entry',
-        reference_id: id
+        source: 'cash_request',
+        reference_id: { [Op.in]: participantIds }
       },
       include: [{ model: User, as: 'user' }],
       order: [['payment_date', 'ASC']]
     });
     
-    // Filtrar solo los que tienen deuda
-    const debtors = payments
-      .map(p => ({
-        username: p.user?.username || 'Desconocido',
-        fullName: p.user?.full_name || '',
-        requested: Number(p.amount || 0),
-        paid: Number(p.paid_amount || 0),
-        debt: Number(p.amount || 0) - Number(p.paid_amount || 0)
-      }))
-      .filter(d => d.debt > 0);
+    // Para cada cash_request, buscar el pago correspondiente (cash)
+    const debtorsMap = new Map();
+    
+    for (const reqPayment of requestPayments) {
+      const cashPayment = await Payment.findOne({
+        where: {
+          source: 'cash',
+          reference_id: reqPayment.reference_id
+        }
+      });
+      
+      const requested = Number(reqPayment.amount || 0);
+      const paid = cashPayment ? Number(cashPayment.paid_amount || 0) : 0;
+      const debt = requested - paid;
+      
+      if (debt > 0) {
+        const userId = reqPayment.user_id;
+        if (!debtorsMap.has(userId)) {
+          debtorsMap.set(userId, {
+            username: reqPayment.user?.username || 'Desconocido',
+            fullName: reqPayment.user?.full_name || '',
+            requested: 0,
+            paid: 0,
+            debt: 0
+          });
+        }
+        const debtor = debtorsMap.get(userId);
+        debtor.requested += requested;
+        debtor.paid += paid;
+        debtor.debt += debt;
+      }
+    }
+    
+    const debtors = Array.from(debtorsMap.values());
     
     res.render('admin/cash_close', { 
       cash, 
