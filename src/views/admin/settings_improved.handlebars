@@ -65,6 +65,122 @@
 			</form>
 		</div>
 
+		{{!-- Sección: Distribución de Premios en Dinero --}}
+		<div class="settings-card">
+			<div class="card-icon">💵</div>
+			<h2>Distribución de Premios ($)</h2>
+			<p class="card-description">Configura los porcentajes de distribución de premios en efectivo</p>
+			
+			<form method="post" action="/admin/games/settings/prize-distribution" class="settings-form">
+				<div class="info-box" style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,215,0,0.3);">
+					<p style="margin: 0; font-size: 0.9rem; color: #ddd;">
+						💡 <strong>La suma de todos los porcentajes debe ser ≤ 100%</strong><br>
+						Estos porcentajes se aplican al pozo disponible después de descontar la comisión (20%).
+					</p>
+				</div>
+
+				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+					<div class="form-field">
+						<label>🥇 1º Lugar (%)</label>
+						<input type="number" name="prize_position_1" value="{{lookup prizeDistribution '1'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>🥈 2º Lugar (%)</label>
+						<input type="number" name="prize_position_2" value="{{lookup prizeDistribution '2'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>🥉 3º Lugar (%)</label>
+						<input type="number" name="prize_position_3" value="{{lookup prizeDistribution '3'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>4º Lugar (%)</label>
+						<input type="number" name="prize_position_4" value="{{lookup prizeDistribution '4'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>5º Lugar (%)</label>
+						<input type="number" name="prize_position_5" value="{{lookup prizeDistribution '5'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>6º Lugar (%)</label>
+						<input type="number" name="prize_position_6" value="{{lookup prizeDistribution '6'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>7º Lugar (%)</label>
+						<input type="number" name="prize_position_7" value="{{lookup prizeDistribution '7'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>8º Lugar (%)</label>
+						<input type="number" name="prize_position_8" value="{{lookup prizeDistribution '8'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>9º Lugar (%)</label>
+						<input type="number" name="prize_position_9" value="{{lookup prizeDistribution '9'}}" min="0" max="100" step="0.1" required />
+					</div>
+					<div class="form-field">
+						<label>10º Lugar (%)</label>
+						<input type="number" name="prize_position_10" value="{{lookup prizeDistribution '10'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>11º Lugar (%)</label>
+						<input type="number" name="prize_position_11" value="{{lookup prizeDistribution '11'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>12º Lugar (%)</label>
+						<input type="number" name="prize_position_12" value="{{lookup prizeDistribution '12'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>13º Lugar (%)</label>
+						<input type="number" name="prize_position_13" value="{{lookup prizeDistribution '13'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>14º Lugar (%)</label>
+						<input type="number" name="prize_position_14" value="{{lookup prizeDistribution '14'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>15º Lugar (%)</label>
+						<input type="number" name="prize_position_15" value="{{lookup prizeDistribution '15'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>16º Lugar (%)</label>
+						<input type="number" name="prize_position_16" value="{{lookup prizeDistribution '16'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>17º Lugar (%)</label>
+						<input type="number" name="prize_position_17" value="{{lookup prizeDistribution '17'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>18º Lugar (%)</label>
+						<input type="number" name="prize_position_18" value="{{lookup prizeDistribution '18'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>19º Lugar (%)</label>
+						<input type="number" name="prize_position_19" value="{{lookup prizeDistribution '19'}}" min="0" max="100" step="0.1" />
+					</div>
+					<div class="form-field">
+						<label>20º Lugar (%)</label>
+						<input type="number" name="prize_position_20" value="{{lookup prizeDistribution '20'}}" min="0" max="100" step="0.1" />
+					</div>
+				</div>
+
+				<div class="info-box" style="background: rgba(100,181,246,0.1); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid rgba(100,181,246,0.3);">
+					<h4 style="margin: 0 0 10px 0; color: #64B5F6;">📊 Ejemplo de Cálculo</h4>
+					<p style="margin: 0; font-size: 0.9rem; color: #ccc;">
+						Si el pozo total es <strong>$10,000</strong>:<br>
+						• Comisión 20% = $2,000<br>
+						• Pozo para premios = $8,000<br>
+						• 1º (23%) = $1,840<br>
+						• 2º (17%) = $1,360<br>
+						• 3º (14%) = $1,120<br>
+						• ...etc
+					</p>
+				</div>
+
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary">💾 Guardar Premios</button>
+				</div>
+			</form>
+		</div>
+
 		{{!-- Sección: Configuración de Comisiones --}}
 		<div class="settings-card quick-access-card">
 			<div class="card-icon">💰</div>

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { Op } from 'sequelize';
 import { requireAdmin } from '../middleware/requireAuth';
 import Setting from '../models/Setting';
 import CommissionPool from '../models/CommissionPool';
@@ -69,10 +70,36 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
   }
 
+  // Load prize distribution settings
+  const prizeSettings = await Setting.findAll({
+    where: {
+      key: {
+        [Op.like]: 'prize_position_%'
+      }
+    } as any
+  });
+
+  const prizeDistribution: Record<string, number> = {};
+  const defaultPrizes = [23, 17, 14, 11, 9, 8, 7, 6, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  
+  for (let i = 1; i <= 20; i++) {
+    prizeDistribution[i] = defaultPrizes[i - 1];
+  }
+
+  for (const s of prizeSettings) {
+    const key = (s as any).key;
+    const match = key.match(/prize_position_(\d+)/);
+    if (match) {
+      const position = Number(match[1]);
+      prizeDistribution[position] = Number((s as any).value) || 0;
+    }
+  }
+
   res.render('admin/settings_improved', {
     username: req.session.username,
     pointsData,
     config,
+    prizeDistribution,
     flash: req.session.flash
   });
   
@@ -198,6 +225,68 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
   } catch (err: any) {
     console.error('Error saving tournament points config:', err);
     if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
+    return res.redirect('/admin/games/settings');
+  }
+});
+
+/**
+ * POST /admin/games/settings/prize-distribution
+ * Actualizar porcentajes de distribución de premios en dinero
+ */
+router.post('/prize-distribution', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const positions: Record<string, string> = {};
+    
+    // Recoger todos los campos prize_position_X
+    for (let i = 1; i <= 20; i++) {
+      const fieldName = `prize_position_${i}`;
+      if (req.body[fieldName] !== undefined) {
+        positions[fieldName] = req.body[fieldName];
+      }
+    }
+
+    // Validar que la suma no exceda 100%
+    let total = 0;
+    for (const key in positions) {
+      total += Number(positions[key]) || 0;
+    }
+
+    if (total > 100) {
+      if (req.session) req.session.flash = { 
+        type: 'error', 
+        message: `⚠️ La suma de porcentajes (${total.toFixed(1)}%) excede el 100%. Ajusta los valores.` 
+      };
+      return res.redirect('/admin/games/settings');
+    }
+
+    // Guardar cada porcentaje en la base de datos
+    for (const key in positions) {
+      const value = String(positions[key] || 0);
+      const [setting, created] = await Setting.findOrCreate({
+        where: { key } as any,
+        defaults: { 
+          key, 
+          value, 
+          description: `Porcentaje de premio para posición ${key.replace('prize_position_', '')}` 
+        } as any,
+      });
+      
+      if (!created) {
+        await Setting.update({ value }, { where: { key } as any });
+      }
+    }
+
+    if (req.session) req.session.flash = { 
+      type: 'success', 
+      message: `✅ Distribución de premios actualizada (Total: ${total.toFixed(1)}%)` 
+    };
+    return res.redirect('/admin/games/settings');
+  } catch (err: any) {
+    console.error('Error saving prize distribution:', err);
+    if (req.session) req.session.flash = { 
+      type: 'error', 
+      message: 'Error al guardar: ' + (err?.message || String(err)) 
+    };
     return res.redirect('/admin/games/settings');
   }
 });

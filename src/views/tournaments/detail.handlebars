@@ -480,7 +480,6 @@
     {{#isAdmin role}}
     <div class="tournament-registrations">
         <h2>📝 Registrar jugador en torneo</h2>
-        <div id="tournamentRegSuccessMsg" style="display:none;padding:1rem;margin-bottom:1rem;background:rgba(76,175,80,0.15);border:2px solid #4CAF50;border-radius:8px;color:#4CAF50;font-weight:600;">✅ Jugador registrado exitosamente</div>
         <form method="post" action="/admin/games/tournaments/{{tournament.id}}/register" id="tournamentRegForm" style="background:rgba(255,255,255,0.03);padding:1.5rem;border-radius:12px;border:1px solid rgba(255,255,255,0.1);">
             
             {{!-- Sección 1: Buscar o crear jugador --}}
@@ -651,22 +650,20 @@
                     });
                 }
 
-                // Validación de buy-in duplicado y prevenir scroll
+                // Validación de buy-in duplicado antes del submit
                 const form = document.getElementById('tournamentRegForm');
                 const actionTypeSelect = document.getElementById('action_type');
                 const userIdInput = document.getElementById('user_id');
-                const successMsg = document.getElementById('tournamentRegSuccessMsg');
 
                 if (form) {
                     form.addEventListener('submit', async (e) => {
-                        e.preventDefault(); // Siempre prevenir el submit default
-                        
                         const actionType = actionTypeSelect ? actionTypeSelect.value : '';
                         const userId = userIdInput ? userIdInput.value : '';
-                        const submitBtn = form.querySelector('button[type="submit"]');
 
                         // Validar si es Buy-in (action_type = 1)
                         if (actionType === '1' && userId) {
+                            e.preventDefault(); // Solo prevenir si necesitamos validar
+                            
                             try {
                                 const response = await fetch(`/admin/registrations/check-buyin?tournament_id={{tournament.id}}&user_id=${userId}`);
                                 const data = await response.json();
@@ -675,48 +672,16 @@
                                     alert('⚠️ Este jugador ya tiene un Buy-in registrado en este torneo.\n\nSolo puede haber UN buy-in por jugador. Si quieres agregar una reentrada, selecciona "Re-entry" en el tipo de acción.');
                                     return;
                                 }
+                                
+                                // Si no existe, enviar el formulario normalmente
+                                form.submit();
                             } catch (err) {
                                 console.error('Error validando buy-in:', err);
+                                // Si hay error en la validación, permitir el submit de todas formas
+                                form.submit();
                             }
                         }
-                        
-                        // Enviar con fetch para evitar scroll
-                        try {
-                            if (submitBtn) submitBtn.disabled = true;
-                            
-                            const formData = new FormData(form);
-                            const res = await fetch(form.action, {
-                                method: 'POST',
-                                body: formData
-                            });
-
-                            if (res.ok || res.redirected) {
-                                // Mostrar mensaje de éxito
-                                if (successMsg) {
-                                    successMsg.style.display = 'block';
-                                    setTimeout(() => {
-                                        successMsg.style.display = 'none';
-                                    }, 3000);
-                                }
-                                
-                                // Resetear formulario
-                                form.reset();
-                                if (userIdInput) userIdInput.value = '';
-                                
-                                // Recargar sin scroll
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1000);
-                            } else {
-                                const error = await res.text();
-                                alert('Error al registrar: ' + error);
-                            }
-                        } catch (err) {
-                            console.error('Error:', err);
-                            alert('Error de red al registrar jugador');
-                        } finally {
-                            if (submitBtn) submitBtn.disabled = false;
-                        }
+                        // Si no es buy-in, dejar que el formulario se envíe normalmente (no preventDefault)
                     });
                 }
             })();

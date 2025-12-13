@@ -49,6 +49,35 @@ async function loadPointsConfig() {
   return config;
 }
 
+// Helper to load prize distribution configuration from database
+async function loadPrizeDistributionConfig() {
+  const settings = await Setting.findAll({
+    where: {
+      key: {
+        [Op.like]: 'prize_position_%'
+      }
+    } as any
+  });
+  
+  // Defaults: top 9 positions get prizes (23, 17, 14, 11, 9, 8, 7, 6, 5)
+  const defaultPercentages = [23, 17, 14, 11, 9, 8, 7, 6, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const prizePercentages: number[] = [...defaultPercentages];
+  
+  for (const s of settings) {
+    const key = (s as any).key;
+    const match = key.match(/prize_position_(\d+)/);
+    if (match) {
+      const position = Number(match[1]);
+      const percentage = Number((s as any).value) || 0;
+      if (position >= 1 && position <= 20) {
+        prizePercentages[position - 1] = percentage;
+      }
+    }
+  }
+  
+  return prizePercentages;
+}
+
 // use central requireAdmin middleware imported above
 
 // List admin view with pagination
@@ -532,11 +561,8 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     const commissionAnnual = +(pot * (commissionAnnualPct / 100));
     const prizePool = +(pot - commissionAmount);
 
-    // Prize distribution percentages for top 20
-    const prizePercentages = [
-      23, 17, 14, 11, 9, 8, 7, 6, 5, 0, // 1-10 (10th gets 0%)
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0      // 11-20 (all get 0%)
-    ];
+    // Load prize distribution percentages from database
+    const prizePercentages = await loadPrizeDistributionConfig();
     
     const paidPlayers = Object.values(perUser).filter(x => x.paid > 0).length;
     const defaultPrizes: Array<{ position: number; amount: number; percentage: number }> = [];
