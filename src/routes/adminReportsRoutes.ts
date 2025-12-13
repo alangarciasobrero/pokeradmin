@@ -25,15 +25,15 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
           [Op.lt]: tomorrow
         }
       },
-      include: [
-        { 
-          model: Tournament, 
-          as: 'tournament',
-          attributes: ['id', 'name', 'buy_in', 'start_datetime']
-        }
-      ],
       order: [['payment_date', 'DESC']]
     });
+
+    // Obtener IDs de torneos
+    const tournamentIds = tournamentCommissions.map((p: any) => p.reference_id).filter(Boolean);
+    const tournaments = await Tournament.findAll({
+      where: { id: { [Op.in]: tournamentIds } }
+    });
+    const tournamentsMap = new Map(tournaments.map((t: any) => [t.id, t]));
 
     // Comisiones de mesas cash del día
     const cashCommissions = await Payment.findAll({
@@ -55,14 +55,17 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
     const cashGamesMap = new Map(cashGames.map((cg: any) => [cg.id, cg]));
 
     // Procesar datos de torneos
-    const tournamentData = tournamentCommissions.map((p: any) => ({
-      id: p.tournament?.id || p.reference_id,
-      name: p.tournament?.name || `Torneo #${p.reference_id}`,
-      buy_in: p.tournament?.buy_in || 0,
-      start_time: p.tournament?.start_datetime,
-      commission: Number(p.amount || 0),
-      payment_date: p.payment_date
-    }));
+    const tournamentData = tournamentCommissions.map((p: any) => {
+      const tournament = tournamentsMap.get(p.reference_id);
+      return {
+        id: tournament?.id || p.reference_id,
+        name: tournament?.name || `Torneo #${p.reference_id}`,
+        buy_in: tournament?.buy_in || 0,
+        start_time: tournament?.start_datetime,
+        commission: Number(p.amount || 0),
+        payment_date: p.payment_date
+      };
+    });
 
     // Procesar datos de cash
     const cashData = cashCommissions.map((p: any) => {
