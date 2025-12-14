@@ -812,6 +812,15 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
 
     if (commissionAmount > 0 && commissionUserId) {
       await Payment.create({ user_id: commissionUserId, amount: +commissionAmount, payment_date: new Date(), source: 'commission', reference_id: id, paid: true, paid_amount: commissionAmount, method: 'commission', personal_account: false, recorded_by_name: req.session ? req.session.username : null });
+      
+      // Distribuir comisión a los pozos según configuración
+      try {
+        await commissionService.distributeCommission(pot, new Date((t as any).start_date));
+        console.log(`[adminTournament] Commission distributed successfully for tournament ${id}`);
+      } catch (err) {
+        console.error('[adminTournament] Error distributing commission to pools:', err);
+        // Continuar aunque falle la distribución a pozos
+      }
     }
 
     // prizes expected: array of {position, user_id, amount}
