@@ -1,63 +1,552 @@
-<section class="pa-card admin-user-ledger">
-  <h1>Libro mayor - {{user.full_name}} (ID: {{user.id}})</h1>
+<div class="ledger-modern">
+  <div class="ledger-header">
+    <div class="header-content">
+      <h1>📖 Libro mayor - {{user.full_name}} <span class="user-id">(ID: {{user.id}})</span></h1>
+      <a href="/admin/debtors" class="btn-back">← Volver a Deudores</a>
+    </div>
+  </div>
 
-  <section>
-    <h2>Saldo</h2>
-    <p>Total pagado: {{currency totals.totalPaid}}</p>
-    <p>Total inscripciones: {{currency totals.totalRegistrationsCost}}</p>
-    <p><strong>Balance: {{currency totals.balance}}</strong> {{#if (gt totals.balance 0)}}(A favor){{else}}(Deuda){{/if}}</p>
-  </section>
+  <!-- Balance Summary Cards -->
+  <div class="balance-summary">
+    <div class="balance-card paid">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <span class="card-label">Total Pagado</span>
+        <span class="card-value">${{currency totals.totalPaid}}</span>
+      </div>
+    </div>
 
-  <section>
-    <h2>Movimientos (Pagos)</h2>
+    <div class="balance-card debt">
+      <div class="card-icon">🎰</div>
+      <div class="card-content">
+        <span class="card-label">Total Inscripciones</span>
+        <span class="card-value">${{currency totals.totalRegistrationsCost}}</span>
+      </div>
+    </div>
+
+    <div class="balance-card {{#if (gt totals.balance 0)}}positive{{else}}negative{{/if}}">
+      <div class="card-icon">{{#if (gt totals.balance 0)}}✅{{else}}⚠️{{/if}}</div>
+      <div class="card-content">
+        <span class="card-label">Balance</span>
+        <span class="card-value balance-value">${{currency totals.balance}}</span>
+        <span class="card-sublabel">{{#if (gt totals.balance 0)}}A favor{{else}}Deuda{{/if}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movimientos (Pagos) -->
+  <section class="movements-section">
+    <h2>💸 Movimientos (Pagos)</h2>
     {{#if payments.length}}
-      <table class="pa-table">
-        <thead><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Pagado</th><th>Método</th><th>Registrado por</th><th>Acción</th></tr></thead>
-        <tbody>
-          {{#each payments}}
+      <div class="table-wrapper">
+        <table class="ledger-table">
+          <thead>
             <tr>
-              <td>{{this.id}}</td>
-              <td>{{formatDate this.payment_date}}</td>
-              <td>{{this.source}}{{#if this.reference_id}} #{{this.reference_id}}{{/if}}</td>
-              <td>{{currency this.amount}}</td>
-              <td>{{currency this.paid_amount}}</td>
-              <td>{{methodLabel this.method}}</td>
-              <td>{{recordedBy this.method}}</td>
-              <td>
-                {{#if this.paid}}
-                  —
-                {{else}}
-                  <form method="post" action="/admin/users/{{../user.id}}/payments/{{this.id}}/mark-paid" style="display:inline">
-                    <input type="number" step="0.01" name="paid_amount" placeholder="monto" style="width:90px" />
-                    <select name="method">
-                      <option value="cash">Efectivo</option>
-                      <option value="card">Tarjeta</option>
-                      <option value="transfer">Transferencia</option>
-                      <option value="other">Otro</option>
-                    </select>
-                    <button type="submit">Registrar pago</button>
-                  </form>
-                {{/if}}
-              </td>
+              <th>ID</th>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th>Pagado</th>
+              <th>Método</th>
+              <th>Registrado por</th>
+              <th>Acción</th>
             </tr>
-          {{/each}}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {{#each payments}}
+              <tr class="{{#if this.paid}}row-paid{{else}}row-pending{{/if}}">
+                <td class="td-id">{{this.id}}</td>
+                <td class="td-date">{{formatDate this.payment_date}}</td>
+                <td class="td-type">
+                  <span class="type-badge">{{this.source}}</span>
+                  {{#if this.reference_id}}<span class="ref-id">#{{this.reference_id}}</span>{{/if}}
+                </td>
+                <td class="td-amount">${{currency this.amount}}</td>
+                <td class="td-paid">
+                  {{#if this.paid}}
+                    <span class="paid-badge">✓ ${{currency this.paid_amount}}</span>
+                  {{else}}
+                    <span class="pending-badge">⏱ ${{currency this.paid_amount}}</span>
+                  {{/if}}
+                </td>
+                <td class="td-method">
+                  {{#if this.method}}
+                    <span class="method-badge">{{methodLabel this.method}}</span>
+                  {{else}}
+                    —
+                  {{/if}}
+                </td>
+                <td class="td-recorded">{{recordedBy this.method}}</td>
+                <td class="td-action">
+                  {{#if this.paid}}
+                    <span class="action-done">✓ Efectivo</span>
+                  {{else}}
+                    <form method="post" action="/admin/users/{{../user.id}}/payments/{{this.id}}/mark-paid" class="payment-form">
+                      <input type="number" step="0.01" name="paid_amount" placeholder="monto" class="input-amount" value="{{this.amount}}" />
+                      <select name="method" class="select-method">
+                        <option value="cash">💵 Efectivo</option>
+                        <option value="card">💳 Tarjeta</option>
+                        <option value="transfer">🏦 Transferencia</option>
+                        <option value="other">📝 Otro</option>
+                      </select>
+                      <button type="submit" class="btn-register">Registrar pago</button>
+                    </form>
+                  {{/if}}
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
     {{else}}
-      <p>No hay pagos registrados</p>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No hay pagos registrados</p>
+      </div>
     {{/if}}
   </section>
 
-  <section>
-    <h2>Inscripciones</h2>
+  <!-- Inscripciones -->
+  <section class="registrations-section">
+    <h2>🎫 Inscripciones</h2>
     {{#if registrations.length}}
-      <ul>
+      <div class="registrations-grid">
         {{#each registrations}}
-          <li>Torneo ID: {{this.tournament_id}} - Fecha: {{formatDate this.registration_date}}</li>
+          <div class="registration-card">
+            <div class="reg-icon">🎰</div>
+            <div class="reg-info">
+              <span class="reg-label">Torneo ID:</span>
+              <span class="reg-value">{{this.tournament_id}}</span>
+            </div>
+            <div class="reg-date">
+              <span class="date-icon">📅</span>
+              <span>{{formatDate this.registration_date}}</span>
+            </div>
+          </div>
         {{/each}}
-      </ul>
+      </div>
     {{else}}
-      <p>No hay inscripciones registradas</p>
+      <div class="empty-state">
+        <div class="empty-icon">🎰</div>
+        <p>No hay inscripciones registradas</p>
+      </div>
     {{/if}}
   </section>
-</section>
+</div>
+
+<style>
+.ledger-modern {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.ledger-header {
+  margin-bottom: 2.5rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.header-content h1 {
+  font-size: 2rem;
+  color: #FFD700;
+  margin: 0;
+  font-weight: 700;
+}
+
+.user-id {
+  color: rgba(255, 215, 0, 0.6);
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: #FFD700;
+  transform: translateX(-4px);
+}
+
+/* Balance Summary Cards */
+.balance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.balance-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.balance-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.balance-card.paid {
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.balance-card.debt {
+  border-color: rgba(255, 152, 0, 0.3);
+}
+
+.balance-card.positive {
+  border-color: rgba(76, 175, 80, 0.5);
+  background: rgba(76, 175, 80, 0.05);
+}
+
+.balance-card.negative {
+  border-color: rgba(244, 67, 54, 0.5);
+  background: rgba(244, 67, 54, 0.05);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.card-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.card-value {
+  font-size: 1.8rem;
+  color: #FFD700;
+  font-weight: 700;
+}
+
+.balance-card.positive .card-value {
+  color: #4caf50;
+}
+
+.balance-card.negative .card-value {
+  color: #f44336;
+}
+
+.card-sublabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+/* Sections */
+.movements-section,
+.registrations-section {
+  margin-bottom: 3rem;
+}
+
+.movements-section h2,
+.registrations-section h2 {
+  font-size: 1.6rem;
+  color: #FFD700;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ledger-table thead {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.ledger-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #FFD700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.ledger-table td {
+  padding: 1rem;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ledger-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.ledger-table tbody tr:hover {
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.row-paid {
+  opacity: 0.7;
+}
+
+.td-id {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.td-date {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ref-id {
+  margin-left: 0.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+}
+
+.td-amount,
+.td-paid {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.paid-badge {
+  color: #4caf50;
+  font-weight: 700;
+}
+
+.pending-badge {
+  color: #ff9800;
+  font-weight: 700;
+}
+
+.method-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.td-recorded {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.action-done {
+  color: #4caf50;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Payment Form */
+.payment-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.input-amount {
+  width: 90px;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.select-method {
+  padding: 0.5rem 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-register {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-register:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* Registrations Grid */
+.registrations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.registration-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.registration-card:hover {
+  background: rgba(255, 215, 0, 0.05);
+  border-color: rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.reg-icon {
+  font-size: 2rem;
+}
+
+.reg-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.reg-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+.reg-value {
+  font-size: 1.1rem;
+  color: #FFD700;
+  font-weight: 700;
+}
+
+.reg-date {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.date-icon {
+  font-size: 1rem;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .balance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .table-wrapper {
+    overflow-x: scroll;
+  }
+
+  .ledger-table {
+    font-size: 0.85rem;
+  }
+
+  .ledger-table th,
+  .ledger-table td {
+    padding: 0.6rem;
+  }
+
+  .payment-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-amount,
+  .select-method {
+    width: 100%;
+  }
+
+  .registrations-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
