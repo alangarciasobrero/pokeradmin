@@ -138,9 +138,10 @@
 
                 <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    console.log('DOM loaded, initializing tournament modals...');
+                    console.log('=== DOM loaded, initializing tournament modals ===');
                     
                     const tid = {{tournament.id}};
+                    console.log('Tournament ID:', tid);
                     
                     // Registrations modal elements
                     const openCloseRegistrationsBtn = document.getElementById('openCloseRegistrationsBtn');
@@ -149,11 +150,13 @@
                     const confirmCloseRegistrationsBtn = document.getElementById('confirmCloseRegistrationsBtn');
                     const cancelRegistrationsBtn = document.getElementById('cancelRegistrationsBtn');
                     
-                    console.log('Tournament modal initialization:', {
+                    console.log('=== Tournament modal elements found ===', {
                         tid,
-                        openCloseRegistrationsBtn,
-                        registrationsModal,
-                        registrationsBody
+                        openCloseRegistrationsBtn: !!openCloseRegistrationsBtn,
+                        registrationsModal: !!registrationsModal,
+                        registrationsBody: !!registrationsBody,
+                        confirmCloseRegistrationsBtn: !!confirmCloseRegistrationsBtn,
+                        cancelRegistrationsBtn: !!cancelRegistrationsBtn
                     });
                 
                     // Finalize modal elements
@@ -412,29 +415,30 @@
 
                         // Handler for CLOSE REGISTRATIONS button
                         if (openCloseRegistrationsBtn) {
-                            console.log('Adding click handler to close registrations button');
+                            console.log('✓ Adding click handler to CLOSE REGISTRATIONS button');
                             openCloseRegistrationsBtn.addEventListener('click', async function() {
-                                console.log('Close registrations button clicked!');
+                                console.log('>>> CLOSE REGISTRATIONS button CLICKED! <<<');
                                 if (!registrationsModal || !registrationsBody) {
-                                    console.error('Modal or body not found:', { registrationsModal: registrationsModal, registrationsBody: registrationsBody });
+                                    console.error('❌ Modal or body not found:', { registrationsModal, registrationsBody });
                                     return;
                                 }
                                 console.log('Opening modal...');
                                 registrationsModal.style.display = 'flex';
                                 registrationsBody.innerHTML = '<p>Cargando datos del torneo...</p>';
                                 try {
-                                    console.log('Fetching preview data...');
+                                    console.log('Fetching preview data from:', `/admin/games/tournaments/${tid}/preview-close`);
                                     const res = await fetch('/admin/games/tournaments/' + tid + '/preview-close');
+                                    console.log('Fetch response status:', res.status);
                                     const j = await res.json();
-                                    console.log('Preview data received:', j);
+                                    console.log('✓ Preview data received:', j);
                                     renderRegistrationsPreview(j);
                                 } catch (e) {
-                                    console.error('Error loading preview:', e);
+                                    console.error('❌ Error loading preview:', e);
                                     registrationsBody.innerHTML = '<p>Error cargando información</p>';
                                 }
                             });
                         } else {
-                            console.warn('openCloseRegistrationsBtn not found!');
+                            console.error('❌❌❌ openCloseRegistrationsBtn NOT FOUND! Button does not exist in DOM.');
                         }
 
                         // Handler for FINALIZE TOURNAMENT button
