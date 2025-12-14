@@ -60,8 +60,12 @@ async function loadPrizeDistributionConfig() {
     } as any
   });
   
-  // Defaults: top 9 positions get prizes (23, 17, 14, 11, 9, 8, 7, 6, 5)
-  const defaultPercentages = [23, 17, 14, 11, 9, 8, 7, 6, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  // Defaults: top 9 positions get prizes (23, 17, 14, 11, 9, 8, 7, 6, 5), extended to 30 positions
+  const defaultPercentages = [
+    23, 17, 14, 11, 9, 8, 7, 6, 5, // Top 9 (original)
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // Positions 10-20
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0   // Positions 21-30
+  ];
   const prizePercentages: number[] = [...defaultPercentages];
   
   for (const s of settings) {
@@ -70,7 +74,7 @@ async function loadPrizeDistributionConfig() {
     if (match) {
       const position = Number(match[1]);
       const percentage = Number((s as any).value) || 0;
-      if (position >= 1 && position <= 20) {
+      if (position >= 1 && position <= 30) { // Extendido a 30 posiciones
         prizePercentages[position - 1] = percentage;
       }
     }
@@ -579,13 +583,13 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     // Load prize distribution percentages from database
     const prizePercentages = await loadPrizeDistributionConfig();
     
-    // Generate prizes for all registered players (up to top 20)
+    // Generate prizes for all registered players (up to top 30)
     // Even if they didn't pay ("fiado"), they played and can win
     const totalPlayers = regs.length;
     const defaultPrizes: Array<{ position: number; amount: number; percentage: number }> = [];
     
-    // Generate prizes for top 20 or total players, whichever is less
-    const prizesCount = Math.min(20, totalPlayers);
+    // Generate prizes for top 30 or total players, whichever is less
+    const prizesCount = Math.min(30, totalPlayers);
     let totalPrizesRounded = 0;
     for (let i = 0; i < prizesCount; i++) {
       const position = i + 1;
@@ -601,7 +605,7 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       defaultPrizes[0].amount = round(defaultPrizes[0].amount + diff); // Dar diferencia al 1er puesto y redondear
     }
 
-    // Ranking points distribution for final table (top 9)
+    // Ranking points distribution for final table (extended to top 15)
     const rankingPointsPercentages = [
       { position: 1, percentage: 23 },
       { position: 2, percentage: 17 },
@@ -611,7 +615,13 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       { position: 6, percentage: 8 },
       { position: 7, percentage: 7 },
       { position: 8, percentage: 6 },
-      { position: 9, percentage: 5 }
+      { position: 9, percentage: 5 },
+      { position: 10, percentage: 0 },
+      { position: 11, percentage: 0 },
+      { position: 12, percentage: 0 },
+      { position: 13, percentage: 0 },
+      { position: 14, percentage: 0 },
+      { position: 15, percentage: 0 }
     ];
 
     // Calculate total ranking points for tournament pool
