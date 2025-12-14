@@ -19,7 +19,7 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
     // Comisiones de torneos del día
     const tournamentCommissions = await Payment.findAll({
       where: {
-        source: 'tournament_commission',
+        source: 'commission', // Comisiones de torneos usan source='commission'
         payment_date: {
           [Op.gte]: today,
           [Op.lt]: tomorrow

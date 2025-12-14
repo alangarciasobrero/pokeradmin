@@ -103,7 +103,10 @@ export async function getAdminDashboard(req: Request, res: Response) {
             paymentsToday.forEach(p => {
                 const amt = Number(p.amount || 0);
                 const src = (p.source || '') as string;
-                if (src.startsWith('cash_commission')) financialTotals.totalCommission += amt;
+                // Sumar comisiones de torneos (source='commission') y cash (source='cash_commission')
+                if (src === 'commission' || src.startsWith('cash_commission')) {
+                    financialTotals.totalCommission += amt;
+                }
                 if (src.startsWith('cash_tips')) financialTotals.totalTips += amt;
             });
         } catch (e) {
