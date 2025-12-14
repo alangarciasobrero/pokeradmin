@@ -246,11 +246,11 @@
                                     let totalAmt = 0;
                                     
                                     pctInputs.forEach((input) => {
-                                        totalPct += Number((input as HTMLInputElement).value) || 0;
+                                        totalPct += Number(input.value) || 0;
                                     });
                                     
                                     amtInputs.forEach((input) => {
-                                        totalAmt += Number((input as HTMLInputElement).value) || 0;
+                                        totalAmt += Number(input.value) || 0;
                                     });
                                     
                                     const validationDiv = document.getElementById('pctValidation');
@@ -282,11 +282,11 @@
                                 // Actualizar montos cuando cambia el porcentaje
                                 document.querySelectorAll('.prize-edit-pct').forEach(input => {
                                     input.addEventListener('input', (e) => {
-                                        const target = e.target as HTMLInputElement;
+                                        const target = e.target;
                                         const pos = target.getAttribute('data-pos');
                                         const pct = Number(target.value) || 0;
                                         const amount = Math.round((prizePool * pct / 100) / 5) * 5; // Redondear a múltiplo de 5
-                                        const amtInput = document.querySelector(`.prize-edit-amount[data-pos="${pos}"]`) as HTMLInputElement;
+                                        const amtInput = document.querySelector(`.prize-edit-amount[data-pos="${pos}"]`);
                                         if (amtInput) amtInput.value = amount.toString();
                                         updateValidation();
                                     });
@@ -295,11 +295,11 @@
                                 // Actualizar porcentaje cuando cambia el monto manualmente
                                 document.querySelectorAll('.prize-edit-amount').forEach(input => {
                                     input.addEventListener('input', (e) => {
-                                        const target = e.target as HTMLInputElement;
+                                        const target = e.target;
                                         const pos = target.getAttribute('data-pos');
                                         const amount = Number(target.value) || 0;
                                         const pct = (amount / prizePool * 100).toFixed(2);
-                                        const pctInput = document.querySelector(`.prize-edit-pct[data-pos="${pos}"]`) as HTMLInputElement;
+                                        const pctInput = document.querySelector(`.prize-edit-pct[data-pos="${pos}"]`);
                                         if (pctInput) pctInput.value = pct;
                                         updateValidation();
                                     });
@@ -472,7 +472,7 @@
                                         const prizeAmtEls = Array.from(finalizeBody.querySelectorAll('.prizeAmt'));
                                         let totalPrizes = 0;
                                         prizeAmtEls.forEach(e => { 
-                                            const val = Math.round(Number((e as HTMLInputElement).value) || 0);
+                                            const val = Math.round(Number(e.value) || 0);
                                             totalPrizes += val;
                                         });
                                         const totalsEl = finalizeBody.querySelector('#prizeTotals');
@@ -534,9 +534,9 @@
                                 const pctInputs = document.querySelectorAll('.prize-edit-pct');
                                 
                                 amountInputs.forEach((input, idx) => {
-                                    const pos = (input as HTMLInputElement).getAttribute('data-pos');
-                                    const amount = Number((input as HTMLInputElement).value) || 0;
-                                    const pct = pctInputs[idx] ? Number((pctInputs[idx] as HTMLInputElement).value) || 0 : 0;
+                                    const pos = input.getAttribute('data-pos');
+                                    const amount = Number(input.value) || 0;
+                                    const pct = pctInputs[idx] ? Number(pctInputs[idx].value) || 0 : 0;
                                     if (pos && amount > 0) {
                                         prizeEdits.push({ position: Number(pos), amount, percentage: pct });
                                     }
@@ -576,10 +576,10 @@
                             console.log('[Finalize] Found prize inputs:', prizeAmtEls.length, 'user selects:', prizeUserEls.length);
                             
                             for (let i=0;i<prizeAmtEls.length;i++) {
-                                const amtInput = prizeAmtEls[i] as HTMLInputElement;
+                                const amtInput = prizeAmtEls[i];
                                 const amt = roundTo5(Number(amtInput.value) || 0);
                                 const pos = Number(amtInput.getAttribute('data-pos'));
-                                const userSel = prizeUserEls[i] as HTMLSelectElement;
+                                const userSel = prizeUserEls[i];
                                 const userId = userSel ? Number(userSel.value) : null;
                                 
                                 console.log(`[Finalize] Position ${pos}: amount=${amt}, userId=${userId}`);
@@ -597,9 +597,8 @@
                             console.log('[Finalize] Found ranking selects:', rankingUserEls.length);
                             
                             rankingUserEls.forEach(sel => {
-                                const selectEl = sel as HTMLSelectElement;
-                                const pos = Number(selectEl.getAttribute('data-pos'));
-                                const userId = Number(selectEl.value);
+                                const pos = Number(sel.getAttribute('data-pos'));
+                                const userId = Number(sel.value);
                                 console.log(`[Finalize] Ranking position ${pos}: userId=${userId}`);
                                 if (userId) {
                                     positions.push({ position: pos, user_id: userId });
