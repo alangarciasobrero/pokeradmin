@@ -557,8 +557,8 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       }
     }
 
-    // Función para redondear sin decimales
-    const round = (n: number) => Math.round(n);
+    // Función para redondear al múltiplo de 5 más cercano
+    const round = (n: number) => Math.round(n / 5) * 5;
     
     // default commission 20% total: 18% casa + 1% temporada + 1% anual (editable)
     const commissionPct = 20;
