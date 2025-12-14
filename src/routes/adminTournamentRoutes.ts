@@ -557,16 +557,24 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       }
     }
 
+    // Función para redondear sin decimales
+    const round = (n: number) => Math.round(n);
+    
     // default commission 20% total: 18% casa + 1% temporada + 1% anual (editable)
     const commissionPct = 20;
     const commissionHousePct = 18;
     const commissionSeasonPct = 1;
     const commissionAnnualPct = 1;
-    const commissionAmount = +(pot * (commissionPct / 100));
-    const commissionHouse = +(pot * (commissionHousePct / 100));
-    const commissionSeason = +(pot * (commissionSeasonPct / 100));
-    const commissionAnnual = +(pot * (commissionAnnualPct / 100));
-    const prizePool = +(pot - commissionAmount);
+    
+    // Redondear todos los valores
+    const commissionAmount = round(pot * (commissionPct / 100));
+    let commissionSeason = round(pot * (commissionSeasonPct / 100));
+    let commissionAnnual = round(pot * (commissionAnnualPct / 100));
+    
+    // Calcular casa y ajustar con diferencia de redondeo
+    let commissionHouse = commissionAmount - commissionSeason - commissionAnnual;
+    
+    const prizePool = pot - commissionAmount;
 
     // Load prize distribution percentages from database
     const prizePercentages = await loadPrizeDistributionConfig();
@@ -578,11 +586,19 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     
     // Generate prizes for top 20 or total players, whichever is less
     const prizesCount = Math.min(20, totalPlayers);
+    let totalPrizesRounded = 0;
     for (let i = 0; i < prizesCount; i++) {
       const position = i + 1;
       const percentage = prizePercentages[i] || 0;
-      const amount = +(prizePool * (percentage / 100));
+      const amount = round(prizePool * (percentage / 100));
       defaultPrizes.push({ position, amount, percentage });
+      totalPrizesRounded += amount;
+    }
+    
+    // Ajustar último premio con diferencia de redondeo
+    if (defaultPrizes.length > 0) {
+      const diff = prizePool - totalPrizesRounded;
+      defaultPrizes[0].amount += diff; // Dar diferencia al 1er puesto
     }
 
     // Ranking points distribution for final table (top 9)

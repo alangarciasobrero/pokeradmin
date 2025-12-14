@@ -173,17 +173,17 @@
                                 // Summary section
                                 html += '<div style="background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.1)">';
                                 html += `<h4 style="margin-top:0;color:#FFD700">💰 Resumen Financiero</h4>`;
-                                html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo total:</strong> <span style="font-size:1.5rem;color:#4CAF50;font-weight:bold">$${(j.pot||0).toFixed(2)}</span></p>`;
+                                html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo total:</strong> <span style="font-size:1.5rem;color:#4CAF50;font-weight:bold">$${Math.round(j.pot||0)}</span></p>`;
                                 html += `<p style="color:#ddd"><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
                                 html += '<div style="background:rgba(255,215,0,0.1);padding:1rem;border-radius:4px;margin:1rem 0;border:1px solid rgba(255,215,0,0.2)">';
                                 html += '<p style="margin:0;font-weight:bold;color:#FFD700">💼 Comisiones (Total 20%):</p>';
                                 html += '<div style="margin-left:1rem;margin-top:0.5rem">';
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa (18%): <span style="color:#4CAF50;font-weight:bold">$${(j.commissionHouse||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada (1%): <span style="color:#4CAF50;font-weight:bold">$${(j.commissionSeason||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual (1%): <span style="color:#4CAF50;font-weight:bold">$${(j.commissionAnnual||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);font-weight:bold;color:#FFD700">Total comisión: $${(j.commissionAmount||0).toFixed(2)}</p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa (18%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionHouse||0)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada (1%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionSeason||0)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual (1%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionAnnual||0)}</span></p>`;
+                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);font-weight:bold;color:#FFD700">Total comisión: $${Math.round(j.commissionAmount||0)}</p>`;
                                 html += '</div></div>';
-                                html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo para premios:</strong> <span style="font-size:1.5rem;color:#64B5F6;font-weight:bold">$${(j.prizePool||0).toFixed(2)}</span></p>`;
+                                html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo para premios:</strong> <span style="font-size:1.5rem;color:#64B5F6;font-weight:bold">$${Math.round(j.prizePool||0)}</span></p>`;
                                 html += '</div>';
                                 
                                 // Ranking points info
@@ -221,7 +221,7 @@
                                         const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
                                         html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
                                         html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
-                                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">\\$${prize ? prize.amount.toFixed(2) : '0.00'}</td>`;
+                                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">$${prize ? Math.round(prize.amount) : '0'}</td>`;
                                         html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${points ? points.points : 0}</td>`;
                                         html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${prize ? prize.percentage : 0}%</td>`;
                                         html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${points ? points.percentage : 0}%</td>`;
@@ -247,17 +247,17 @@
                                 // Summary section
                                 html += '<div style="background:rgba(255,255,255,0.05);padding:1rem;border-radius:6px;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.1)">';
                                 html += `<h4 style="margin-top:0;color:#FFD700">💰 Resumen Financiero</h4>`;
-                                html += `<p style="color:#fff"><strong>Pozo total:</strong> <span id="modalPot" style="font-size:1.2rem;color:#4CAF50;font-weight:bold">$${(j.pot||0).toFixed(2)}</span></p>`;
+                                html += `<p style="color:#fff"><strong>Pozo total:</strong> <span id="modalPot" style="font-size:1.2rem;color:#4CAF50;font-weight:bold">$${Math.round(j.pot||0)}</span></p>`;
                                 html += `<p style="color:#ddd"><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
                                 html += '<div style="background:rgba(255,215,0,0.1);padding:0.75rem;border-radius:4px;margin:0.5rem 0;border:1px solid rgba(255,215,0,0.2)">';
                                 html += '<p style="margin:0;color:#FFD700"><strong>💼 Comisiones (Total 20%):</strong></p>';
                                 html += '<div style="margin-left:1rem;margin-top:0.5rem">';
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa: ${j.commissionHousePct || 18}% = <span id="commissionHouse" style="color:#4CAF50;font-weight:bold">$${(j.commissionHouse||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada: ${j.commissionSeasonPct || 1}% = <span id="commissionSeason" style="color:#4CAF50;font-weight:bold">$${(j.commissionSeason||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual: ${j.commissionAnnualPct || 1}% = <span id="commissionAnnual" style="color:#4CAF50;font-weight:bold">$${(j.commissionAnnual||0).toFixed(2)}</span></p>`;
-                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);color:#FFD700"><strong>Total comisión:</strong> <span id="commissionAmount">$${(j.commissionAmount||0).toFixed(2)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa: ${j.commissionHousePct || 18}% = <span id="commissionHouse" style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionHouse||0)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada: ${j.commissionSeasonPct || 1}% = <span id="commissionSeason" style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionSeason||0)}</span></p>`;
+                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual: ${j.commissionAnnualPct || 1}% = <span id="commissionAnnual" style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionAnnual||0)}</span></p>`;
+                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);color:#FFD700"><strong>Total comisión:</strong> <span id="commissionAmount">$${Math.round(j.commissionAmount||0)}</span></p>`;
                                 html += '</div></div>';
-                                html += `<p style="color:#fff"><strong>Pozo para premios:</strong> <span id="modalPrizePool" style="font-size:1.2rem;color:#64B5F6;font-weight:bold">$${(j.prizePool||0).toFixed(2)}</span></p>`;
+                                html += `<p style="color:#fff"><strong>Pozo para premios:</strong> <span id="modalPrizePool" style="font-size:1.2rem;color:#64B5F6;font-weight:bold">$${Math.round(j.prizePool||0)}</span></p>`;
                                 html += '</div>';
 
                                 // Ranking points section
@@ -318,7 +318,7 @@
                                     html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02)">`;
                                     html += `<td style="padding:0.5rem;color:#FFD700"><strong>${p.position}º</strong></td>`;
                                     html += `<td style="padding:0.5rem;text-align:right;color:#ddd">${p.percentage}%</td>`;
-                                    html += `<td style="padding:0.5rem;text-align:right"><input class="prizeAmt" data-pos="${p.position}" value="${(p.amount||0).toFixed(2)}" style="width:6rem;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;text-align:right"></td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right"><input class="prizeAmt" data-pos="${p.position}" value="${Math.round(p.amount||0)}" style="width:6rem;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;text-align:right"></td>`;
                                     html += `<td style="padding:0.5rem"><select class="prizeUser" data-pos="${p.position}" style="width:100%;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px"><option value="">-- asignar jugador --</option>`;
                                     parts.forEach(u => { 
                                         const selected = (u.user_id == preselectedUser) ? " selected" : "";
@@ -383,15 +383,15 @@
                                     const commissionPct = 20; // Fijo: 18% casa + 1% temporada + 1% anual
 
                                     function recalcTotals() {
-                                        const commissionAmt = +(pot * (commissionPct / 100));
-                                        const prizePool = +(pot - commissionAmt);
-                                        if (prizePoolSpan) prizePoolSpan.textContent = prizePool.toFixed(2);
+                                        const commissionAmt = Math.round(pot * (commissionPct / 100));
+                                        const prizePool = pot - commissionAmt;
+                                        if (prizePoolSpan) prizePoolSpan.textContent = Math.round(prizePool);
                                         const prizeAmtEls = Array.from(finalizeBody.querySelectorAll('.prizeAmt'));
                                         let totalPrizes = 0;
-                                        prizeAmtEls.forEach(e => { totalPrizes += Number(e.value) || 0; });
+                                        prizeAmtEls.forEach(e => { totalPrizes += Math.round(Number(e.value) || 0); });
                                         const totalsEl = finalizeBody.querySelector('#prizeTotals');
-                                        if (totalsEl) totalsEl.textContent = `Suma premios: $${totalPrizes.toFixed(2)} — Pozo disponible: $${prizePool.toFixed(2)}`;
-                                        const over = totalPrizes > prizePool + 0.0001;
+                                        if (totalsEl) totalsEl.textContent = `Suma premios: $${totalPrizes} — Pozo disponible: $${Math.round(prizePool)}`;
+                                        const over = totalPrizes > prizePool + 1;
                                         if (over) {
                                             if (totalsEl) totalsEl.style.color = '#900';
                                             if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = true;
@@ -475,7 +475,7 @@
                                 });
                                 const j = await res.json();
                                 if (j.ok) {
-                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#2e7d32;font-size:1.1rem">✓ Cierre completado exitosamente</p><p>Pozo: $${j.pot.toFixed(2)}<br>Comisión: $${j.commissionAmount.toFixed(2)}<br>Premios: $${j.prizePool.toFixed(2)}</p><p style="margin-top:1rem">Redirigiendo...</p>`;
+                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#2e7d32;font-size:1.1rem">✓ Cierre completado exitosamente</p><p>Pozo: $${Math.round(j.pot)}<br>Comisión: $${Math.round(j.commissionAmount)}<br>Premios: $${Math.round(j.prizePool)}</p><p style="margin-top:1rem">Redirigiendo...</p>`;
                                     setTimeout(() => { window.location.href = `/admin/games/tournaments/${tid}`; }, 1500);
                                 } else {
                                     if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#c62828">Error: ${j.error || "Error al cerrar torneo"}</p>`;
@@ -590,7 +590,7 @@
                         const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
                         html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
                         html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
-                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">\\$${prize.amount.toFixed(2)} <span style="color:#999;font-size:0.85rem;">(${prize.percentage}%)</span></td>`;
+                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">$${Math.round(prize.amount)} <span style="color:#999;font-size:0.85rem;">(${prize.percentage}%)</span></td>`;
                         html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${points ? points.points : 0} <span style="color:#999;font-size:0.85rem;">${points ? '(' + points.percentage + '%)' : ''}</span></td>`;
                         html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${prize.percentage}%</td>`;
                         html += '</tr>';
