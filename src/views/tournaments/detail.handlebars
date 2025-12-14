@@ -139,31 +139,29 @@
                 <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     console.log('DOM loaded, initializing tournament modals...');
-                    (function(){
-                        // wrap preview-close wiring in an async IIFE to avoid top-level await
-                        (async function() {
-                            const tid = {{tournament.id}};
-                            
-                            // Registrations modal elements
-                            const openCloseRegistrationsBtn = document.getElementById('openCloseRegistrationsBtn');
-                            const registrationsModal = document.getElementById('registrationsModal');
-                            const registrationsBody = registrationsModal ? registrationsModal.querySelector('#registrationsModalBody') : null;
-                            const confirmCloseRegistrationsBtn = document.getElementById('confirmCloseRegistrationsBtn');
-                            const cancelRegistrationsBtn = document.getElementById('cancelRegistrationsBtn');
-                            
-                            console.log('Tournament modal initialization:', {
-                                tid,
-                                openCloseRegistrationsBtn,
-                                registrationsModal,
-                                registrationsBody
-                            });
-                        
-                        // Finalize modal elements
-                        const openFinalizeBtn = document.getElementById('openFinalizeModalBtn');
-                        const finalizeModal = document.getElementById('finalizeModal');
-                        const finalizeBody = finalizeModal ? finalizeModal.querySelector('#finalizeModalBody') : null;
-                        const confirmFinalizeBtn = document.getElementById('confirmFinalizeBtn');
-                        const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
+                    
+                    const tid = {{tournament.id}};
+                    
+                    // Registrations modal elements
+                    const openCloseRegistrationsBtn = document.getElementById('openCloseRegistrationsBtn');
+                    const registrationsModal = document.getElementById('registrationsModal');
+                    const registrationsBody = registrationsModal ? registrationsModal.querySelector('#registrationsModalBody') : null;
+                    const confirmCloseRegistrationsBtn = document.getElementById('confirmCloseRegistrationsBtn');
+                    const cancelRegistrationsBtn = document.getElementById('cancelRegistrationsBtn');
+                    
+                    console.log('Tournament modal initialization:', {
+                        tid,
+                        openCloseRegistrationsBtn,
+                        registrationsModal,
+                        registrationsBody
+                    });
+                
+                    // Finalize modal elements
+                    const openFinalizeBtn = document.getElementById('openFinalizeModalBtn');
+                    const finalizeModal = document.getElementById('finalizeModal');
+                    const finalizeBody = finalizeModal ? finalizeModal.querySelector('#finalizeModalBody') : null;
+                    const confirmFinalizeBtn = document.getElementById('confirmFinalizeBtn');
+                    const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
 
                         // Render preview for CLOSE REGISTRATIONS (no positions)
                         function renderRegistrationsPreview(j) {
@@ -646,9 +644,6 @@
                                 }
                             }
                         });
-
-                        })();
-                    })();
                 });
                 </script>
                 <script src="/js/quickpay-modal.js"></script>
