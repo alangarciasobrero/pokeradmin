@@ -36,7 +36,7 @@ CashParticipant.init(
     sequelize,
     tableName: 'cash_participants',
     modelName: 'CashParticipant',
-    timestamps: false
+    timestamps: true
   }
 );
 

@@ -11,48 +11,43 @@ const router = Router();
 // Reporte de comisión diaria
 router.get('/daily-commission', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Usar gaming_date en lugar de payment_date para consistencia con el dashboard
+    const { getCurrentGamingDate } = await import('../utils/gamingDate');
+    const currentGamingDate = getCurrentGamingDate();
 
-    // Comisiones de torneos del día
+    // Buscar torneos del gaming_date actual
+    const tournaments = await Tournament.findAll({ 
+      where: { gaming_date: currentGamingDate } 
+    });
+    const tournamentIds = tournaments.map((t: any) => t.id);
+    const tournamentsMap = new Map(tournaments.map((t: any) => [t.id, t]));
+
+    // Buscar mesas cash del gaming_date actual
+    const cashGames = await CashGame.findAll({ 
+      where: { gaming_date: currentGamingDate } 
+    });
+    const cashGameIds = cashGames.map((cg: any) => cg.id);
+    const cashGamesMap = new Map(cashGames.map((cg: any) => [cg.id, cg]));
+
+    // Comisiones de torneos
     const tournamentCommissions = await Payment.findAll({
       where: {
-        source: 'commission', // Comisiones de torneos usan source='commission'
-        payment_date: {
-          [Op.gte]: today,
-          [Op.lt]: tomorrow
-        }
+        source: 'commission',
+        reference_id: { [Op.in]: tournamentIds }
       },
       order: [['payment_date', 'DESC']]
     });
 
-    // Obtener IDs de torneos
-    const tournamentIds = tournamentCommissions.map((p: any) => p.reference_id).filter(Boolean);
-    const tournaments = await Tournament.findAll({
-      where: { id: { [Op.in]: tournamentIds } }
-    });
-    const tournamentsMap = new Map(tournaments.map((t: any) => [t.id, t]));
-
-    // Comisiones de mesas cash del día
+    // Comisiones de mesas cash
     const cashCommissions = await Payment.findAll({
       where: {
         source: 'cash_commission',
-        payment_date: {
-          [Op.gte]: today,
-          [Op.lt]: tomorrow
-        }
+        reference_id: { [Op.in]: cashGameIds }
       },
       order: [['payment_date', 'DESC']]
     });
 
-    // Obtener detalles de las mesas cash
-    const cashGameIds = cashCommissions.map((p: any) => p.reference_id).filter(Boolean);
-    const cashGames = await CashGame.findAll({
-      where: { id: { [Op.in]: cashGameIds } }
-    });
-    const cashGamesMap = new Map(cashGames.map((cg: any) => [cg.id, cg]));
+
 
     // Procesar datos de torneos
     const tournamentData = tournamentCommissions.map((p: any) => {
@@ -90,7 +85,7 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
 
     res.render('admin/reports/daily_commission', {
       username: req.session?.username,
-      date: today,
+      date: currentGamingDate,
       tournamentData,
       cashData,
       totalTournaments,
