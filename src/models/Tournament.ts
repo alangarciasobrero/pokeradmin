@@ -6,6 +6,7 @@ export class Tournament extends Model {
   public id!: number;
   public tournament_name!: string;
   public start_date!: Date;
+  public gaming_date?: Date | null;
   public buy_in!: number;
   public re_entry!: number;
   public knockout_bounty!: number;
@@ -44,6 +45,10 @@ Tournament.init(
     start_date: {
       type: DataTypes.DATE,
       allowNull: false,
+    },
+    gaming_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
     },
     buy_in: {
       type: DataTypes.DECIMAL(15,2),

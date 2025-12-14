@@ -14,6 +14,7 @@ import bonusService from '../services/bonusService';
 import { Op } from 'sequelize';
 import Setting from '../models/Setting';
 import { HistoricalPoint } from '../models/HistoricalPoint';
+import { getGamingDate, getCurrentGamingDate } from '../utils/gamingDate';
 
 const router = Router();
 const tournamentRepo = new TournamentRepository();
@@ -352,6 +353,12 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
   // Normalize form input coming as strings and then create
   const normalized = normalizeTournamentInput(req.body);
+  
+  // Calculate gaming_date from start_date
+  if (normalized.start_date) {
+    (normalized as any).gaming_date = getGamingDate(normalized.start_date);
+  }
+  
   await tournamentRepo.create(normalized as any);
     if (req.session) {
       req.session.flash = { type: 'success', message: 'Torneo creado correctamente' };
@@ -978,6 +985,12 @@ router.post('/:id', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   try {
   const normalized = normalizeTournamentInput(req.body);
+  
+  // Recalculate gaming_date if start_date changed
+  if (normalized.start_date) {
+    (normalized as any).gaming_date = getGamingDate(normalized.start_date);
+  }
+  
   const [affectedRows] = await tournamentRepo.updateById(id, normalized as any);
     if (affectedRows === 0) return res.status(404).send('No encontrado');
     return res.redirect(`/admin/games/tournaments/${id}`);

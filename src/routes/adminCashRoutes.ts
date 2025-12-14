@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { getGamingDate } from '../utils/gamingDate';
 import { requireAdmin } from '../middleware/requireAuth';
 import CashGameRepository from '../repositories/CashGameRepository';
 import CashParticipantRepository from '../repositories/CashParticipantRepository';
@@ -198,9 +199,11 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
       });
     }
     
+    const startDate = new Date();
     const payload = {
       small_blind: Number(small_blind),
-      start_datetime: new Date(), // Fecha automática actual
+      start_datetime: startDate,
+      gaming_date: getGamingDate(startDate),
       end_datetime: null,
       default_buyin: Number(initial_pot || 0), // Monto mínimo requerido para sentarse
       total_commission: 0,

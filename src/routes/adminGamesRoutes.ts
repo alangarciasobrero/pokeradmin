@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { requireAdmin } from '../middleware/requireAuth';
 import { Tournament } from '../models/Tournament';
 import CashGame from '../models/CashGame';
+import { getCurrentGamingDate, formatGamingDateSQL } from '../utils/gamingDate';
 
 
 const router = Router();
@@ -9,15 +10,21 @@ const router = Router();
 // use central requireAdmin middleware imported above
 
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
-  // Obtener torneos y cash games
+  // Obtener torneos y cash games de la jornada actual
   let tournaments: any[] = [];
   let cashGames: any[] = [];
   let activeTournament: any = null;
   let summary: any = {};
+  
+  const currentGamingDate = formatGamingDateSQL(getCurrentGamingDate());
+  
   try {
+    // Obtener torneos de hoy (por gaming_date) ordenados por pinned y fecha
     tournaments = await Tournament.findAll({ 
+      where: { gaming_date: currentGamingDate },
       order: [['pinned', 'DESC'], ['start_date', 'DESC']] 
     });
+    
     // Buscar torneo activo (registration_open = true Y no cerrado)
     const now = new Date();
     activeTournament = tournaments.find((t: any) => 
@@ -28,12 +35,18 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     console.error('Error loading tournaments', err);
     tournaments = [];
   }
+  
   try {
-    cashGames = await CashGame.findAll({ order: [['start_datetime', 'DESC']] });
+    // Obtener cash games de hoy (por gaming_date)
+    cashGames = await CashGame.findAll({ 
+      where: { gaming_date: currentGamingDate },
+      order: [['start_datetime', 'DESC']] 
+    });
   } catch (err) {
     console.error('Error loading cash games', err);
     cashGames = [];
   }
+  
   // Build simple summary
   try {
     const now = new Date();
