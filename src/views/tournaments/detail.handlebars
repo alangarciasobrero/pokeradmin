@@ -221,7 +221,7 @@
                                         const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
                                         html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
                                         html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
-                                        html += `<td style="padding:0.75rem;text-align:right;color:#FFD700;font-weight:600;">$${prize ? Math.round(prize.amount) : '0'}</td>`;
+                                        html += `<td style="padding:0.75rem;text-align:right;"><input type="number" class="prize-edit-detail" data-pos="${pos}" value="${prize ? Math.round(prize.amount) : 0}" style="width:6rem;padding:0.25rem;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:#FFD700;border-radius:4px;text-align:right;font-weight:600;" /></td>`;
                                         html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${points ? points.points : 0}</td>`;
                                         html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${prize ? prize.percentage : 0}%</td>`;
                                         html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${points ? points.percentage : 0}%</td>`;

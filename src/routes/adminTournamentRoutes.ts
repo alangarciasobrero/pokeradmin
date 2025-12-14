@@ -598,7 +598,7 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     // Ajustar último premio con diferencia de redondeo
     if (defaultPrizes.length > 0) {
       const diff = prizePool - totalPrizesRounded;
-      defaultPrizes[0].amount += diff; // Dar diferencia al 1er puesto
+      defaultPrizes[0].amount = round(defaultPrizes[0].amount + diff); // Dar diferencia al 1er puesto y redondear
     }
 
     // Ranking points distribution for final table (top 9)

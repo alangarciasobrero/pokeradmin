@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import { TournamentRepository } from '../repositories/TournamentRepository';
 import CashGameRepository from '../repositories/CashGameRepository';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import User from '../models/User';
+import { Tournament } from '../models/Tournament';
+import { CashGame } from '../models/CashGame';
+import Payment from '../models/Payment';
 import paymentRepo from '../repositories/PaymentRepository';
 import { Registration } from '../models/Registration';
 import sequelize from '../services/database';
@@ -99,8 +103,33 @@ export async function getAdminDashboard(req: Request, res: Response) {
         // Compute simple financial totals for today (commissions & tips)
         let financialTotals = { totalCommission: 0, totalTips: 0 };
         try {
-            const paymentsToday: any[] = await paymentRepo.findByDate(today) as any[];
-            paymentsToday.forEach(p => {
+            // Obtener la gaming_date actual para filtrar correctamente
+            const { getCurrentGamingDate } = await import('../utils/gamingDate');
+            const currentGamingDate = getCurrentGamingDate();
+            
+            // Buscar torneos y mesas cash del gaming_date actual
+            const tournamentsTodayByGaming = await Tournament.findAll({ 
+                where: { gaming_date: currentGamingDate } 
+            });
+            const cashGamesTodayByGaming = await CashGame.findAll({ 
+                where: { gaming_date: currentGamingDate } 
+            });
+            
+            const tournamentIdsForCommissions = tournamentsTodayByGaming.map((t: any) => t.id);
+            const cashGameIdsForCommissions = cashGamesTodayByGaming.map((c: any) => c.id);
+            
+            // Buscar payments con source='commission' y reference_id en tournamentIds
+            // o source like 'cash_%' y reference_id en cashGameIds
+            const allPayments = await Payment.findAll({
+                where: {
+                    [Op.or]: [
+                        { source: 'commission', reference_id: tournamentIdsForCommissions },
+                        { source: { [Op.like]: 'cash_%' }, reference_id: cashGameIdsForCommissions }
+                    ]
+                }
+            });
+            
+            allPayments.forEach(p => {
                 const amt = Number(p.amount || 0);
                 const src = (p.source || '') as string;
                 // Sumar comisiones de torneos (source='commission') y cash (source='cash_commission')
