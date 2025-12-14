@@ -37,9 +37,15 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   }
   
   try {
-    // Obtener cash games de hoy (por gaming_date)
+    // Obtener cash games activas (no cerradas) o de la jornada actual
+    const { Op } = await import('sequelize');
     cashGames = await CashGame.findAll({ 
-      where: { gaming_date: currentGamingDate },
+      where: {
+        [Op.or]: [
+          { end_datetime: null }, // Mesas activas (no cerradas)
+          { gaming_date: currentGamingDate } // O de hoy (aunque estén cerradas)
+        ]
+      },
       order: [['start_datetime', 'DESC']] 
     });
   } catch (err) {
