@@ -786,8 +786,15 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
   const id = Number(req.params.id);
   try {
     const { commissionPct, prizes, positions } = req.body as any;
+    console.log('[confirm-close] Received data:', { id, commissionPct, prizesCount: (prizes || []).length, positionsCount: (positions || []).length });
+    console.log('[confirm-close] Prizes:', prizes);
+    console.log('[confirm-close] Positions:', positions);
+    
     const t = await tournamentRepo.getById(id);
-    if (!t) return res.status(404).json({ error: 'No encontrado' });
+    if (!t) {
+      console.error('[confirm-close] Tournament not found:', id);
+      return res.status(404).json({ error: 'No encontrado' });
+    }
 
     // recompute pot same as preview
     const regs = await Registration.findAll({ where: { tournament_id: id } });
@@ -804,14 +811,24 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
       }
     }
 
+    console.log('[confirm-close] Calculated pot:', pot);
+
+    // Función de redondeo a múltiplo de 5
+    const round = (n: number) => Math.round(n / 5) * 5;
+
     const cPct = Number(commissionPct) || 0;
-    const commissionAmount = +(pot * (cPct / 100));
-    const prizePool = +(pot - commissionAmount);
+    const commissionAmount = round(pot * (cPct / 100));
+    const prizePool = pot - commissionAmount;
+
+    console.log('[confirm-close] Commission:', commissionAmount, 'Prize pool:', prizePool);
 
     // validate total prizes do not exceed prizePool
-    const totalPrizes = (prizes || []).reduce((s: number, p: any) => s + (Number(p.amount) || 0), 0);
+    const totalPrizes = (prizes || []).reduce((s: number, p: any) => s + round(Number(p.amount) || 0), 0);
+    console.log('[confirm-close] Total prizes:', totalPrizes);
+    
     // allow tiny floating point slack
-    if (totalPrizes > prizePool + 0.0001) {
+    if (totalPrizes > prizePool + 5) {
+      console.error('[confirm-close] Total prizes exceeds pool:', { totalPrizes, prizePool, diff: totalPrizes - prizePool });
       return res.status(400).json({ error: 'Total premios excede pozo disponible', totalPrizes, prizePool });
     }
 
@@ -827,43 +844,56 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
     if (!commissionUserId && regs.length > 0) commissionUserId = (regs[0] as any).user_id;
 
     if (commissionAmount > 0 && commissionUserId) {
+      console.log('[confirm-close] Creating commission payment:', { userId: commissionUserId, amount: commissionAmount });
       await Payment.create({ user_id: commissionUserId, amount: +commissionAmount, payment_date: new Date(), source: 'commission', reference_id: id, paid: true, paid_amount: commissionAmount, method: 'commission', personal_account: false, recorded_by_name: req.session ? req.session.username : null });
       
       // Distribuir comisión a los pozos según configuración
       try {
         await commissionService.distributeCommission(pot, new Date((t as any).start_date));
-        console.log(`[adminTournament] Commission distributed successfully for tournament ${id}`);
+        console.log(`[confirm-close] Commission distributed successfully for tournament ${id}`);
       } catch (err) {
-        console.error('[adminTournament] Error distributing commission to pools:', err);
+        console.error('[confirm-close] Error distributing commission to pools:', err);
         // Continuar aunque falle la distribución a pozos
       }
     }
 
     // prizes expected: array of {position, user_id, amount}
     // create payouts (negative amounts) for each prize entry
+    console.log('[confirm-close] Creating prize payouts...');
     for (const pr of prizes || []) {
       const userId = Number(pr.user_id);
-      const amount = Number(pr.amount) || 0;
-      if (!userId || amount <= 0) continue;
+      const amount = round(Number(pr.amount) || 0);
+      console.log('[confirm-close] Prize payout:', { position: pr.position, userId, amount });
+      if (!userId || amount <= 0) {
+        console.log('[confirm-close] Skipping prize (invalid userId or amount)');
+        continue;
+      }
       // create payout payment as negative amount
       await Payment.create({ user_id: userId, amount: -Math.abs(amount), payment_date: new Date(), source: 'tournament_payout', reference_id: null, paid: true, paid_amount: Math.abs(amount), method: 'payout', personal_account: false, recorded_by_name: req.session ? req.session.username : null });
     }
 
     // ✨ NUEVO: Guardar posiciones en tabla Result
+    console.log('[confirm-close] Creating Result records...');
     if (positions && Array.isArray(positions)) {
       try {
         // Create Result records for each position
         for (const pos of positions) {
           const userId = Number(pos.user_id);
           const position = Number(pos.position);
-          if (!userId || !position) continue;
+          console.log('[confirm-close] Result record:', { userId, position });
+          if (!userId || !position) {
+            console.log('[confirm-close] Skipping result (invalid userId or position)');
+            continue;
+          }
 
           // Determine if final table (positions 1-9)
           const finalTable = position <= 9;
           
           // Find prize amount for this user
           const userPrize = (prizes || []).find((p: any) => Number(p.user_id) === userId);
-          const prizeAmount = userPrize ? Number(userPrize.amount) : 0;
+          const prizeAmount = userPrize ? round(Number(userPrize.amount)) : 0;
+
+          console.log('[confirm-close] Creating result:', { tournament_id: id, user_id: userId, position, final_table: finalTable, prize_amount: prizeAmount });
 
           // Create or update Result record (points will be distributed separately)
           await Result.create({
@@ -876,26 +906,20 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
             bounty_count: 0 // TODO: collect bounties if applicable
           } as any);
         }
+        console.log('[confirm-close] Result records created successfully');
       } catch (err) {
-        console.error('[adminTournament] Error creating Result records:', err);
+        console.error('[confirm-close] Error creating Result records:', err);
       }
     }
 
     // finalize tournament: set registration_open false and end_date
+    console.log('[confirm-close] Finalizing tournament...');
     const tt = await Tournament.findByPk(id);
     if (tt) {
       (tt as any).registration_open = false;
       (tt as any).end_date = new Date();
       await tt.save();
-    }
-
-    // ✨ Distribuir comisión a pozos automáticamente
-    try {
-      const tournamentDate = new Date((t as any).start_date);
-      await commissionService.distributeCommission(pot, tournamentDate);
-    } catch (err) {
-      console.error('[adminTournament] Error distributing commission:', err);
-      // No fallar el cierre si la distribución falla
+      console.log('[confirm-close] Tournament finalized');
     }
 
     // Load points configuration from database
@@ -975,6 +999,7 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
       console.error('[adminTournament] Error distributing box points:', err);
     }
 
+    console.log('[confirm-close] Tournament closed successfully, sending response');
     return res.json({ ok: true, pot, commissionAmount, prizePool });
   } catch (e) {
     console.error('Error confirm-close', e);

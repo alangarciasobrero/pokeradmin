@@ -197,14 +197,14 @@
                                 html += '<details style="margin-top:1rem;background:rgba(255,255,255,0.03);padding:1rem;border-radius:6px;border:1px solid rgba(255,255,255,0.1);" open>';
                                 html += '<summary style="cursor:pointer;font-weight:600;color:#FFD700;padding:0.5rem;margin-bottom:1rem;">📊 Ver distribución detallada de premios y puntos</summary>';
                                 html += '<div style="overflow-x:auto;">';
-                                html += '<table style="width:100%;border-collapse:collapse;margin-top:1rem;">';
+                                html += '<table id="prizeDistributionTable" style="width:100%;border-collapse:collapse;margin-top:1rem;">';
                                 html += '<thead><tr style="background:rgba(255,255,255,0.05);">';
                                 html += '<th style="padding:0.75rem;text-align:left;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Posición</th>';
                                 html += '<th style="padding:0.75rem;text-align:right;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">Premio ($)</th>';
+                                html += '<th style="padding:0.75rem;text-align:center;color:#FFD700;border-bottom:2px solid rgba(255,215,0,0.3);">% Premio</th>';
                                 html += '<th style="padding:0.75rem;text-align:right;color:#2196F3;border-bottom:2px solid rgba(33,150,243,0.3);">Puntos</th>';
-                                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">% Premio</th>';
-                                html += '<th style="padding:0.75rem;text-align:center;color:#999;border-bottom:2px solid rgba(255,255,255,0.1);">% Puntos</th>';
-                                html += '</tr></thead><tbody>';
+                                html += '<th style="padding:0.75rem;text-align:center;color:#2196F3;border-bottom:2px solid rgba(33,150,243,0.3);">% Puntos</th>';
+                                html += '</tr></thead><tbody id="prizeDistributionBody">';
 
                                 // Combinar prizes y points en una sola tabla
                                 const maxPos = Math.max(
@@ -221,18 +221,91 @@
                                         const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
                                         html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">`;
                                         html += `<td style="padding:0.75rem;color:#ddd;font-weight:600;">${medal}</td>`;
-                                        html += `<td style="padding:0.75rem;text-align:right;"><input type="number" class="prize-edit-detail" data-pos="${pos}" value="${prize ? Math.round(prize.amount) : 0}" style="width:6rem;padding:0.25rem;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:#FFD700;border-radius:4px;text-align:right;font-weight:600;" /></td>`;
+                                        html += `<td style="padding:0.75rem;text-align:right;"><input type="number" class="prize-edit-amount" data-pos="${pos}" value="${prize ? Math.round(prize.amount) : 0}" style="width:6rem;padding:0.25rem;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:#FFD700;border-radius:4px;text-align:right;font-weight:600;" /></td>`;
+                                        html += `<td style="padding:0.75rem;text-align:center;"><input type="number" class="prize-edit-pct" data-pos="${pos}" value="${prize ? prize.percentage : 0}" min="0" max="100" step="0.1" style="width:4rem;padding:0.25rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;text-align:center;" />%</td>`;
                                         html += `<td style="padding:0.75rem;text-align:right;color:#2196F3;font-weight:600;">${points ? points.points : 0}</td>`;
-                                        html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${prize ? prize.percentage : 0}%</td>`;
                                         html += `<td style="padding:0.75rem;text-align:center;color:#999;font-size:0.9rem;">${points ? points.percentage : 0}%</td>`;
                                         html += '</tr>';
                                     }
                                 }
 
-                                html += '</tbody></table></div></details>';
+                                html += '</tbody></table>';
+                                html += '<div id="pctValidation" style="margin-top:1rem;padding:0.75rem;border-radius:4px;font-weight:600;"></div>';
+                                html += '</div></details>';
 
                                 html += '</div>';
                                 if (registrationsBody) registrationsBody.innerHTML = html;
+
+                                // Agregar validación en vivo de porcentajes
+                                const prizePool = j.prizePool || 0;
+                                const updateValidation = () => {
+                                    const pctInputs = Array.from(document.querySelectorAll('.prize-edit-pct'));
+                                    const amtInputs = Array.from(document.querySelectorAll('.prize-edit-amount'));
+                                    let totalPct = 0;
+                                    let totalAmt = 0;
+                                    
+                                    pctInputs.forEach((input) => {
+                                        totalPct += Number((input as HTMLInputElement).value) || 0;
+                                    });
+                                    
+                                    amtInputs.forEach((input) => {
+                                        totalAmt += Number((input as HTMLInputElement).value) || 0;
+                                    });
+                                    
+                                    const validationDiv = document.getElementById('pctValidation');
+                                    if (!validationDiv) return;
+                                    
+                                    const pctDiff = Math.abs(100 - totalPct);
+                                    const amtDiff = prizePool - totalAmt;
+                                    
+                                    let message = `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;">`;
+                                    message += `<div>Total %: <span style="${pctDiff < 0.01 ? 'color:#4CAF50' : 'color:#FF9800'}">${totalPct.toFixed(1)}%</span></div>`;
+                                    message += `<div>Total $: <span style="${Math.abs(amtDiff) < 5 ? 'color:#4CAF50' : amtDiff > 0 ? 'color:#FF9800' : 'color:#F44336'}">${Math.round(totalAmt).toLocaleString()}</span> / ${Math.round(prizePool).toLocaleString()}</div>`;
+                                    message += `<div>Diferencia: <span style="${Math.abs(amtDiff) < 5 ? 'color:#4CAF50' : 'color:#FF9800'}">${Math.round(amtDiff).toLocaleString()}</span></div>`;
+                                    message += `</div>`;
+                                    
+                                    if (pctDiff > 0.01) {
+                                        message += `<div style="margin-top:0.5rem;color:#FF9800;">⚠️ Los porcentajes no suman 100%</div>`;
+                                    }
+                                    if (Math.abs(amtDiff) > 5) {
+                                        message += `<div style="margin-top:0.5rem;color:${amtDiff > 0 ? '#FF9800' : '#F44336'};">${amtDiff > 0 ? '⚠️' : '❌'} ${amtDiff > 0 ? 'Quedan $' + Math.round(amtDiff).toLocaleString() + ' sin repartir' : 'Excede el pozo por $' + Math.round(Math.abs(amtDiff)).toLocaleString()}</div>`;
+                                    } else if (pctDiff < 0.01 && Math.abs(amtDiff) <= 5) {
+                                        message += `<div style="margin-top:0.5rem;color:#4CAF50;">✓ Distribución correcta</div>`;
+                                    }
+                                    
+                                    validationDiv.innerHTML = message;
+                                    validationDiv.style.background = pctDiff < 0.01 && Math.abs(amtDiff) <= 5 ? 'rgba(76,175,80,0.1)' : 'rgba(255,152,0,0.1)';
+                                    validationDiv.style.border = pctDiff < 0.01 && Math.abs(amtDiff) <= 5 ? '1px solid rgba(76,175,80,0.3)' : '1px solid rgba(255,152,0,0.3)';
+                                };
+                                
+                                // Actualizar montos cuando cambia el porcentaje
+                                document.querySelectorAll('.prize-edit-pct').forEach(input => {
+                                    input.addEventListener('input', (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        const pos = target.getAttribute('data-pos');
+                                        const pct = Number(target.value) || 0;
+                                        const amount = Math.round((prizePool * pct / 100) / 5) * 5; // Redondear a múltiplo de 5
+                                        const amtInput = document.querySelector(`.prize-edit-amount[data-pos="${pos}"]`) as HTMLInputElement;
+                                        if (amtInput) amtInput.value = amount.toString();
+                                        updateValidation();
+                                    });
+                                });
+                                
+                                // Actualizar porcentaje cuando cambia el monto manualmente
+                                document.querySelectorAll('.prize-edit-amount').forEach(input => {
+                                    input.addEventListener('input', (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        const pos = target.getAttribute('data-pos');
+                                        const amount = Number(target.value) || 0;
+                                        const pct = (amount / prizePool * 100).toFixed(2);
+                                        const pctInput = document.querySelector(`.prize-edit-pct[data-pos="${pos}"]`) as HTMLInputElement;
+                                        if (pctInput) pctInput.value = pct;
+                                        updateValidation();
+                                    });
+                                });
+                                
+                                // Validación inicial
+                                updateValidation();
                             } catch (e) {
                                 console.error('Error rendering registrations preview:', e);
                                 if (registrationsBody) registrationsBody.innerHTML = '<p>Error cargando información</p>';
@@ -370,8 +443,16 @@
                         if (openFinalizeBtn) {
                             openFinalizeBtn.addEventListener('click', async () => {
                                 if (!finalizeModal || !finalizeBody) return;
+                                
+                                // Resetear estado del modal
+                                if (confirmFinalizeBtn) {
+                                    confirmFinalizeBtn.disabled = false;
+                                    confirmFinalizeBtn.textContent = '✓ Confirmar y Finalizar Torneo';
+                                }
+                                
                                 finalizeModal.style.display = 'flex';
                                 finalizeBody.innerHTML = 'Cargando...';
+                                
                                 try {
                                     const res = await fetch(`/admin/games/tournaments/${tid}/preview-close`);
                                     const j = await res.json();
@@ -383,21 +464,43 @@
                                     const commissionPct = 20; // Fijo: 18% casa + 1% temporada + 1% anual
 
                                     function recalcTotals() {
-                                        const commissionAmt = Math.round(pot * (commissionPct / 100));
+                                        const commissionAmt = Math.round(pot * (commissionPct / 100) / 5) * 5; // Redondear a múltiplo de 5
                                         const prizePool = pot - commissionAmt;
-                                        if (prizePoolSpan) prizePoolSpan.textContent = Math.round(prizePool);
+                                        if (prizePoolSpan) prizePoolSpan.textContent = Math.round(prizePool).toLocaleString();
                                         const prizeAmtEls = Array.from(finalizeBody.querySelectorAll('.prizeAmt'));
                                         let totalPrizes = 0;
-                                        prizeAmtEls.forEach(e => { totalPrizes += Math.round(Number(e.value) || 0); });
+                                        prizeAmtEls.forEach(e => { 
+                                            const val = Math.round(Number((e as HTMLInputElement).value) || 0);
+                                            totalPrizes += val;
+                                        });
                                         const totalsEl = finalizeBody.querySelector('#prizeTotals');
-                                        if (totalsEl) totalsEl.textContent = `Suma premios: $${totalPrizes} — Pozo disponible: $${Math.round(prizePool)}`;
+                                        const diff = prizePool - totalPrizes;
                                         const over = totalPrizes > prizePool + 1;
+                                        
+                                        if (totalsEl) {
+                                            totalsEl.innerHTML = `<strong>Suma premios:</strong> $${totalPrizes.toLocaleString()} | <strong>Pozo disponible:</strong> $${Math.round(prizePool).toLocaleString()} | <strong>Diferencia:</strong> <span style="color:${diff >= 0 ? '#4CAF50' : '#F44336'}">$${diff.toLocaleString()}</span>`;
+                                        }
+                                        
                                         if (over) {
-                                            if (totalsEl) totalsEl.style.color = '#900';
-                                            if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = true;
+                                            if (totalsEl) {
+                                                totalsEl.style.color = '#F44336';
+                                                totalsEl.style.background = 'rgba(244,67,54,0.1)';
+                                                totalsEl.style.border = '1px solid rgba(244,67,54,0.3)';
+                                            }
+                                            if (confirmFinalizeBtn) {
+                                                confirmFinalizeBtn.disabled = true;
+                                                confirmFinalizeBtn.textContent = '❌ Total premios excede pozo disponible';
+                                            }
                                         } else {
-                                            if (totalsEl) totalsEl.style.color = '';
-                                            if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = false;
+                                            if (totalsEl) {
+                                                totalsEl.style.color = '#fff';
+                                                totalsEl.style.background = 'rgba(255,255,255,0.05)';
+                                                totalsEl.style.border = '1px solid rgba(255,255,255,0.1)';
+                                            }
+                                            if (confirmFinalizeBtn) {
+                                                confirmFinalizeBtn.disabled = false;
+                                                confirmFinalizeBtn.textContent = '✓ Confirmar y Finalizar Torneo';
+                                            }
                                         }
                                     }
 
@@ -423,7 +526,27 @@
                         // Confirm close registrations (POST and close modal)
                         if (confirmCloseRegistrationsBtn) confirmCloseRegistrationsBtn.addEventListener('click', async () => {
                             try {
-                                const res = await fetch(`/admin/games/tournaments/${tid}/close-registrations`, { method: 'POST' });
+                                // Recopilar los valores editados de la distribución de premios
+                                const prizeEdits = [];
+                                const amountInputs = document.querySelectorAll('.prize-edit-amount');
+                                const pctInputs = document.querySelectorAll('.prize-edit-pct');
+                                
+                                amountInputs.forEach((input, idx) => {
+                                    const pos = (input as HTMLInputElement).getAttribute('data-pos');
+                                    const amount = Number((input as HTMLInputElement).value) || 0;
+                                    const pct = pctInputs[idx] ? Number((pctInputs[idx] as HTMLInputElement).value) || 0 : 0;
+                                    if (pos && amount > 0) {
+                                        prizeEdits.push({ position: Number(pos), amount, percentage: pct });
+                                    }
+                                });
+                                
+                                // Enviar tanto el cierre como los valores editados
+                                const res = await fetch(`/admin/games/tournaments/${tid}/close-registrations`, { 
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ prizeEdits })
+                                });
+                                
                                 if (res.ok) {
                                     window.location.reload();
                                 } else {
@@ -441,32 +564,54 @@
                             // Comisiones fijas: 18% casa + 1% temporada + 1% anual = 20% total
                             const commissionPct = 20;
                             
+                            // Función para redondear a múltiplo de 5
+                            const roundTo5 = (n) => Math.round(n / 5) * 5;
+                            
                             // Collect prizes
                             const prizes = [];
                             const prizeAmtEls = finalizeBody.querySelectorAll('.prizeAmt');
                             const prizeUserEls = finalizeBody.querySelectorAll('.prizeUser');
+                            console.log('[Finalize] Found prize inputs:', prizeAmtEls.length, 'user selects:', prizeUserEls.length);
+                            
                             for (let i=0;i<prizeAmtEls.length;i++) {
-                                const amt = Number(prizeAmtEls[i].value) || 0;
-                                const pos = Number(prizeAmtEls[i].getAttribute('data-pos'));
-                                const userSel = prizeUserEls[i];
+                                const amtInput = prizeAmtEls[i] as HTMLInputElement;
+                                const amt = roundTo5(Number(amtInput.value) || 0);
+                                const pos = Number(amtInput.getAttribute('data-pos'));
+                                const userSel = prizeUserEls[i] as HTMLSelectElement;
                                 const userId = userSel ? Number(userSel.value) : null;
+                                
+                                console.log(`[Finalize] Position ${pos}: amount=${amt}, userId=${userId}`);
+                                
                                 if (amt > 0 && userId) {
                                     prizes.push({ position: pos, user_id: userId, amount: amt });
                                 }
                             }
                             
+                            console.log('[Finalize] Collected prizes:', prizes);
+                            
                             // Collect ranking positions
                             const positions = [];
                             const rankingUserEls = finalizeBody.querySelectorAll('.rankingUser');
+                            console.log('[Finalize] Found ranking selects:', rankingUserEls.length);
+                            
                             rankingUserEls.forEach(sel => {
-                                const pos = Number(sel.getAttribute('data-pos'));
-                                const userId = Number(sel.value);
+                                const selectEl = sel as HTMLSelectElement;
+                                const pos = Number(selectEl.getAttribute('data-pos'));
+                                const userId = Number(selectEl.value);
+                                console.log(`[Finalize] Ranking position ${pos}: userId=${userId}`);
                                 if (userId) {
                                     positions.push({ position: pos, user_id: userId });
                                 }
                             });
                             
-                            if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = true;
+                            console.log('[Finalize] Collected positions:', positions);
+                            console.log('[Finalize] Sending to backend:', { commissionPct, prizes, positions });
+                            
+                            if (confirmFinalizeBtn) {
+                                confirmFinalizeBtn.disabled = true;
+                                confirmFinalizeBtn.textContent = 'Procesando...';
+                            }
+                            
                             try {
                                 const res = await fetch(`/admin/games/tournaments/${tid}/confirm-close`, { 
                                     method: 'POST', 
@@ -474,16 +619,32 @@
                                     body: JSON.stringify({ commissionPct, prizes, positions }) 
                                 });
                                 const j = await res.json();
+                                console.log('[Finalize] Response from backend:', j);
+                                
                                 if (j.ok) {
-                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#2e7d32;font-size:1.1rem">✓ Cierre completado exitosamente</p><p>Pozo: $${Math.round(j.pot)}<br>Comisión: $${Math.round(j.commissionAmount)}<br>Premios: $${Math.round(j.prizePool)}</p><p style="margin-top:1rem">Redirigiendo...</p>`;
+                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#2e7d32;font-size:1.1rem">✓ Cierre completado exitosamente</p><p>Pozo: $${Math.round(j.pot).toLocaleString()}<br>Comisión: $${Math.round(j.commissionAmount).toLocaleString()}<br>Premios: $${Math.round(j.prizePool).toLocaleString()}</p><p style="margin-top:1rem">Redirigiendo...</p>`;
                                     setTimeout(() => { window.location.href = `/admin/games/tournaments/${tid}`; }, 1500);
                                 } else {
-                                    if (finalizeBody) finalizeBody.innerHTML = `<p style="color:#c62828">Error: ${j.error || "Error al cerrar torneo"}</p>`;
+                                    if (finalizeBody) {
+                                        finalizeBody.innerHTML = `<p style="color:#c62828;font-size:1.1rem">❌ Error: ${j.error || "Error al cerrar torneo"}</p>`;
+                                        finalizeBody.innerHTML += `<button onclick="this.parentElement.innerHTML='';document.getElementById('openFinalizeBtn').click()" style="margin-top:1rem;padding:0.5rem 1rem;background:#2196F3;color:#fff;border:none;border-radius:4px;cursor:pointer;">Reintentar</button>`;
+                                    }
+                                    if (confirmFinalizeBtn) {
+                                        confirmFinalizeBtn.disabled = false;
+                                        confirmFinalizeBtn.textContent = '✓ Confirmar y Finalizar Torneo';
+                                    }
                                 }
                             } catch (e) {
                                 console.error('Error confirming close:', e);
-                                if (finalizeBody) finalizeBody.innerHTML = '<p style="color:#c62828">Error al confirmar cierre</p>';
-                            } finally { if (confirmFinalizeBtn) confirmFinalizeBtn.disabled = false; }
+                                if (finalizeBody) {
+                                    finalizeBody.innerHTML = '<p style="color:#c62828;font-size:1.1rem">❌ Error al confirmar cierre</p>';
+                                    finalizeBody.innerHTML += `<button onclick="this.parentElement.innerHTML='';document.getElementById('openFinalizeBtn').click()" style="margin-top:1rem;padding:0.5rem 1rem;background:#2196F3;color:#fff;border:none;border-radius:4px;cursor:pointer;">Reintentar</button>`;
+                                }
+                                if (confirmFinalizeBtn) {
+                                    confirmFinalizeBtn.disabled = false;
+                                    confirmFinalizeBtn.textContent = '✓ Confirmar y Finalizar Torneo';
+                                }
+                            }
                         });
 
                         })();
