@@ -106,8 +106,8 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
     
     res.render('cash/detail', { cash, participants: enrichedParticipants, users, umap, shifts, username: req.session.username });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Error');
+    console.error('Error loading cash game detail:', err);
+    res.status(500).send(`Error al cargar detalle de cash game: ${err instanceof Error ? err.message : 'Error desconocido'}`);
   }
 });
 

@@ -389,9 +389,11 @@
                                 // Reusar el mismo positionMap creado anteriormente para premios
                                 (j.defaultPrizes||[]).forEach(p => {
                                     const preselectedUser = positionMap[p.position] || "";
+                                    const prizePool = j.prizePool || 1; // Evitar división por cero
+                                    const actualPercentage = prizePool > 0 ? ((p.amount / prizePool) * 100).toFixed(1) : '0.0';
                                     html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02)">`;
                                     html += `<td style="padding:0.5rem;color:#FFD700"><strong>${p.position}º</strong></td>`;
-                                    html += `<td style="padding:0.5rem;text-align:right;color:#ddd">${p.percentage}%</td>`;
+                                    html += `<td style="padding:0.5rem;text-align:right;color:#ddd">${actualPercentage}%</td>`;
                                     html += `<td style="padding:0.5rem;text-align:right"><input class="prizeAmt" data-pos="${p.position}" value="${Math.round(p.amount||0)}" style="width:6rem;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;text-align:right"></td>`;
                                     html += `<td style="padding:0.5rem"><select class="prizeUser" data-pos="${p.position}" style="width:100%;padding:0.25rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px"><option value="">-- asignar jugador --</option>`;
                                     parts.forEach(u => { 
@@ -477,7 +479,7 @@
                                         });
                                         const totalsEl = finalizeBody.querySelector('#prizeTotals');
                                         const diff = prizePool - totalPrizes;
-                                        const over = totalPrizes > prizePool + 1;
+                                        const over = totalPrizes > prizePool + 1; // Permitir 1 peso de margen
                                         
                                         if (totalsEl) {
                                             totalsEl.innerHTML = `<strong>Suma premios:</strong> $${totalPrizes.toLocaleString()} | <strong>Pozo disponible:</strong> $${Math.round(prizePool).toLocaleString()} | <strong>Diferencia:</strong> <span style="color:${diff >= 0 ? '#4CAF50' : '#F44336'}">$${diff.toLocaleString()}</span>`;

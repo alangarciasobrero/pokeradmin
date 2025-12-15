@@ -836,8 +836,8 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
     const totalPrizes = (prizes || []).reduce((s: number, p: any) => s + round(Number(p.amount) || 0), 0);
     console.log('[confirm-close] Total prizes:', totalPrizes);
     
-    // allow tiny floating point slack
-    if (totalPrizes > prizePool + 5) {
+    // allow tiny floating point slack (1 peso)
+    if (totalPrizes > prizePool + 1) {
       console.error('[confirm-close] Total prizes exceeds pool:', { totalPrizes, prizePool, diff: totalPrizes - prizePool });
       return res.status(400).json({ error: 'Total premios excede pozo disponible', totalPrizes, prizePool });
     }
