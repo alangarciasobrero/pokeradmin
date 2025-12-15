@@ -806,18 +806,15 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
       return res.status(404).json({ error: 'No encontrado' });
     }
 
-    // recompute pot same as preview
+    // recompute pot same as preview (use expected amount, not paid_amount)
     const regs = await Registration.findAll({ where: { tournament_id: id } });
     const regIds = regs.map(r => r.id);
     const payments = await Payment.findAll({ where: { reference_id: regIds } as any });
     let pot = 0;
-    const perRegPaid: Record<number, number> = {};
-    for (const r of regs) perRegPaid[(r as any).id] = 0;
     for (const p of payments) {
-      const paid = Number((p as any).paid_amount || 0) || (Number((p as any).amount || 0) * ((p as any).paid ? 1 : 0));
-      if (!isNaN(paid) && paid > 0) {
-        pot += paid;
-        if ((p as any).reference_id && perRegPaid[(p as any).reference_id] !== undefined) perRegPaid[(p as any).reference_id] += paid;
+      const amount = Number((p as any).amount || 0);
+      if (!isNaN(amount) && amount > 0) {
+        pot += amount;
       }
     }
 
