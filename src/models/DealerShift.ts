@@ -66,6 +66,7 @@ DealerShift.init(
     sequelize,
     tableName: 'dealer_shifts',
     timestamps: false,
+    underscored: true,
   }
 );
 
