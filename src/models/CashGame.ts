@@ -79,6 +79,7 @@ CashGame.init(
     tableName: 'cash_games',
     modelName: 'CashGame',
     timestamps: false,
+    underscored: true,
   }
 );
 
