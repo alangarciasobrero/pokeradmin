@@ -3,7 +3,25 @@
 {{!-- Contenedor principal de la vista de detalles de torneo --}}
 <div class="tournament-detail-container">
     {{!-- Enlace para volver a la página anterior --}}
-    <a class="back-link" href="javascript:history.back()">&#8592; Volver</a>
+    <a class="back-link" href="/admin/dashboard" id="backLink">&#8592; Volver</a>
+    <script>
+        // Detectar si venimos del dashboard y ajustar el enlace de volver
+        (function() {
+            const referrer = document.referrer;
+            const backLink = document.getElementById('backLink');
+            if (backLink && referrer) {
+                // Si el referrer contiene '/dashboard', volver ahí; sino usar history.back()
+                if (referrer.includes('/dashboard')) {
+                    backLink.href = '/admin/dashboard';
+                } else if (referrer.includes('/tournaments/list')) {
+                    backLink.href = '/admin/games/tournaments/list';
+                } else {
+                    // Si no viene de ninguna página conocida, usar history.back()
+                    backLink.href = 'javascript:history.back()';
+                }
+            }
+        })();
+    </script>
 
     <h1>
         <svg class="trophy-icon" viewBox="0 0 24 24" fill="none"><defs><radialGradient id="gold" cx="50%" cy="50%" r="80%"><stop offset="0%" stop-color="#fffde4"/><stop offset="100%" stop-color="#FFD600"/></radialGradient></defs><path d="M7 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h1v2.09A7.001 7.001 0 0 0 5 14a7 7 0 0 0 14 0 7.001 7.001 0 0 0-3-5.91V6h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H7Zm1 2V4h8v1H8Zm4 16a5 5 0 0 1-5-5c0-2.21 1.44-4.08 3.5-4.77V6h3v2.23A5.002 5.002 0 0 1 17 13a5 5 0 0 1-5 5Z" fill="url(#gold)" stroke="#FFD600" stroke-width="1.2"/><circle cx="12" cy="19" r="1.2" fill="#FFD600"/></svg>

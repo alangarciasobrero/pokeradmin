@@ -454,7 +454,7 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
   const paidFlag = (amountPaid > 0 && amountPaid >= expectedAmount);
   const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : (method || null);
   const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
-  await Payment.create({ user_id: userId, amount: expectedAmount, payment_date: now, source: 'tournament', reference_id: registration.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
+  await Payment.create({ user_id: userId, amount: expectedAmount, payment_date: now, gaming_date: tournament.gaming_date, source: 'tournament', reference_id: registration.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
 
     // audit: log action_type for this registration
     try {
@@ -476,15 +476,138 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
   }
 });
 
-// POST /admin/games/tournaments/:id/close-registrations - close further registrations
+// POST /admin/games/tournaments/:id/close-registrations - close further registrations and create commission payment
 router.post('/:id/close-registrations', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
+  console.log('[close-registrations] Starting for tournament:', id);
   try {
     const t = await Tournament.findByPk(id);
     if (!t) return res.status(404).send('No encontrado');
+    
+    // Marcar como cerrado
     (t as any).registration_open = false;
     await t.save();
-    if (req.session) req.session.flash = { type: 'success', message: 'Inscripciones cerradas' };
+    console.log('[close-registrations] Registration marked as closed');
+    
+    // Calcular y crear el pago de comisión
+    console.log('[close-registrations] Fetching registrations...');
+    const regs = await Registration.findAll({ where: { tournament_id: id } });
+    console.log('[close-registrations] Found registrations:', regs.length);
+    const regIds = regs.map(r => r.id);
+    console.log('[close-registrations] Registration IDs:', regIds);
+    
+    const payments = await Payment.findAll({ 
+      where: { 
+        source: 'tournament',
+        reference_id: regIds 
+      } 
+    });
+    console.log('[close-registrations] Found payments:', payments.length);
+    
+    let pot = 0;
+    for (const p of payments) {
+      const amount = Number((p as any).amount || 0);
+      if (!isNaN(amount) && amount > 0) {
+        pot += amount;
+      }
+    }
+    console.log('[close-registrations] Calculated pot:', pot);
+    
+    // Comisión fija del 20%
+    const round = (n: number) => Math.round(n / 5) * 5;
+    const commissionPct = 20;
+    const commissionAmount = round(pot * (commissionPct / 100));
+    
+    if (commissionAmount > 0) {
+      // Determinar el usuario para asignar la comisión
+      let commissionUserId: number | null = null;
+      if (req.session && req.session.userId) {
+        commissionUserId = Number(req.session.userId);
+      } else {
+        const adminUser = await User.findOne({ where: { role: 'admin' } as any });
+        if (adminUser) commissionUserId = (adminUser as any).id;
+      }
+      if (!commissionUserId && regs.length > 0) {
+        commissionUserId = (regs[0] as any).user_id;
+      }
+      
+      if (commissionUserId) {
+        // Verificar si ya existe un pago de comisión para este torneo
+        const existingCommission = await Payment.findOne({
+          where: {
+            source: 'commission',
+            reference_id: id
+          }
+        });
+        
+        if (existingCommission) {
+          // Actualizar el monto si cambió (porque se inscribieron más jugadores)
+          const oldAmount = Number((existingCommission as any).amount || 0);
+          if (oldAmount !== commissionAmount) {
+            console.log('[close-registrations] Updating commission payment:', { 
+              tournamentId: id, 
+              oldAmount, 
+              newAmount: commissionAmount,
+              pot 
+            });
+            
+            (existingCommission as any).amount = commissionAmount;
+            (existingCommission as any).paid_amount = commissionAmount;
+            (existingCommission as any).payment_date = new Date();
+            (existingCommission as any).recorded_by_name = req.session ? req.session.username : null;
+            await existingCommission.save();
+            
+            // Redistribuir la comisión a los pools
+            try {
+              const tournamentDate = new Date((t as any).start_date);
+              await commissionService.distributeCommission(pot, tournamentDate);
+              console.log('[close-registrations] Commission redistributed to pools successfully');
+            } catch (redistError) {
+              console.error('[close-registrations] Error redistributing commission:', redistError);
+            }
+            
+            console.log('[close-registrations] Commission payment updated successfully');
+          } else {
+            console.log('[close-registrations] Commission amount unchanged, no update needed');
+          }
+        } else {
+          // Crear nuevo pago de comisión
+          console.log('[close-registrations] Creating commission payment:', { 
+            tournamentId: id, 
+            userId: commissionUserId, 
+            amount: commissionAmount,
+            pot 
+          });
+          
+          await Payment.create({ 
+            user_id: commissionUserId, 
+            amount: +commissionAmount, 
+            payment_date: new Date(), 
+            gaming_date: (t as any).gaming_date || null,
+            source: 'commission', 
+            reference_id: id, 
+            paid: true, 
+            paid_amount: commissionAmount, 
+            method: 'commission', 
+            personal_account: false, 
+            recorded_by_name: req.session ? req.session.username : null 
+          });
+          
+          // Distribuir la comisión a los pools
+          try {
+            const tournamentDate = new Date((t as any).start_date);
+            await commissionService.distributeCommission(pot, tournamentDate);
+            console.log('[close-registrations] Commission distributed to pools successfully');
+          } catch (distError) {
+            console.error('[close-registrations] Error distributing commission:', distError);
+          }
+          
+          console.log('[close-registrations] Commission payment created successfully');
+        }
+      }
+    }
+    
+    if (req.session) req.session.flash = { type: 'success', message: 'Inscripciones cerradas y comisión registrada' };
     return res.redirect(`/admin/games/tournaments/${id}`);
   } catch (e) {
     console.error('Error closing registrations', e);
@@ -540,7 +663,12 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
 
     // sum expected money for this tournament: consider all amounts regardless of payment status
     // because even if a player is "fiado" (credit), the organizer absorbs that cost
-    const payments = await Payment.findAll({ where: { reference_id: { [Op.in]: regIds } } });
+    const payments = await Payment.findAll({ 
+      where: { 
+        source: 'tournament',
+        reference_id: { [Op.in]: regIds } 
+      } 
+    });
     let pot = 0;
     const perUser: Record<number, { paid: number; expected: number }> = {};
     for (const r of regs) perUser[(r as any).user_id] = { paid: 0, expected: 0 };
@@ -706,7 +834,13 @@ router.get('/:id/participants-json', requireAdmin, async (req: Request, res: Res
     const regIds = regs.map(r => (r as any).id);
 
     // fetch payments linked to these registrations
-    const payments = await Payment.findAll({ where: { reference_id: regIds } as any, order: [['payment_date','ASC']] });
+    const payments = await Payment.findAll({ 
+      where: { 
+        source: 'tournament',
+        reference_id: regIds 
+      },
+      order: [['payment_date','ASC']] 
+    });
 
     // aggregate per registration
     const perReg: Record<number, any> = {};
@@ -809,7 +943,12 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
     // recompute pot same as preview (use expected amount, not paid_amount)
     const regs = await Registration.findAll({ where: { tournament_id: id } });
     const regIds = regs.map(r => r.id);
-    const payments = await Payment.findAll({ where: { reference_id: regIds } as any });
+    const payments = await Payment.findAll({ 
+      where: { 
+        source: 'tournament',
+        reference_id: regIds 
+      } 
+    });
     let pot = 0;
     for (const p of payments) {
       const amount = Number((p as any).amount || 0);
@@ -852,7 +991,19 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
 
     if (commissionAmount > 0 && commissionUserId) {
       console.log('[confirm-close] Creating commission payment:', { userId: commissionUserId, amount: commissionAmount });
-      await Payment.create({ user_id: commissionUserId, amount: +commissionAmount, payment_date: new Date(), source: 'commission', reference_id: id, paid: true, paid_amount: commissionAmount, method: 'commission', personal_account: false, recorded_by_name: req.session ? req.session.username : null });
+      await Payment.create({ 
+        user_id: commissionUserId, 
+        amount: +commissionAmount, 
+        payment_date: new Date(), 
+        gaming_date: (t as any).gaming_date || null,
+        source: 'commission', 
+        reference_id: id, 
+        paid: true, 
+        paid_amount: commissionAmount, 
+        method: 'commission', 
+        personal_account: false, 
+        recorded_by_name: req.session ? req.session.username : null 
+      });
       
       // Distribuir comisión a los pozos según configuración
       try {
@@ -876,7 +1027,19 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
         continue;
       }
       // create payout payment as negative amount
-      await Payment.create({ user_id: userId, amount: -Math.abs(amount), payment_date: new Date(), source: 'tournament_payout', reference_id: null, paid: true, paid_amount: Math.abs(amount), method: 'payout', personal_account: false, recorded_by_name: req.session ? req.session.username : null });
+      await Payment.create({ 
+        user_id: userId, 
+        amount: -Math.abs(amount), 
+        payment_date: new Date(), 
+        gaming_date: (t as any).gaming_date || null,
+        source: 'tournament_payout', 
+        reference_id: null, 
+        paid: true, 
+        paid_amount: Math.abs(amount), 
+        method: 'payout', 
+        personal_account: false, 
+        recorded_by_name: req.session ? req.session.username : null 
+      });
     }
 
     // ✨ NUEVO: Guardar posiciones en tabla Result

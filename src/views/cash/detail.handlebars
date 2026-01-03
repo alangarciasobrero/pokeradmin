@@ -246,15 +246,32 @@
 				const formData = new FormData(cashRegForm);
 				const submitBtn = cashRegForm.querySelector('button[type="submit"]');
 				
+				// Convertir FormData a URLSearchParams para que express.urlencoded lo pueda parsear
+				const urlParams = new URLSearchParams();
+				for (let [key, value] of formData.entries()) {
+					urlParams.append(key, value);
+				}
+				
+				// Debug: mostrar los datos que se envían
+				console.log('📤 Enviando datos del formulario:');
+				for (let [key, value] of urlParams.entries()) {
+					console.log(`  ${key}: ${value}`);
+				}
+				
 				try {
 					if (submitBtn) submitBtn.disabled = true;
 					
 					const res = await fetch(cashRegForm.action, {
 						method: 'POST',
-						body: formData
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						},
+						body: urlParams.toString()
 					});
+					
+					console.log('📥 Respuesta del servidor:', res.status, res.statusText);
 
-					if (res.ok || res.redirected) {
+					if (res.ok) {
 						// Mostrar mensaje de éxito sin recargar
 						regSuccessMsg.style.display = 'block';
 						cashRegForm.reset();
@@ -274,10 +291,11 @@
 						}, 1000);
 					} else {
 						const error = await res.text();
+						console.error('❌ Error del servidor:', error);
 						alert('Error al registrar: ' + error);
 					}
 				} catch (err) {
-					console.error('Error:', err);
+					console.error('❌ Error de red:', err);
 					alert('Error de red al registrar jugador');
 				} finally {
 					if (submitBtn) submitBtn.disabled = false;

@@ -300,6 +300,12 @@ Handlebars.registerHelper('and', function(a: any, b: any) {
 	return a && b;
 });
 
+Handlebars.registerHelper('concat', function(...args: any[]) {
+	// Remove the options object which is always last
+	args.pop();
+	return args.join('');
+});
+
 Handlebars.registerHelper('repeat', function(n: number, options: any) {
 	let result = '';
 	for (let i = 0; i < n; i++) {

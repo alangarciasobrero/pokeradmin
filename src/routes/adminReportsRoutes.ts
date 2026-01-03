@@ -5,15 +5,37 @@ import { Tournament } from '../models/Tournament';
 import { CashGame } from '../models/CashGame';
 import User from '../models/User';
 import { Op } from 'sequelize';
+import CommissionDestination from '../models/CommissionDestination';
+import CommissionConfig from '../models/CommissionConfig';
 
 const router = Router();
 
 // Reporte de comisión diaria
 router.get('/daily-commission', requireAdmin, async (req: Request, res: Response) => {
   try {
+    // Obtener destinos activos con sus configuraciones de porcentaje
+    const destinations = await CommissionDestination.findAll({
+      where: { is_active: true },
+      order: [['id', 'ASC']]
+    });
+
+    // Crear mapa de destinos con sus porcentajes
+    const destinationsMap = new Map();
+    for (const dest of destinations) {
+      const config = await CommissionConfig.findOne({ where: { destination_id: dest.id } });
+      destinationsMap.set(dest.id, {
+        id: dest.id,
+        name: dest.name,
+        type: dest.type,
+        percentage: config ? Number(config.percentage) : 0
+      });
+    }
+    
     // Usar gaming_date en lugar de payment_date para consistencia con el dashboard
-    const { getCurrentGamingDate } = await import('../utils/gamingDate');
-    const currentGamingDate = getCurrentGamingDate();
+    const { getCurrentGamingDate, getGamingDate } = await import('../utils/gamingDate');
+    // Permitir filtrar por fecha específica
+    const dateParam = req.query.date as string;
+    const currentGamingDate = dateParam || getCurrentGamingDate();
 
     // Buscar torneos del gaming_date actual
     const tournaments = await Tournament.findAll({ 
@@ -49,15 +71,28 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
 
 
 
-    // Procesar datos de torneos
+    // Procesar datos de torneos con desglose dinámico
     const tournamentData = tournamentCommissions.map((p: any) => {
       const tournament = tournamentsMap.get(p.reference_id);
+      const commissionTotal = Number(p.amount || 0);
+      
+      // Calcular desglose para cada destino configurado
+      const breakdown: any = {};
+      let totalAssigned = 0;
+      
+      destinationsMap.forEach((dest, destId) => {
+        const amount = Math.round(commissionTotal * (dest.percentage / 100));
+        breakdown[`dest_${destId}`] = amount;
+        totalAssigned += amount;
+      });
+      
       return {
         id: tournament?.id || p.reference_id,
         name: tournament?.name || `Torneo #${p.reference_id}`,
         buy_in: tournament?.buy_in || 0,
         start_time: tournament?.start_datetime,
-        commission: Number(p.amount || 0),
+        commission: commissionTotal,
+        breakdown,
         payment_date: p.payment_date
       };
     });
@@ -83,6 +118,15 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
     const totalCash = cashData.reduce((sum, c) => sum + c.commission, 0);
     const grandTotal = totalTournaments + totalCash;
 
+    // Calcular desglose sumando los desgloses individuales
+    const breakdown: any = {};
+    destinationsMap.forEach((dest, destId) => {
+      breakdown[`dest_${destId}`] = tournamentData.reduce((sum, t) => sum + (t.breakdown[`dest_${destId}`] || 0), 0);
+    });
+
+    // Convertir destinos a array para la vista
+    const destinationsArray = Array.from(destinationsMap.values());
+
     res.render('admin/reports/daily_commission', {
       username: req.session?.username,
       date: currentGamingDate,
@@ -90,7 +134,9 @@ router.get('/daily-commission', requireAdmin, async (req: Request, res: Response
       cashData,
       totalTournaments,
       totalCash,
-      grandTotal
+      grandTotal,
+      breakdown,
+      destinations: destinationsArray
     });
   } catch (err) {
     console.error('Error loading daily commission report', err);

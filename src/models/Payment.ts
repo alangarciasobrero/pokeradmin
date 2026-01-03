@@ -7,6 +7,7 @@ export interface PaymentAttributes {
   user_id: number;
   amount: number; // positive = user paid into system (buy-in / cash-in), negative = refund/withdrawal
   payment_date: Date;
+  gaming_date?: Date | null; // date of gaming session (midnight-to-midnight)
   source?: string | null; // 'tournament' | 'cash' | 'other'
   reference_id?: number | null; // e.g., registration id or cash_game id
   paid?: boolean; // whether payment was completed
@@ -16,13 +17,14 @@ export interface PaymentAttributes {
   recorded_by_name?: string | null;
 }
 
-export interface PaymentCreationAttributes extends Optional<PaymentAttributes, 'id' | 'source' | 'reference_id' | 'paid' | 'paid_amount' | 'method' | 'personal_account'> {}
+export interface PaymentCreationAttributes extends Optional<PaymentAttributes, 'id' | 'gaming_date' | 'source' | 'reference_id' | 'paid' | 'paid_amount' | 'method' | 'personal_account'> {}
 
 export class Payment extends Model<PaymentAttributes, PaymentCreationAttributes> implements PaymentAttributes {
   public id!: number;
   public user_id!: number;
   public amount!: number;
   public payment_date!: Date;
+  public gaming_date?: Date | null;
   public source?: string | null;
   public reference_id?: number | null;
   public paid?: boolean;
@@ -44,6 +46,7 @@ Payment.init(
     user_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, references: { model: 'users', key: 'id' } },
     amount: { type: DataTypes.DECIMAL(15,2), allowNull: false },
     payment_date: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    gaming_date: { type: DataTypes.DATEONLY, allowNull: true },
     source: { type: DataTypes.STRING(50), allowNull: true },
     reference_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     paid: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },

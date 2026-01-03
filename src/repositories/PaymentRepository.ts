@@ -1,5 +1,6 @@
 import Payment from '../models/Payment';
 import { Op } from 'sequelize';
+import sequelize from '../services/database';
 
 export class PaymentRepository {
   /**
@@ -14,11 +15,29 @@ export class PaymentRepository {
   }
 
   /**
-   * Get debtors for a given date: users with unpaid or partially paid payments
+   * Get debtors for a given date using gaming_date: users with unpaid or partially paid payments
    * For each user sum amount - paid_amount where amount > paid_amount
    */
-  async getDebtorsByDate(date: Date) {
-    const payments = await this.findByDate(date);
+  async getDebtorsByDate(dateStr: string | Date) {
+    const gamingDateStr = typeof dateStr === 'string' ? dateStr : dateStr.toISOString().split('T')[0];
+    
+    // Find payments for this gaming_date where paid = false or amount > paid_amount
+    // Only consider cash and cash_request payments (not commission, payouts, etc.)
+    const payments = await Payment.findAll({ 
+      where: { 
+        gaming_date: gamingDateStr,
+        source: {
+          [Op.in]: ['cash', 'cash_request', 'tournament']
+        },
+        [Op.or]: [
+          { paid: false },
+          sequelize.literal('amount > COALESCE(paid_amount, 0)')
+        ]
+      } 
+    });
+    
+    console.log(`[PaymentRepo] Found ${payments.length} unpaid payments for gaming_date ${gamingDateStr}`);
+    
     const map = new Map<number, number>();
     for (const p of payments) {
       const amt = Number(p.amount || 0);
@@ -31,6 +50,7 @@ export class PaymentRepository {
     // return array of { userId, amountDue }
     const arr: Array<{ userId: number; amountDue: number }> = [];
     for (const [userId, amountDue] of map.entries()) arr.push({ userId, amountDue });
+    console.log(`[PaymentRepo] Returning ${arr.length} debtors:`, arr);
     return arr;
   }
 

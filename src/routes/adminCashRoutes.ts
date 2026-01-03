@@ -115,29 +115,37 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
 router.post('/:id/register', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const data = req.body || {};
+  console.log('📝 Datos recibidos en /register:', data);
+  
   try {
     const cash = await CashGameRepository.findById(id);
     if (!cash) return res.status(404).send('Cash game no encontrado');
 
     // handle inline user creation
-    let userId = data.user_id ? Number(data.user_id) : null;
-    if ((!userId || isNaN(userId)) && data.new_user_username) {
+    let userId = (data.user_id && data.user_id !== '') ? Number(data.user_id) : null;
+    console.log('👤 userId inicial:', userId);
+    
+    if ((!userId || isNaN(userId) || userId <= 0) && data.new_user_username && data.new_user_username.trim() !== '') {
+      console.log('🆕 Intentando crear usuario nuevo:', data.new_user_username);
       const existing = await User.findOne({ where: { username: data.new_user_username } });
-      if (existing) userId = existing.id;
-      else {
+      if (existing) {
+        userId = existing.id;
+        console.log('✅ Usuario existente encontrado:', userId);
+      } else {
         const nu = await User.create({ username: data.new_user_username, password_hash: 'imported', full_name: data.new_user_full_name || null, is_player: true });
         userId = nu.id;
+        console.log('✅ Usuario nuevo creado con ID:', userId);
       }
     }
-    if (!userId) {
+    
+    if (!userId || userId <= 0) {
+      console.log('❌ No se pudo obtener userId válido');
       if (req.session) req.session.flash = { type: 'error', message: 'Debes seleccionar o crear un usuario' };
-      return res.redirect(`/admin/games/cash/${id}`);
+      return res.status(400).send('Debes seleccionar o crear un usuario');
     }
 
     const seatNumber = data.seat_number ? Number(data.seat_number) : null;
-    // create participant
-    const participant = await CashParticipantRepository.create({ cash_game_id: id, user_id: userId, seat_number: seatNumber });
-
+    
     // record payment if amount provided
     const amountPaid = data.amount_paid !== undefined && data.amount_paid !== null && data.amount_paid !== '' ? Number(data.amount_paid) : 0;
     // requested amount (pedido) is a distinct concept for cash games: the amount the player asks to play with
@@ -145,17 +153,46 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
     
     // Validación: no permitir monto pedido = 0
     if (requestedAmount <= 0) {
+      console.log('❌ Validación fallida: requestedAmount =', requestedAmount);
       if (req.session) req.session.flash = { type: 'error', message: 'El monto pedido debe ser mayor a 0' };
-      return res.redirect(`/admin/games/cash/${id}`);
+      return res.status(400).send('El monto pedido debe ser mayor a 0');
     }
+    
+    console.log('✅ Creando participante:', { cash_game_id: id, user_id: userId, seat_number: seatNumber });
+    
+    // create participant (joined_at is required)
+    const participant = await CashParticipantRepository.create({ 
+      cash_game_id: id, 
+      user_id: userId, 
+      seat_number: seatNumber,
+      joined_at: new Date()
+    });
+    
+    console.log('✅ Participante creado con ID:', participant.id);
     
     const method = data.method || null;
     const personalAccount = data.personal_account === 'on' || data.personal_account === 'true' || data.personal_account === true;
     const now = new Date();
+    
+    // Obtener gaming_date del cash game
+    const cashGameGamingDate = (cash as any).gaming_date || null;
+    
     // If the admin entered a requested amount, record it as a separate ledger entry with paid=false
     if (requestedAmount > 0) {
       try {
-        await Payment.create({ user_id: userId, amount: requestedAmount, payment_date: now, source: 'cash_request', reference_id: participant.id, paid: false, paid_amount: 0, method: null, personal_account: personalAccount, recorded_by_name: req.session && req.session.username ? String(req.session.username) : null });
+        await Payment.create({ 
+          user_id: userId, 
+          amount: requestedAmount, 
+          payment_date: now, 
+          gaming_date: cashGameGamingDate,
+          source: 'cash_request', 
+          reference_id: participant.id, 
+          paid: false, 
+          paid_amount: 0, 
+          method: null, 
+          personal_account: personalAccount, 
+          recorded_by_name: req.session && req.session.username ? String(req.session.username) : null 
+        });
       } catch (err) {
         console.error('Error recording requested amount for cash registration', err);
         // continue: do not block registration if ledger write fails; show flash
@@ -169,7 +206,19 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
     const methodWithActor = paidFlag && req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : null;
     const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
     try {
-      await Payment.create({ user_id: userId, amount: amountPaid, payment_date: now, source: 'cash', reference_id: participant.id, paid: paidFlag, paid_amount: amountPaid, method: methodWithActor, personal_account: personalAccount, recorded_by_name: recordedByName });
+      await Payment.create({ 
+        user_id: userId, 
+        amount: amountPaid, 
+        payment_date: now, 
+        gaming_date: cashGameGamingDate,
+        source: 'cash', 
+        reference_id: participant.id, 
+        paid: paidFlag, 
+        paid_amount: amountPaid, 
+        method: methodWithActor, 
+        personal_account: personalAccount, 
+        recorded_by_name: recordedByName 
+      });
     } catch (err) {
       console.error('Error recording payment for cash registration', err);
       if (req.session) req.session.flash = { type: 'warning', message: 'Jugador registrado pero falló el registro de pago en ledger' };

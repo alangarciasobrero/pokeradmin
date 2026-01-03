@@ -1,7 +1,12 @@
 <div class="daily-commission-report">
 	<div class="report-header">
 		<h1>💰 Reporte de Comisión Diaria</h1>
-		<p class="report-date">📅 {{formatDate date}}</p>
+		<div style="display:flex;align-items:center;gap:1rem;margin:1rem 0;">
+			<p class="report-date" style="margin:0;">📅 {{formatDate date}}</p>
+			<input type="date" id="dateFilter" value="{{date}}" style="padding:0.5rem;border-radius:6px;border:1px solid rgba(255,215,0,0.3);background:rgba(255,255,255,0.05);color:#fff;" />
+			<button onclick="window.location.href='/admin/reports/daily-commission?date='+document.getElementById('dateFilter').value" style="padding:0.5rem 1rem;background:#4CAF50;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:600;">Filtrar</button>
+			<button onclick="window.location.href='/admin/reports/daily-commission'" style="padding:0.5rem 1rem;background:#757575;border:none;border-radius:6px;color:white;cursor:pointer;">Hoy</button>
+		</div>
 		<a href="/admin/dashboard" class="back-link">← Volver al Dashboard</a>
 	</div>
 
@@ -32,6 +37,23 @@
 		</div>
 	</div>
 
+	{{#if breakdown}}
+	<div class="report-section">
+		<h2>📊 Desglose de Comisiones</h2>
+		<div class="breakdown-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;">
+			{{#each destinations}}
+			<div class="breakdown-card" style="background:rgba(76,175,80,0.1);border:2px solid rgba(76,175,80,0.3);border-radius:8px;padding:1.5rem;text-align:center;">
+				<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">
+					{{#if (eq this.type 'house')}}🏢{{else}}⭐{{/if}} {{this.name}}
+				</div>
+				<div style="font-size:1.5rem;font-weight:700;color:#4CAF50;">${{currency (lookup ../breakdown (concat 'dest_' this.id))}}</div>
+				<div style="font-size:0.75rem;color:#888;margin-top:0.25rem;">{{this.percentage}}% del total</div>
+			</div>
+			{{/each}}
+		</div>
+	</div>
+	{{/if}}
+
 	{{#if tournamentData.length}}
 	<div class="report-section">
 		<h2>🏆 Comisiones de Torneos</h2>
@@ -42,8 +64,10 @@
 						<th>#</th>
 						<th>Nombre del Torneo</th>
 						<th>Buy-in</th>
-						<th>Hora Inicio</th>
-						<th>Comisión</th>
+						<th>Hora</th>
+						{{#each ../destinations}}
+						<th style="background:rgba(76,175,80,0.05);">{{#if (eq this.type 'house')}}🏢{{else}}⭐{{/if}} {{this.name}}</th>
+						{{/each}}
 					</tr>
 				</thead>
 				<tbody>
@@ -53,14 +77,18 @@
 						<td><a href="/admin/games/tournaments/{{this.id}}" class="tournament-link">{{this.name}}</a></td>
 						<td>${{currency this.buy_in}}</td>
 						<td>{{formatTime this.start_time}}</td>
-						<td class="commission-amount">${{currency this.commission}}</td>
+						{{#each ../../destinations}}
+						<td class="commission-amount" style="color:#4CAF50;font-weight:600;">${{currency (lookup ../breakdown (concat 'dest_' this.id))}}</td>
+						{{/each}}
 					</tr>
 					{{/each}}
 				</tbody>
 				<tfoot>
 					<tr>
 						<td colspan="4" class="total-label">Subtotal Torneos</td>
-						<td class="total-amount">${{currency ../totalTournaments}}</td>
+						{{#each ../destinations}}
+						<td class="total-amount" style="color:#4CAF50;">${{currency (lookup ../../breakdown (concat 'dest_' this.id))}}</td>
+						{{/each}}
 					</tr>
 				</tfoot>
 			</table>

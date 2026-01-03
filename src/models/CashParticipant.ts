@@ -19,8 +19,6 @@ export class CashParticipant extends Model<CashParticipantAttributes, CashPartic
   public seat_number?: number | null;
   public joined_at!: Date;
   public left_at?: Date | null;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 }
 
 CashParticipant.init(
@@ -36,7 +34,7 @@ CashParticipant.init(
     sequelize,
     tableName: 'cash_participants',
     modelName: 'CashParticipant',
-    timestamps: true
+    timestamps: false
   }
 );
 

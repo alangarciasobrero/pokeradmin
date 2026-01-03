@@ -67,13 +67,83 @@ export async function getAdminDashboard(req: Request, res: Response) {
         // Prefer to compute debtors from payments table if available
         let debtorsToday: Array<{ userId: number; name: string; amountDue: number }> = [];
         try {
-            const paymentsDebtors = await paymentRepo.getDebtorsByDate(today);
-            if (paymentsDebtors && paymentsDebtors.length > 0) {
-                debtorsToday = await Promise.all(paymentsDebtors.map(async d => {
-                    const user = await User.findByPk(d.userId);
-                    return { userId: d.userId, name: user ? (user.full_name || user.username) : `#${d.userId}`, amountDue: d.amountDue };
-                }));
-            } else {
+            // Obtener gaming_dates únicos de los torneos y cash games de hoy
+            const { getCurrentGamingDate, getGamingDate } = await import('../utils/gamingDate');
+            
+            // Buscar torneos que empezaron hoy
+            const todayStart = new Date(today);
+            todayStart.setHours(0, 0, 0, 0);
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+            
+            console.log('[Dashboard] Buscando torneos entre:', todayStart.toISOString(), 'y', todayEnd.toISOString());
+            
+            const tournamentsTodayByDate = await Tournament.findAll({
+                where: {
+                    start_date: {
+                        [Op.between]: [todayStart, todayEnd]
+                    }
+                }
+            });
+            
+            console.log('[Dashboard] Torneos encontrados:', tournamentsTodayByDate.length, tournamentsTodayByDate.map(t => ({ id: t.id, start_date: t.start_date, gaming_date: t.gaming_date })));
+            
+            const cashGamesTodayByDate = await CashGame.findAll({
+                where: {
+                    start_datetime: {
+                        [Op.between]: [todayStart, todayEnd]
+                    }
+                }
+            });
+            
+            // Recolectar gaming_dates únicos
+            const gamingDates = new Set<string>();
+            tournamentsTodayByDate.forEach(t => {
+                if ((t as any).gaming_date) {
+                    const dateStr = new Date((t as any).gaming_date).toISOString().split('T')[0];
+                    gamingDates.add(dateStr);
+                }
+            });
+            cashGamesTodayByDate.forEach(c => {
+                if ((c as any).gaming_date) {
+                    const dateStr = new Date((c as any).gaming_date).toISOString().split('T')[0];
+                    gamingDates.add(dateStr);
+                }
+            });
+            
+            // Si no hay gaming_dates específicos, usar el getCurrentGamingDate como fallback
+            if (gamingDates.size === 0) {
+                const currentGamingDate = getCurrentGamingDate();
+                gamingDates.add(currentGamingDate.toISOString().split('T')[0]);
+            }
+            
+            console.log('[Dashboard] Gaming dates para buscar deudores:', Array.from(gamingDates));
+            
+            // Buscar deudores para todos los gaming_dates relevantes
+            const debtorsMap = new Map<number, { userId: number; name: string; amountDue: number }>();
+            
+            for (const gamingDate of gamingDates) {
+                console.log(`[Dashboard] Buscando deudores para gaming_date: ${gamingDate}`);
+                const paymentsDebtors = await paymentRepo.getDebtorsByDate(gamingDate);
+                console.log(`[Dashboard] Encontrados ${paymentsDebtors.length} deudores para ${gamingDate}:`, paymentsDebtors);
+                
+                for (const d of paymentsDebtors) {
+                    if (debtorsMap.has(d.userId)) {
+                        debtorsMap.get(d.userId)!.amountDue += d.amountDue;
+                    } else {
+                        const user = await User.findByPk(d.userId);
+                        debtorsMap.set(d.userId, {
+                            userId: d.userId,
+                            name: user ? (user.full_name || user.username) : `#${d.userId}`,
+                            amountDue: d.amountDue
+                        });
+                    }
+                }
+            }
+            
+            debtorsToday = Array.from(debtorsMap.values());
+            
+            if (debtorsToday.length === 0) {
                 // fallback heuristic: registrations created today with punctuality === false
                 const allRegs = await registrationRepo.getAll();
                 const regsToday = allRegs.filter(r => isSameDay(new Date(r.registration_date), today) && r.punctuality === false);
@@ -83,6 +153,7 @@ export async function getAdminDashboard(req: Request, res: Response) {
                 }));
             }
         } catch (e) {
+            console.error('[Dashboard] Error getting debtors:', e);
             // If payments table/access not present, fall back to registrations heuristic
             const allRegs = await registrationRepo.getAll();
             const regsToday = allRegs.filter(r => isSameDay(new Date(r.registration_date), today) && r.punctuality === false);
@@ -101,7 +172,7 @@ export async function getAdminDashboard(req: Request, res: Response) {
         };
 
         // Compute simple financial totals for today (commissions & tips)
-        let financialTotals = { totalCommission: 0, totalTips: 0 };
+        let financialTotals = { totalCommission: 0, houseCommission: 0, totalTips: 0 };
         try {
             // Obtener la gaming_date actual para filtrar correctamente
             const { getCurrentGamingDate } = await import('../utils/gamingDate');
@@ -138,6 +209,10 @@ export async function getAdminDashboard(req: Request, res: Response) {
                 }
                 if (src.startsWith('cash_tips')) financialTotals.totalTips += amt;
             });
+            
+            // Calcular comisión de casa: 17% del total de comisiones (85% de 20%)
+            // Total comisión = 20% (house 17% + monthly 1% + quarterly 1% + copa 1%)
+            financialTotals.houseCommission = Math.round(financialTotals.totalCommission * 0.85);
         } catch (e) {
             // ignore and leave defaults
         }
