@@ -231,7 +231,7 @@ function validarTorneo(data: any, parcial = false): string | null {
       if (b2 !== undefined) data.double_points = b2;
     }
     // números
-    const numFields = ['buy_in', 're_entry', 'knockout_bounty', 'starting_stack', 'blind_levels', 'small_blind', 'punctuality_discount'];
+    const numFields = ['buy_in', 're_entry', 'knockout_bounty', 'starting_stack', 'blind_levels', 'small_blind', 'punctuality_discount', 'punctuality_bonus_chips'];
     for (const f of numFields) {
       if (data[f] !== undefined) {
         const n = parseNumber(data[f]);
@@ -247,12 +247,17 @@ function validarTorneo(data: any, parcial = false): string | null {
     if (data.punctuality_apply !== undefined) {
       const pa = parseBool(data.punctuality_apply);
       if (pa === false) {
-        // si no aplica, forzar descuento a 0
+        // si no aplica, forzar descuento a 0 y bonus chips a 0
         data.punctuality_discount = 0;
+        data.punctuality_bonus_chips = 0;
       } else if (pa === true) {
         // si aplica y no viene valor, preset 20
         if (data.punctuality_discount === undefined || data.punctuality_discount === '') {
           data.punctuality_discount = 20;
+        }
+        // si no viene bonus chips, default 0
+        if (data.punctuality_bonus_chips === undefined || data.punctuality_bonus_chips === '') {
+          data.punctuality_bonus_chips = 0;
         }
       }
     }
@@ -305,6 +310,11 @@ function validarTorneo(data: any, parcial = false): string | null {
   if (!parcial || data.small_blind !== undefined) {
     if (data.small_blind == null || isNaN(Number(data.small_blind)) || Number(data.small_blind) <= 0) {
       return 'El small blind es obligatorio y debe ser mayor a cero';
+    }
+  }
+  if (!parcial || data.punctuality_bonus_chips !== undefined) {
+    if (data.punctuality_bonus_chips == null || isNaN(Number(data.punctuality_bonus_chips)) || Number(data.punctuality_bonus_chips) < 0) {
+      return 'Las fichas extras por puntualidad deben ser un número positivo';
     }
   }
   if (!parcial || data.punctuality_discount !== undefined) {

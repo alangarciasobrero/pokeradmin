@@ -16,7 +16,7 @@
     <h1>🏆 Ranking</h1>
     <div class="ranking-filters">
       <label for="seasonFilter">Temporada:</label>
-      <select id="seasonFilter" onchange="window.location.href='/admin/ranking?season='+this.value">
+      <select id="seasonFilter" onchange="window.location.href='/admin/games/ranking?season='+this.value">
         <option value="">Todas las temporadas</option>
         {{#each seasons}}
         <option value="{{this.id}}" {{#ifEquals this.id ../selectedSeason}}selected{{/ifEquals}}>

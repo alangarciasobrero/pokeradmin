@@ -92,7 +92,9 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   const offset = (page - 1) * perPage;
   
   // Extraer todos los filtros
-  const showClosed = req.query.show_closed === 'true';
+  // showClosed es true por defecto, solo es false si explícitamente se envía 'false'
+  const showClosed = req.query.show_closed !== 'false';
+  const showClosedExplicitlyFalse = req.query.show_closed === 'false';
   const dateFromStr = req.query.date_from as string;
   const dateToStr = req.query.date_to as string;
   const dayOfWeek = req.query.day_of_week as string;
@@ -208,7 +210,7 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
     // Construir queryParams para paginación
     const queryParams = new URLSearchParams();
     queryParams.set('per_page', perPage.toString());
-    if (showClosed) queryParams.set('show_closed', 'true');
+    if (!showClosed) queryParams.set('show_closed', 'false');
     if (dateFromStr) queryParams.set('date_from', dateFromStr);
     if (dateToStr) queryParams.set('date_to', dateToStr);
     if (dayOfWeek) queryParams.set('day_of_week', dayOfWeek);
@@ -232,6 +234,7 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
       meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages },
       links,
       showClosed,
+      showClosedExplicitlyFalse,
       dateFrom: dateFromStr || '',
       dateTo: dateToStr || '',
       dayOfWeek: dayOfWeek || '',

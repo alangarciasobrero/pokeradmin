@@ -91,7 +91,7 @@
         </div>
         <div class="filter-group-modern checkbox-group">
           <label class="checkbox-label">
-            <input type="checkbox" name="show_closed" value="true" {{#if showClosed}}checked{{/if}}>
+            <input type="checkbox" name="show_closed" value="true" {{#unless showClosedExplicitlyFalse}}checked{{/unless}}>
             <span>Incluir cerrados</span>
           </label>
         </div>

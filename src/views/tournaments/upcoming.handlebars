@@ -104,6 +104,16 @@
 										</div>
 									</div>
 								{{/if}}
+
+								{{#if this.punctuality_bonus_chips}}
+									<div class="detail-item special">
+										<span class="detail-icon">🎁</span>
+										<div class="detail-content">
+											<span class="detail-label">Fichas Extras</span>
+											<span class="detail-value">{{this.punctuality_bonus_chips}}</span>
+										</div>
+									</div>
+								{{/if}}
 							</div>
 						</div>
 					</div>
@@ -208,6 +218,16 @@
 									<div class="detail-content">
 										<span class="detail-label">Descuento Puntualidad</span>
 										<span class="detail-value">${{currency this.punctuality_discount}}</span>
+									</div>
+								</div>
+							{{/if}}
+
+							{{#if this.punctuality_bonus_chips}}
+								<div class="detail-item special">
+									<span class="detail-icon">🎁</span>
+									<div class="detail-content">
+										<span class="detail-label">Fichas Extras</span>
+										<span class="detail-value">{{this.punctuality_bonus_chips}}</span>
 									</div>
 								</div>
 							{{/if}}

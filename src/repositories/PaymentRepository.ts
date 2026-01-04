@@ -22,7 +22,7 @@ export class PaymentRepository {
     const gamingDateStr = typeof dateStr === 'string' ? dateStr : dateStr.toISOString().split('T')[0];
     
     // Find payments for this gaming_date where paid = false or amount > paid_amount
-    // Only consider cash and cash_request payments (not commission, payouts, etc.)
+    // Only consider cash and cash_request payments (not commission, payouts, settlements, etc.)
     const payments = await Payment.findAll({ 
       where: { 
         gaming_date: gamingDateStr,
@@ -40,6 +40,9 @@ export class PaymentRepository {
     
     const map = new Map<number, number>();
     for (const p of payments) {
+      // Excluir settlements del cálculo (son solo audit trail)
+      if (p.source === 'settlement') continue;
+      
       const amt = Number(p.amount || 0);
       const paid = Number((p.paid_amount as any) || 0);
       const due = Math.max(0, amt - paid);
@@ -61,6 +64,9 @@ export class PaymentRepository {
     const payments = await Payment.findAll({ where: { user_id: userId } });
     let totalDebt = 0;
     for (const p of payments) {
+      // Excluir settlements del cálculo (son solo audit trail)
+      if (p.source === 'settlement') continue;
+      
       const amt = Number(p.amount || 0);
       const paid = Number((p.paid_amount as any) || 0);
       const due = Math.max(0, amt - paid);
@@ -76,6 +82,9 @@ export class PaymentRepository {
     const payments = await Payment.findAll();
     const map = new Map<number, number>();
     for (const p of payments) {
+      // Excluir settlements del cálculo (son solo audit trail)
+      if (p.source === 'settlement') continue;
+      
       const amt = Number(p.amount || 0);
       const paid = Number((p.paid_amount as any) || 0);
       const due = Math.max(0, amt - paid);

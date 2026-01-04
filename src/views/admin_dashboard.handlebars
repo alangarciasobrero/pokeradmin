@@ -45,7 +45,11 @@
 			<div class="content-grid">
 				{{#each tournamentsActive}}
 					<div class="content-card tournament-card">
-						<div class="card-badge live-badge">🔴 EN VIVO</div>
+						{{#if this.registrationOpen}}
+							<div class="card-badge live-badge">🔴 EN VIVO</div>
+						{{else}}
+							<div class="card-badge closed-badge" style="background: #ff6b6b;">🔒 INSCRIPCIÓN CERRADA</div>
+						{{/if}}
 						<div class="content-body">
 							<h3>{{this.name}}</h3>
 							<div class="info-row">

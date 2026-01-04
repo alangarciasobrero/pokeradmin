@@ -49,6 +49,10 @@
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FF6F00"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">⏱</text></svg> Duración Ciega:</span> {{tournament.small_blind}} minutos</p>
     {{!-- Descuento por puntualidad --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Descuento Puntualidad:</span> ${{tournament.punctuality_discount}}</p>
+    {{!-- Fichas extras por puntualidad --}}
+    {{#if tournament.punctuality_bonus_chips}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#4CAF50"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">🎁</text></svg> Fichas Extras Puntualidad:</span> {{tournament.punctuality_bonus_chips}} fichas</p>
+    {{/if}}
     {{!-- Temporada --}}
     {{#if tournament.season}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#9c27b0"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg> Temporada:</span> <span class="badge badge-season">{{tournament.season.nombre}}</span></p>

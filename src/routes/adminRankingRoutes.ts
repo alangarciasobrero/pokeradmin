@@ -53,13 +53,24 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   try {
     const includeAll = req.query.includeAll === '1';
     const seasonParam = req.query.season as string | undefined;
-    const seasonId = (seasonParam && seasonParam !== '') ? Number(seasonParam) : null;
-
+    
+    // Actualizar estados de temporadas automáticamente
+    const seasonService = await import('../services/seasonService');
+    await seasonService.updateSeasonStates();
+    
     // Cargar todas las temporadas para el selector
     const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
     
     // Encontrar temporada activa
-    const activeSeason = seasons.find((s: any) => s.is_active === true);
+    const activeSeason = seasons.find((s: any) => s.estado === 'activa');
+    
+    // Si no se especifica temporada, usar la activa por defecto
+    let seasonId: number | null = null;
+    if (seasonParam && seasonParam !== '') {
+      seasonId = Number(seasonParam);
+    } else if (activeSeason) {
+      seasonId = activeSeason.id;
+    }
 
     const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll, seasonId);
 

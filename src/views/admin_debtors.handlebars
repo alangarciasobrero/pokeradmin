@@ -60,6 +60,9 @@
                 <a class="btn-ledger" href="/admin/users/{{this.user.id}}/ledger">
                   ðŸ“Š Libro mayor
                 </a>
+                <button class="btn-pay" onclick="openQuickPayModal({{this.user.id}}, '{{this.user.full_name}}', {{this.totalDebt}})">
+                  ðŸ’° Pagar rÃ¡pido
+                </button>
               </td>
             </tr>
           {{/each}}
@@ -357,6 +360,31 @@
   transform: translateY(-2px);
 }
 
+.btn-pay {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.btn-pay:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -394,5 +422,67 @@
   }
 }
 </style>
+
+
+<!-- Modal de pago rápido -->
+<div id="quickPayModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeQuickPayModal()">&times;</span>
+    <h2> Pago Rápido</h2>
+    <form id="quickPayForm" method="post" action="">
+      <div class="modal-info">
+        <p><strong>Usuario:</strong> <span id="modalUserName"></span></p>
+        <p><strong>Deuda total:</strong> `$<span id="modalDebt"></span></p>
+      </div>
+      <div class="form-group">
+        <label for="quickAmount">Monto a pagar:</label>
+        <input type="number" step="0.01" id="quickAmount" name="amount" required class="input-amount" />
+      </div>
+      <div class="form-group">
+        <label for="quickMethod">Método de pago:</label>
+        <select id="quickMethod" name="method" required class="select-method">
+          <option value="cash"> Efectivo</option>
+          <option value="card"> Tarjeta</option>
+          <option value="transfer"> Transferencia</option>
+          <option value="other"> Otro</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeQuickPayModal()">Cancelar</button>
+        <button type="submit" class="btn-submit">Pagar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; }
+.modal-content { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; border: 2px solid rgba(255, 215, 0, 0.3); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+.modal-content h2 { color: #FFD700; margin-bottom: 1.5rem; }
+.close { float: right; font-size: 2rem; font-weight: bold; color: rgba(255, 255, 255, 0.5); cursor: pointer; line-height: 1; }
+.close:hover { color: #fff; }
+.modal-info { background: rgba(255, 215, 0, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 215, 0, 0.2); }
+.modal-info p { margin: 0.5rem 0; color: rgba(255, 255, 255, 0.9); }
+.modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+.btn-cancel { padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-cancel:hover { background: rgba(255, 255, 255, 0.15); }
+.btn-submit { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+</style>
+
+<script>
+function openQuickPayModal(userId, fullName, debt) {
+  document.getElementById('modalUserName').textContent = fullName;
+  document.getElementById('modalDebt').textContent = debt.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  document.getElementById('quickAmount').value = debt;
+  document.getElementById('quickPayForm').action = `/admin/users/${userId}/payments/quick-pay`;
+  document.getElementById('quickPayModal').style.display = 'flex';
+}
+function closeQuickPayModal() { document.getElementById('quickPayModal').style.display = 'none'; }
+window.onclick = function(event) {
+  const modal = document.getElementById('quickPayModal');
+  if (event.target == modal) { closeQuickPayModal(); }
+}
+</script>
 
 <script src="/js/date-input-validator.js"></script>

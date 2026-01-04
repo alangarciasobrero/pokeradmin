@@ -345,16 +345,8 @@ Handlebars.registerHelper('json', function(context: any) {
 	return JSON.stringify(context);
 });
 
-// Rutas de autenticación (login/logout)
-app.use(authRoutes);
-
-// Perfil de usuario
-app.use('/profile', profileRoutes);
-
-// Estadísticas
-app.use('/stats', statsRoutes);
-
 // Simple session-based flash middleware and expose currentUser to templates
+// IMPORTANTE: Este middleware debe estar ANTES de las rutas para que res.locals esté disponible
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
 	// Ensure session exists
 	if (!req.session) return next();
@@ -374,6 +366,33 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 	next();
 });
 
+// Rutas de autenticación (login/logout)
+app.use(authRoutes);
+
+// Perfil de usuario
+app.use('/profile', profileRoutes);
+
+// Estadísticas
+app.use('/stats', statsRoutes);
+
+// Middleware para actualizar estados de temporadas periódicamente
+let lastSeasonUpdate = 0;
+const SEASON_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos
+
+app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+	const now = Date.now();
+	if (now - lastSeasonUpdate > SEASON_UPDATE_INTERVAL) {
+		try {
+			const seasonService = await import('./services/seasonService');
+			await seasonService.updateSeasonStates();
+			lastSeasonUpdate = now;
+		} catch (error) {
+			console.error('[app] Error updating season states:', error);
+		}
+	}
+	next();
+});
+
 
 // Rutas web (SSR): protegidas
 app.use('/tournaments', requireAuthMiddleware, tournamentWebRoutes);
@@ -390,6 +409,12 @@ app.use('/admin/games/ranking', adminRankingRoutes);
 
 // Admin game settings (points/prize editor)
 app.use('/admin/games/settings', adminSettingsRoutes);
+
+// Redirect legacy /admin/ranking to /admin/games/ranking
+app.get('/admin/ranking', requireAuthMiddleware, (req, res) => {
+	const queryString = req.url.split('?')[1] || '';
+	res.redirect(`/admin/games/ranking${queryString ? '?' + queryString : ''}`);
+});
 
 // Admin bonus calculation
 app.use('/admin/bonus', adminBonusRoutes);

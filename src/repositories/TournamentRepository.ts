@@ -37,6 +37,7 @@ export class TournamentRepository {
         blind_levels: number;
         small_blind: number;
         punctuality_discount: number;
+        punctuality_bonus_chips?: number;
     }): Promise<Tournament> {
         return Tournament.create(data);
     }

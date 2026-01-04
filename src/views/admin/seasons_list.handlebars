@@ -4,6 +4,15 @@
     <a href="/admin/seasons/new" class="btn-create">+ Nueva Temporada</a>
   </div>
 
+  <div class="alert alert-info" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1rem; margin-bottom: 1.5rem; border-radius: 4px;">
+    <strong>ℹ️ Gestión Automática de Temporadas</strong>
+    <p style="margin: 0.5rem 0 0 0; color: #555;">
+      Las temporadas se activan/desactivan automáticamente según las fechas. 
+      La temporada <strong>activa</strong> será la que incluya la fecha actual. 
+      El sistema actualiza los estados cada 5 minutos, pero puedes cambiarlos manualmente si es necesario.
+    </p>
+  </div>
+
   {{#if seasons.length}}
     <div class="seasons-grid">
       {{#each seasons}}

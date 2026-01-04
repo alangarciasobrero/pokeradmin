@@ -37,16 +37,16 @@
 		</div>
 	</div>
 
-	{{#if breakdown}}
+	{{#if destinations.length}}
 	<div class="report-section">
 		<h2>📊 Desglose de Comisiones</h2>
 		<div class="breakdown-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;">
 			{{#each destinations}}
 			<div class="breakdown-card" style="background:rgba(76,175,80,0.1);border:2px solid rgba(76,175,80,0.3);border-radius:8px;padding:1.5rem;text-align:center;">
 				<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">
-					{{#if (eq this.type 'house')}}🏢{{else}}⭐{{/if}} {{this.name}}
+					{{#if (eq this.type 'house')}}🏢{{else}}⭐{{/if}} {{this.displayName}}
 				</div>
-				<div style="font-size:1.5rem;font-weight:700;color:#4CAF50;">${{currency (lookup ../breakdown (concat 'dest_' this.id))}}</div>
+				<div style="font-size:1.5rem;font-weight:700;color:#4CAF50;">${{currency this.value}}</div>
 				<div style="font-size:0.75rem;color:#888;margin-top:0.25rem;">{{this.percentage}}% del total</div>
 			</div>
 			{{/each}}
@@ -65,8 +65,8 @@
 						<th>Nombre del Torneo</th>
 						<th>Buy-in</th>
 						<th>Hora</th>
-						{{#each ../destinations}}
-						<th style="background:rgba(76,175,80,0.05);">{{#if (eq this.type 'house')}}🏢{{else}}⭐{{/if}} {{this.name}}</th>
+						{{#each allDestinations}}
+						<th style="background:rgba(76,175,80,0.05);">{{#if (eq this.type 'house')}}🏢{{else}}⭐{{/if}} {{this.displayName}}</th>
 						{{/each}}
 					</tr>
 				</thead>
@@ -77,8 +77,8 @@
 						<td><a href="/admin/games/tournaments/{{this.id}}" class="tournament-link">{{this.name}}</a></td>
 						<td>${{currency this.buy_in}}</td>
 						<td>{{formatTime this.start_time}}</td>
-						{{#each ../../destinations}}
-						<td class="commission-amount" style="color:#4CAF50;font-weight:600;">${{currency (lookup ../breakdown (concat 'dest_' this.id))}}</td>
+						{{#each this.destinationValues}}
+						<td class="commission-amount" style="color:#4CAF50;font-weight:600;">${{currency this.amount}}</td>
 						{{/each}}
 					</tr>
 					{{/each}}
@@ -86,8 +86,8 @@
 				<tfoot>
 					<tr>
 						<td colspan="4" class="total-label">Subtotal Torneos</td>
-						{{#each ../destinations}}
-						<td class="total-amount" style="color:#4CAF50;">${{currency (lookup ../../breakdown (concat 'dest_' this.id))}}</td>
+						{{#each allDestinations}}
+						<td class="total-amount" style="color:#4CAF50;">${{currency this.total}}</td>
 						{{/each}}
 					</tr>
 				</tfoot>

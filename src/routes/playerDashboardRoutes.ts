@@ -42,17 +42,20 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 			limit: 6
 		});
 
-		// Torneos activos (que empezaron hoy o ayer y no tienen end_date)
-		const yesterday = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+		// Torneos activos (del gaming_date actual que no están finalizados)
+		// Incluye tanto torneos con inscripción abierta como cerrada
+		const { getCurrentGamingDate } = await import('../utils/gamingDate');
+		const currentGamingDate = getCurrentGamingDate();
+		const gamingDateStr = currentGamingDate.toISOString().split('T')[0];
+		
 		const activeTournaments = await Tournament.findAll({
 			where: {
-				start_date: { 
-					[Op.gte]: yesterday,
-					[Op.lte]: now
-				},
-				[Op.or]: [
-					{ end_date: null },
-					{ end_date: { [Op.gte]: now } }
+				[Op.and]: [
+					sequelize.where(
+						sequelize.fn('DATE', sequelize.col('gaming_date')),
+						gamingDateStr
+					),
+					{ end_date: null }
 				]
 			},
 			order: [['start_date', 'DESC']],

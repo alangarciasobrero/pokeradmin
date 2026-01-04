@@ -8,6 +8,15 @@
     <div class="alert alert-error">⚠️ {{error}}</div>
   {{/if}}
 
+  <div class="alert alert-info" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1rem; margin-bottom: 1.5rem; border-radius: 4px;">
+    <strong>ℹ️ Activación Automática de Temporadas</strong>
+    <p style="margin: 0.5rem 0 0 0; color: #555;">
+      Las temporadas se activan/desactivan automáticamente según las fechas establecidas. 
+      Una temporada será <strong>activa</strong> si la fecha actual está entre la fecha de inicio y fin.
+      Puedes cambiar manualmente el estado si es necesario, pero el sistema lo ajustará automáticamente cada 5 minutos.
+    </p>
+  </div>
+
   <form method="post" action="{{formAction}}" class="modern-form">
     <div class="form-section">
       <div class="form-group">

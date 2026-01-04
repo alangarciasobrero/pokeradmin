@@ -7,6 +7,10 @@ const router = Router();
 // GET /admin/seasons - Lista de temporadas
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
     try {
+        // Actualizar automáticamente los estados basados en fechas
+        const seasonService = await import('../services/seasonService');
+        await seasonService.updateSeasonStates();
+        
         const seasons = await SeasonRepository.findAll();
         res.render('admin/seasons_list', {
             seasons: seasons.map(s => ({

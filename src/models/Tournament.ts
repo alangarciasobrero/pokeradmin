@@ -16,6 +16,7 @@ export class Tournament extends Model {
   public blind_levels!: number;
   public small_blind!: number;
   public punctuality_discount!: number;
+  public punctuality_bonus_chips!: number;
   public registration_open!: boolean;
   public end_date?: Date | null;
   public pinned!: boolean;
@@ -91,6 +92,11 @@ Tournament.init(
     },
     punctuality_discount: {
       type: DataTypes.DECIMAL(10,2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    punctuality_bonus_chips: {
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },

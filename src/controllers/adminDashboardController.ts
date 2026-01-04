@@ -25,14 +25,26 @@ const registrationRepo = new RegistrationRepository();
  */
 export async function getAdminDashboard(req: Request, res: Response) {
     try {
-        const allTournaments = await tournamentRepo.getAll();
+        // Actualizar automáticamente los estados de las temporadas
+        const seasonService = await import('../services/seasonService');
+        await seasonService.updateSeasonStates();
+        
+        const { getCurrentGamingDate } = await import('../utils/gamingDate');
+        const currentGamingDate = getCurrentGamingDate();
+        const gamingDateStr = currentGamingDate.toISOString().split('T')[0];
+        
         const today = new Date();
         const isSameDay = (d1: Date, d2: Date) => {
             return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
         };
 
-        // Find tournaments that start today and have open registrations
-        const tournamentsToday = allTournaments.filter(t => isSameDay(new Date(t.start_date), today) && t.registration_open);
+        // Find tournaments that match the current gaming_date and are not finished (end_date is null)
+        // Include both open and closed registrations
+        const allTournaments = await tournamentRepo.getAll();
+        const tournamentsToday = allTournaments.filter(t => {
+            const tournamentGamingDate = (t as any).gaming_date ? new Date((t as any).gaming_date).toISOString().split('T')[0] : null;
+            return tournamentGamingDate === gamingDateStr && !t.end_date;
+        });
         const tournamentIds = tournamentsToday.map(t => t.id);
 
         // Fetch registration counts grouped by tournament in one query
@@ -46,7 +58,14 @@ export async function getAdminDashboard(req: Request, res: Response) {
             regsCounts.forEach(rc => { regsByTournament[Number((rc as any).tournament_id)] = Number((rc as any).get('cnt') || 0); });
         }
 
-        const tournamentsActive = tournamentsToday.map(t => ({ id: t.id, name: t.tournament_name, startedAt: t.start_date, players: regsByTournament[t.id] || 0, status: 'running' }));
+        const tournamentsActive = tournamentsToday.map(t => ({ 
+            id: t.id, 
+            name: t.tournament_name, 
+            startedAt: t.start_date, 
+            players: regsByTournament[t.id] || 0, 
+            status: 'running',
+            registrationOpen: t.registration_open
+        }));
 
         // Cash games: count participants per cash game
         const cashGames = await CashGameRepository.findAll();
@@ -178,6 +197,8 @@ export async function getAdminDashboard(req: Request, res: Response) {
             const { getCurrentGamingDate } = await import('../utils/gamingDate');
             const currentGamingDate = getCurrentGamingDate();
             
+            console.log('[Dashboard] Computing financials for gaming_date:', currentGamingDate);
+            
             // Buscar torneos y mesas cash del gaming_date actual
             const tournamentsTodayByGaming = await Tournament.findAll({ 
                 where: { gaming_date: currentGamingDate } 
@@ -185,6 +206,8 @@ export async function getAdminDashboard(req: Request, res: Response) {
             const cashGamesTodayByGaming = await CashGame.findAll({ 
                 where: { gaming_date: currentGamingDate } 
             });
+            
+            console.log('[Dashboard] Found tournaments:', tournamentsTodayByGaming.length, 'cash games:', cashGamesTodayByGaming.length);
             
             const tournamentIdsForCommissions = tournamentsTodayByGaming.map((t: any) => t.id);
             const cashGameIdsForCommissions = cashGamesTodayByGaming.map((c: any) => c.id);
@@ -200,6 +223,8 @@ export async function getAdminDashboard(req: Request, res: Response) {
                 }
             });
             
+            console.log('[Dashboard] Found payments:', allPayments.length);
+            
             allPayments.forEach(p => {
                 const amt = Number(p.amount || 0);
                 const src = (p.source || '') as string;
@@ -210,10 +235,12 @@ export async function getAdminDashboard(req: Request, res: Response) {
                 if (src.startsWith('cash_tips')) financialTotals.totalTips += amt;
             });
             
-            // Calcular comisión de casa: 17% del total de comisiones (85% de 20%)
-            // Total comisión = 20% (house 17% + monthly 1% + quarterly 1% + copa 1%)
-            financialTotals.houseCommission = Math.round(financialTotals.totalCommission * 0.85);
+            // La comisión del día es el total de todas las comisiones
+            financialTotals.houseCommission = financialTotals.totalCommission;
+            
+            console.log('[Dashboard] Financial totals:', financialTotals);
         } catch (e) {
+            console.error('[Dashboard] Error computing financial totals:', e);
             // ignore and leave defaults
         }
 
@@ -228,6 +255,13 @@ export async function getAdminDashboard(req: Request, res: Response) {
     } catch (err: any) {
         console.error('Error rendering admin dashboard', err);
         // render with empty datasets so UI still works
-        res.render('admin_dashboard', { username: req.session?.username || 'admin', tournamentsActive: [], cashGamesActive: [], debtorsToday: [] });
+        res.render('admin_dashboard', { 
+            username: req.session?.username || 'admin', 
+            tournamentsActive: [], 
+            cashGamesActive: [], 
+            debtorsToday: [],
+            summary: { activeTournaments: 0, activeCashGames: 0, playersPlaying: 0 },
+            financialTotals: { totalCommission: 0, houseCommission: 0, totalTips: 0 }
+        });
     }
 }

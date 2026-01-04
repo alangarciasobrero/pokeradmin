@@ -45,6 +45,9 @@
                 </label>
                 <label for="punctuality_discount">Descuento por puntualidad (%):</label>
                 <input type="number" id="punctuality_discount" name="punctuality_discount" value="{{tournament.punctuality_discount}}" min="0" max="100" {{#unless tournament.punctuality_discount}}disabled{{/unless}}>
+                <label for="punctuality_bonus_chips">🎁 Fichas extras por puntualidad:</label>
+                <input type="number" id="punctuality_bonus_chips" name="punctuality_bonus_chips" value="{{tournament.punctuality_bonus_chips}}" min="0" step="100" {{#unless tournament.punctuality_discount}}disabled{{/unless}}>
+                <small style="color:#888;font-size:0.85rem;display:block;margin-top:-5px;margin-bottom:10px;">Fichas adicionales para jugadores puntuales</small>
                 <label for="count_to_ranking">Cuenta para ranking:</label>
                 <select id="count_to_ranking" name="count_to_ranking" required>
                     <option value="true" {{#if tournament.count_to_ranking}}selected{{/if}}>Sí</option>
@@ -74,13 +77,17 @@
         // Toggle puntualidad
         const chk = document.getElementById('punctuality_apply');
         const input = document.getElementById('punctuality_discount');
-        if (chk && input) {
+        const bonusInput = document.getElementById('punctuality_bonus_chips');
+        if (chk && input && bonusInput) {
             function toggle() {
                 if (chk.checked) {
                     input.removeAttribute('disabled');
+                    bonusInput.removeAttribute('disabled');
                     if (!input.value) input.value = '20';
+                    if (!bonusInput.value) bonusInput.value = '0';
                 } else {
                     input.setAttribute('disabled','disabled');
+                    bonusInput.setAttribute('disabled','disabled');
                 }
             }
             chk.addEventListener('change', toggle);
