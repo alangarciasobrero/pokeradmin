@@ -305,4 +305,167 @@ router.post('/:id/payments/:pid/mark-paid', requireAdmin, async (req: Request, r
   }
 });
 
+// POST /admin/users/:id/payments/bulk-pay - pago múltiple desde libro mayor
+router.post('/:id/payments/bulk-pay', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.id);
+    const paymentIds = Array.isArray(req.body['payment_ids[]']) ? req.body['payment_ids[]'].map(Number) : [Number(req.body['payment_ids[]'])].filter(n => !isNaN(n));
+    const totalPaymentAmount = Number(req.body.amount);
+    const method = req.body.method || 'cash';
+    const now = new Date();
+
+    if (!paymentIds.length) {
+      if (req.session) req.session.flash = { type: 'error', message: 'No seleccionaste ningún movimiento' };
+      return res.redirect(`/admin/users/${userId}/ledger`);
+    }
+
+    if (totalPaymentAmount <= 0) {
+      if (req.session) req.session.flash = { type: 'error', message: 'El monto debe ser mayor a 0' };
+      return res.redirect(`/admin/users/${userId}/ledger`);
+    }
+
+    const payments = await Payment.findAll({
+      where: { id: paymentIds, user_id: userId },
+      order: [['payment_date', 'ASC']]
+    });
+
+    if (!payments.length) {
+      if (req.session) req.session.flash = { type: 'error', message: 'No se encontraron los pagos seleccionados' };
+      return res.redirect(`/admin/users/${userId}/ledger`);
+    }
+
+    const methodWithActor = req.session && req.session.username ? `${method}|by:${req.session.username}:${req.session.userId}` : method;
+    const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+
+    let remainingAmount = totalPaymentAmount;
+    const paidPayments: any[] = [];
+
+    for (const payment of payments) {
+      if (remainingAmount <= 0) break;
+      const pAny = payment as any;
+      const expected = Number(pAny.amount || 0);
+      const prevPaid = Number(pAny.paid_amount || 0);
+      const pending = Math.max(0, expected - prevPaid);
+      if (pending <= 0) continue;
+      const amountToApply = Math.min(pending, remainingAmount);
+
+      await Payment.create({
+        user_id: userId,
+        amount: amountToApply,
+        payment_date: now,
+        source: 'settlement',
+        reference_id: pAny.id,
+        paid: true,
+        paid_amount: amountToApply,
+        method: methodWithActor,
+        recorded_by_name: recordedByName
+      });
+
+      const newPaidAmount = prevPaid + amountToApply;
+      pAny.paid_amount = newPaidAmount;
+      pAny.paid = (newPaidAmount >= expected);
+      await pAny.save();
+
+      remainingAmount -= amountToApply;
+      paidPayments.push({ id: pAny.id, paid: amountToApply });
+    }
+
+    const totalApplied = totalPaymentAmount - remainingAmount;
+    if (req.session) {
+      req.session.flash = {
+        type: 'success',
+        message: `✅ Pago registrado: $${totalApplied.toFixed(0)} aplicado a ${paidPayments.length} movimiento(s)${remainingAmount > 0 ? `. Sobrante: $${remainingAmount.toFixed(0)}` : ''}`
+      };
+    }
+
+    return res.redirect(`/admin/users/${userId}/ledger`);
+  } catch (err) {
+    console.error('Error processing bulk payment', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al procesar el pago múltiple' };
+    return res.redirect(`/admin/users/${req.params.id}/ledger`);
+  }
+});
+
+// POST /admin/users/:id/payments/quick-pay - pago rápido desde lista de deudores
+router.post('/:id/payments/quick-pay', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.id);
+    const totalPaymentAmount = Number(req.body.amount);
+    const method = req.body.method || 'cash';
+    const now = new Date();
+    const { Op } = await import('sequelize');
+    const sequelize = await import('../services/database');
+
+    if (totalPaymentAmount <= 0) {
+      if (req.session) req.session.flash = { type: 'error', message: 'El monto debe ser mayor a 0' };
+      return res.redirect('/admin/debtors');
+    }
+
+    const payments = await Payment.findAll({
+      where: {
+        user_id: userId,
+        source: { [Op.in]: ['tournament', 'cash', 'cash_request'] },
+        [Op.or]: [
+          { paid: false },
+          (sequelize.default as any).literal('amount > COALESCE(paid_amount, 0)')
+        ]
+      },
+      order: [['payment_date', 'ASC']]
+    });
+
+    if (!payments.length) {
+      if (req.session) req.session.flash = { type: 'info', message: 'No hay pagos pendientes' };
+      return res.redirect('/admin/debtors');
+    }
+
+    const methodWithActor = req.session && req.session.username ? `${method}|by:${req.session.username}:${req.session.userId}` : method;
+    const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+
+    let remainingAmount = totalPaymentAmount;
+    const paidPayments: any[] = [];
+
+    for (const payment of payments) {
+      if (remainingAmount <= 0) break;
+      const pAny = payment as any;
+      const expected = Number(pAny.amount || 0);
+      const prevPaid = Number(pAny.paid_amount || 0);
+      const pending = Math.max(0, expected - prevPaid);
+      if (pending <= 0) continue;
+      const amountToApply = Math.min(pending, remainingAmount);
+
+      await Payment.create({
+        user_id: userId,
+        amount: amountToApply,
+        payment_date: now,
+        source: 'settlement',
+        reference_id: pAny.id,
+        paid: true,
+        paid_amount: amountToApply,
+        method: methodWithActor,
+        recorded_by_name: recordedByName
+      });
+
+      const newPaidAmount = prevPaid + amountToApply;
+      pAny.paid_amount = newPaidAmount;
+      pAny.paid = (newPaidAmount >= expected);
+      await pAny.save();
+      remainingAmount -= amountToApply;
+      paidPayments.push({ id: pAny.id, paid: amountToApply });
+    }
+
+    const totalApplied = totalPaymentAmount - remainingAmount;
+    if (req.session) {
+      req.session.flash = {
+        type: 'success',
+        message: `✅ Pago registrado: $${totalApplied.toFixed(0)} aplicado a ${paidPayments.length} movimiento(s)${remainingAmount > 0 ? `. Sobrante: $${remainingAmount.toFixed(0)}` : ''}`
+      };
+    }
+    return res.redirect('/admin/debtors');
+  } catch (err) {
+    console.error('Error processing quick payment', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al procesar el pago rápido' };
+    return res.redirect('/admin/debtors');
+  }
+});
+
 export default router;

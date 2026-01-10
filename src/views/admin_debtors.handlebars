@@ -424,11 +424,11 @@
 </style>
 
 
-<!-- Modal de pago r�pido -->
+<!-- Modal de pago rápido -->
 <div id="quickPayModal" class="modal" style="display: none;">
   <div class="modal-content">
     <span class="close" onclick="closeQuickPayModal()">&times;</span>
-    <h2> Pago R�pido</h2>
+    <h2>💰 Pago Rápido</h2>
     <form id="quickPayForm" method="post" action="">
       <div class="modal-info">
         <p><strong>Usuario:</strong> <span id="modalUserName"></span></p>
@@ -439,12 +439,12 @@
         <input type="number" step="0.01" id="quickAmount" name="amount" required class="input-amount" />
       </div>
       <div class="form-group">
-        <label for="quickMethod">M�todo de pago:</label>
+        <label for="quickMethod">Método de pago:</label>
         <select id="quickMethod" name="method" required class="select-method">
-          <option value="cash"> Efectivo</option>
-          <option value="card"> Tarjeta</option>
-          <option value="transfer"> Transferencia</option>
-          <option value="other"> Otro</option>
+          <option value="cash">💵 Efectivo</option>
+          <option value="card">💳 Tarjeta</option>
+          <option value="transfer">🏦 Transferencia</option>
+          <option value="other">📋 Otro</option>
         </select>
       </div>
       <div class="modal-actions">
@@ -468,6 +468,11 @@
 .btn-cancel:hover { background: rgba(255, 255, 255, 0.15); }
 .btn-submit { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s; }
 .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+.modal-content .select-method { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 0.75rem; border-radius: 6px; width: 100%; }
+.modal-content .select-method option { background: #1a1a2e; color: #fff; }
+.modal-content .input-amount { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 0.75rem; border-radius: 6px; width: 100%; }
+.modal-content .form-group { margin-bottom: 1rem; }
+.modal-content .form-group label { display: block; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.5rem; font-weight: 500; }
 </style>
 
 <script>

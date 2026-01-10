@@ -13,12 +13,26 @@ function updateBulkPaymentInfo() {
   
   const selectedCountEl = document.getElementById('selectedCount');
   const selectedTotalEl = document.getElementById('selectedTotal');
+  const bulkAmountEl = document.getElementById('bulkAmount');
+  const bulkControlsEl = document.getElementById('bulkControls');
   
   if (selectedCountEl) {
     selectedCountEl.textContent = `${count} seleccionados`;
   }
   if (selectedTotalEl) {
     selectedTotalEl.textContent = `Total pendiente: $${total.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+  }
+  
+  // Mostrar/ocultar controles de pago múltiple
+  if (bulkControlsEl) {
+    bulkControlsEl.style.display = count > 0 ? 'block' : 'none';
+  }
+  
+  // Actualizar automáticamente el campo de monto con el total pendiente
+  if (bulkAmountEl && count > 0) {
+    bulkAmountEl.value = total.toFixed(2);
+  } else if (bulkAmountEl && count === 0) {
+    bulkAmountEl.value = '';
   }
 }
 
@@ -46,16 +60,27 @@ document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('bulkPaymentForm');
   if (form) {
     form.addEventListener('submit', function(e) {
-      const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
-      
-      if (checkboxes.length === 0) {
-        e.preventDefault();
-        alert('Selecciona al menos un movimiento para pagar');
-        return false;
+      // Solo validar si el submit viene del botón de pagar seleccionados
+      const submitButton = e.submitter;
+      if (submitButton && submitButton.classList.contains('btn-pay-selected')) {
+        const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
+        
+        if (checkboxes.length === 0) {
+          e.preventDefault();
+          alert('Selecciona al menos un movimiento para pagar');
+          return false;
+        }
       }
       
-      // Los checkboxes ya están dentro del form, no necesitamos agregar nada más
       return true;
     });
   }
+  
+  // Prevenir que los formularios individuales activen la validación del bulk form
+  const individualForms = document.querySelectorAll('.payment-form-individual');
+  individualForms.forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.stopPropagation(); // Evitar que el evento llegue al formulario padre
+    });
+  });
 });

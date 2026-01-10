@@ -58,6 +58,44 @@ export class PaymentRepository {
   }
 
   /**
+   * Get debtors whose payment_date is on a specific date (for dashboard "today" view)
+   */
+  async getDebtorsByPaymentDate(dateStr: string): Promise<Array<{ userId: number; amountDue: number }>> {
+    const startDate = new Date(dateStr);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(dateStr);
+    endDate.setHours(23, 59, 59, 999);
+
+    const payments = await Payment.findAll({
+      where: {
+        payment_date: {
+          [Op.between]: [startDate, endDate]
+        }
+      }
+    });
+
+    console.log(`[PaymentRepo] Found ${payments.length} payments for payment_date ${dateStr}`);
+
+    const map = new Map<number, number>();
+    for (const p of payments) {
+      // Excluir settlements del cálculo (son solo audit trail)
+      if (p.source === 'settlement') continue;
+
+      const amt = Number(p.amount || 0);
+      const paid = Number((p.paid_amount as any) || 0);
+      const due = Math.max(0, amt - paid);
+      if (due > 0) {
+        map.set(p.user_id, (map.get(p.user_id) || 0) + due);
+      }
+    }
+
+    const arr: Array<{ userId: number; amountDue: number }> = [];
+    for (const [userId, amountDue] of map.entries()) arr.push({ userId, amountDue });
+    console.log(`[PaymentRepo] Returning ${arr.length} debtors by payment_date:`, arr);
+    return arr;
+  }
+
+  /**
    * Get total debt for a user across all dates
    */
   async getTotalDebtByUserId(userId: number): Promise<number> {

@@ -162,6 +162,27 @@ export async function getAdminDashboard(req: Request, res: Response) {
             
             debtorsToday = Array.from(debtorsMap.values());
             
+            // También buscar por payment_date de hoy (para cash games y otros pagos sin gaming_date específico)
+            const todayStr = today.toISOString().split('T')[0];
+            console.log(`[Dashboard] También buscando deudores por payment_date: ${todayStr}`);
+            const paymentsDebtorsToday = await paymentRepo.getDebtorsByPaymentDate(todayStr);
+            console.log(`[Dashboard] Encontrados ${paymentsDebtorsToday.length} deudores por payment_date:`, paymentsDebtorsToday);
+            
+            for (const d of paymentsDebtorsToday) {
+                if (debtorsMap.has(d.userId)) {
+                    debtorsMap.get(d.userId)!.amountDue += d.amountDue;
+                } else {
+                    const user = await User.findByPk(d.userId);
+                    debtorsMap.set(d.userId, {
+                        userId: d.userId,
+                        name: user ? (user.full_name || user.username) : `#${d.userId}`,
+                        amountDue: d.amountDue
+                    });
+                }
+            }
+            
+            debtorsToday = Array.from(debtorsMap.values());
+            
             if (debtorsToday.length === 0) {
                 // fallback heuristic: registrations created today with punctuality === false
                 const allRegs = await registrationRepo.getAll();

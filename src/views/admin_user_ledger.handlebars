@@ -60,6 +60,26 @@
       {{/if}}
     </div>
     <form method="post" action="/admin/users/{{user.id}}/payments/bulk-pay" id="bulkPaymentForm">
+      <div class="bulk-payment-controls" id="bulkControls" style="display: none; margin-bottom: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px;">
+        <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.5rem; font-weight: 500;">Monto a pagar:</label>
+            <input type="number" step="0.01" name="amount" id="bulkAmount" placeholder="Monto total" required class="input-amount" style="width: 100%;" />
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.5rem; font-weight: 500;">Método de pago:</label>
+            <select name="method" required class="select-method" style="width: 100%;">
+              <option value="cash">💵 Efectivo</option>
+              <option value="card">💳 Tarjeta</option>
+              <option value="transfer">🏦 Transferencia</option>
+              <option value="other">📝 Otro</option>
+            </select>
+          </div>
+          <div>
+            <button type="submit" class="btn-pay-selected" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap;">💰 Pagar seleccionados</button>
+          </div>
+        </div>
+      </div>
     {{#if payments.length}}
       <div class="table-wrapper">
         <table class="ledger-table">
@@ -114,16 +134,20 @@
                   {{#if this.paid}}
                     <span class="action-done">✓ Efectivo</span>
                   {{else}}
-                    <form method="post" action="/admin/users/{{../user.id}}/payments/{{this.id}}/mark-paid" class="payment-form">
-                      <input type="number" step="0.01" name="paid_amount" placeholder="monto" class="input-amount" value="{{this.amount}}" />
-                      <select name="method" class="select-method">
-                        <option value="cash">💵 Efectivo</option>
-                        <option value="card">💳 Tarjeta</option>
-                        <option value="transfer">🏦 Transferencia</option>
-                        <option value="other">📝 Otro</option>
-                      </select>
-                      <button type="submit" class="btn-register">Registrar pago</button>
-                    </form>
+                    {{#unless (eq this.source 'settlement')}}
+                      <form method="post" action="/admin/users/{{../user.id}}/payments/{{this.id}}/mark-paid" class="payment-form-individual">
+                        <input type="number" step="0.01" name="paid_amount" placeholder="monto" class="input-amount" value="{{subtract this.amount this.paid_amount}}" />
+                        <select name="method" class="select-method">
+                          <option value="cash">💵 Efectivo</option>
+                          <option value="card">💳 Tarjeta</option>
+                          <option value="transfer">🏦 Transferencia</option>
+                          <option value="other">📝 Otro</option>
+                        </select>
+                        <button type="submit" class="btn-register">Registrar pago</button>
+                      </form>
+                    {{else}}
+                      <span class="settlement-note">Liquidación</span>
+                    {{/unless}}
                   {{/if}}
                 </td>
               </tr>
@@ -425,11 +449,18 @@
 }
 
 /* Payment Form */
-.payment-form {
+.payment-form,
+.payment-form-individual {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.settlement-note {
+  color: #ffd700;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 .input-amount {
