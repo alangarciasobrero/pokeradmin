@@ -14,10 +14,17 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "root",
+    "username": "avnadmin",
     "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "database": "defaultdb",
+    "host": "pokeradmin-db-pokeradmin.c.aivencloud.com",
+    "port": 21222,
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   }
 }
