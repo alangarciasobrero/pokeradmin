@@ -1,5 +1,7 @@
 import { Request } from 'express';
 
+declare module 'multer';
+
 declare global {
   namespace Express {
     namespace Multer {
