@@ -1,7 +1,24 @@
 {{! views/admin_users.handlebars }}
-<div class="tournament-list-container" style="max-width:900px;">
-    <h1 style="margin-bottom:2.2rem;">Gestión de Usuarios</h1>
-        <div class="main-actions" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+<div class="tournament-list-container users-container">
+    <h1>Gestión de Usuarios</h1>
+    
+    {{!-- Campo de búsqueda --}}
+    <div class="search-section">
+        <form method="GET" action="/admin/users" class="search-form">
+            <div class="search-box">
+                <input type="text" name="search" id="searchInput" placeholder="🔍 Buscar por usuario o nombre..." value="{{searchQuery}}" />
+                <button type="submit" class="btn btn-search">🔍 Buscar</button>
+                {{#if searchQuery}}
+                    <a href="/admin/users" class="btn btn-clear">✕ Limpiar</a>
+                {{/if}}
+            </div>
+        </form>
+        {{#if searchQuery}}
+            <p class="search-results-info">📊 Mostrando {{meta.total_items}} resultado(s) para: <strong>"{{searchQuery}}"</strong></p>
+        {{/if}}
+    </div>
+
+    <div class="main-actions">
                 <a class="btn" href="/admin/users/new">+ Nuevo usuario</a>
                 {{#if meta}}
                     <div class="user-pagination">
@@ -11,38 +28,39 @@
                     </div>
                 {{/if}}
         </div>
-    <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:separate; border-spacing:0 0.7rem;">
+    <div class="table-responsive">
+        <table class="users-table">
             <thead>
-                <tr style="background:rgba(255,255,255,0.04); color:#FFD700;">
-                    <th style="padding:0.7rem 0.5rem;">ID</th>
-                    <th style="padding:0.7rem 0.5rem;">Avatar</th>
-                    <th style="padding:0.7rem 0.5rem;">Usuario</th>
-                    <th style="padding:0.7rem 0.5rem;">Nombre completo</th>
-                    <th style="padding:0.7rem 0.5rem;">Rol</th>
-                    <th style="padding:0.7rem 0.5rem;">Acciones</th>
+                <tr class="header-row">
+                    <th>ID</th>
+                    <th>Avatar</th>
+                    <th>Usuario</th>
+                    <th>Nombre completo</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {{#each users}}
-                <tr style="background:rgba(30,30,45,0.95); box-shadow:0 2px 12px #FFD70022; border-radius:12px;">
-                    <td style="padding:0.7rem 0.5rem; font-weight:600; color:#FFD700;">{{id}}</td>
-                                        <td style="padding:0.7rem 0.5rem;">
+                <tr class="user-row">
+                    <td style="font-weight:600; color:#FFD700;">{{id}}</td>
+                                        <td>
                                                 {{#if avatar}}
-                                                    <img src="{{avatar}}" alt="avatar" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #FFD700;">
+                                                    <img src="{{avatar}}" alt="avatar" class="avatar-img">
                                                 {{else}}
-                                                    <span style="color:#aaa;">Sin avatar</span>
+                                                    <span class="no-avatar">Sin avatar</span>
                                                 {{/if}}
                                         </td>
-                    <td style="padding:0.7rem 0.5rem; font-weight:600;">{{username}}</td>
-                    <td style="padding:0.7rem 0.5rem;">{{full_name}}</td>
-                    <td style="padding:0.7rem 0.5rem;">
-                        <span class="badge badge-{{role}}" style="background:{{#if (eq role 'admin')}}#3949ab{{else}}#43a047{{/if}}; color:#fff; padding:0.3em 1em; border-radius:8px; font-size:0.98em; font-weight:600;">{{role}}</span>
+                    <td style="font-weight:600;">{{username}}</td>
+                    <td>{{full_name}}</td>
+                    <td>
+                        <span class="role-badge badge-{{role}}">{{#if (eq role 'admin')}}Admin{{else}}Player{{/if}}</span>
                     </td>
-                    <td style="padding:0.7rem 0.5rem;">
-                        <a class="btn" style="padding:0.4em 1.2em; font-size:0.98em; margin-right:0.5em;" href="/admin/users/{{id}}/edit">Editar</a>
+                    <td>
+                        <a class="btn small" href="/admin/users/{{id}}/ledger">📖 Libro</a>
+                        <a class="btn small" href="/admin/users/{{id}}/edit">Editar</a>
                         <form action="/admin/users/{{id}}/delete" method="POST" style="display:inline">
-                            <button class="btn" style="padding:0.4em 1.2em; font-size:0.98em; background:#23243a; color:#FFD700; border:1.2px solid #FFD700;" type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar</button>
+                            <button class="btn small danger" type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar</button>
                         </form>
                     </td>
                 </tr>
@@ -51,3 +69,71 @@
         </table>
     </div>
 </div>
+
+<style>
+.search-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(57, 73, 171, 0.08) 0%, rgba(33, 150, 243, 0.06) 100%);
+    border: 1px solid rgba(100, 181, 246, 0.2);
+    border-radius: 12px;
+}
+
+.search-form {
+    margin-bottom: 0;
+}
+
+.search-box {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 181, 246, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+#searchInput:focus {
+    outline: none;
+    border-color: #64b5f6;
+    box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
+}
+
+.btn-search {
+    background: linear-gradient(135deg, #3949ab 0%, #1976d2 100%);
+    padding: 0.75rem 1.5rem;
+    white-space: nowrap;
+}
+
+.btn-search:hover {
+    background: linear-gradient(135deg, #1976d2 0%, #3949ab 100%);
+}
+
+.btn-clear {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1.5rem;
+    color: #ff7043;
+    white-space: nowrap;
+}
+
+.btn-clear:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.search-results-info {
+    margin-top: 1rem;
+    color: #64b5f6;
+    font-size: 0.95rem;
+}
+
+.search-results-info strong {
+    color: #fff;
+}
+</style>

@@ -1,19 +1,88 @@
-{{#> layouts/main title="Admin - Cash Games" }}
-<div class="admin-cash">
-  <header style="display:flex; justify-content:space-between; align-items:center;">
-    <h1>Gestión de Cash Games</h1>
-    <a href="/admin/games/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
-  </header>
+ 
+<div class="admin-cash-modern">
+  <div class="page-header-modern">
+    <div class="header-content">
+      <h1>🎲 Gestión de Cash Games</h1>
+      <p class="subtitle">Administra las mesas de cash del club</p>
+    </div>
+    <a href="/admin/games/cash/new" class="btn-create">
+      <span class="btn-icon">+</span>
+      Nueva Mesa Cash
+    </a>
+  </div>
 
   {{#if cashGames.length}}
-    <div class="cash-grid">
+    <div class="cash-grid-modern">
       {{#each cashGames}}
-        <article class="cash-card">
-          <h3>Mesa #{{id}}</h3>
-          <div class="meta">Inicio: {{formatDate start_datetime}} — Fin: {{formatDate end_datetime}}</div>
-          <div class="meta">Small blind: ${{currency small_blind}} — Comisión: ${{currency total_commission}}</div>
-          <div class="meta">Propinas: ${{currency total_tips}} — Dealer: {{dealer}}</div>
-          <div style="margin-top:0.6rem;"><a class="btn btn-sm" href="/admin/games/cash/{{id}}">Ver</a></div>
+        <article class="cash-card-modern {{#if end_datetime}}closed{{else}}active{{/if}}">
+          <div class="card-header-cash">
+            <div class="mesa-badge">
+              <span class="badge-icon">🃏</span>
+              <span class="badge-text">Mesa #{{id}}</span>
+            </div>
+            <div class="status-badge {{#if end_datetime}}status-closed{{else}}status-active{{/if}}">
+              {{#if end_datetime}}Cerrada{{else}}🟢 Activa{{/if}}
+            </div>
+          </div>
+
+          <div class="card-body-cash">
+            <div class="info-row">
+              <div class="info-item">
+                <span class="info-icon">📅</span>
+                <div class="info-content">
+                  <span class="info-label">Inicio</span>
+                  <span class="info-value">{{formatDateTime start_datetime}}</span>
+                </div>
+              </div>
+              {{#if end_datetime}}
+              <div class="info-item">
+                <span class="info-icon">🏁</span>
+                <div class="info-content">
+                  <span class="info-label">Fin</span>
+                  <span class="info-value">{{formatDateTime end_datetime}}</span>
+                </div>
+              </div>
+              {{/if}}
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-box">
+                <span class="stat-icon">💵</span>
+                <div class="stat-details">
+                  <span class="stat-label">Small Blind</span>
+                  <span class="stat-value">${{currency small_blind}}</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <span class="stat-icon">💰</span>
+                <div class="stat-details">
+                  <span class="stat-label">Comisión</span>
+                  <span class="stat-value success">${{currency total_commission}}</span>
+                </div>
+              </div>
+              <div class="stat-box">
+                <span class="stat-icon">🎁</span>
+                <div class="stat-details">
+                  <span class="stat-label">Propinas</span>
+                  <span class="stat-value tip">${{currency total_tips}}</span>
+                </div>
+              </div>
+            </div>
+
+            {{#if dealer}}
+            <div class="dealer-row">
+              <span class="dealer-icon">👤</span>
+              <span class="dealer-label">Dealer:</span>
+              <span class="dealer-name">{{dealer}}</span>
+            </div>
+            {{/if}}
+          </div>
+
+          <div class="card-footer-cash">
+            <a class="btn-view" href="/admin/games/cash/{{id}}">
+              Ver Detalles →
+            </a>
+          </div>
         </article>
       {{/each}}
     </div>
@@ -31,12 +100,381 @@
 </div>
 
 <style>
-.cash-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; }
-.cash-card { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06) }
-.btn-primary { background:#007bff; color:#fff }
-.btn-sm { padding:0.35rem 0.6rem; font-size:0.9rem }
-.disabled { opacity:0.45 }
-@media (max-width:900px){ .cash-grid { grid-template-columns: repeat(2,1fr);} }
-@media (max-width:600px){ .cash-grid { grid-template-columns: 1fr;} }
+.admin-cash-modern {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.page-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.header-content h1 {
+  font-size: 2.2rem;
+  color: #FFD700;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.header-content .subtitle {
+  color: #dfe6ff;
+  opacity: 0.7;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.btn-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #1a1a1a;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  font-size: 1.05rem;
+}
+
+.btn-create:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
+}
+
+.btn-create .btn-icon {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.cash-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.cash-card-modern {
+  background: linear-gradient(135deg, rgba(57, 73, 171, 0.08) 0%, rgba(229, 57, 53, 0.08) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+
+.cash-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cash-card-modern:hover::before {
+  opacity: 1;
+}
+
+.cash-card-modern:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 12px 40px rgba(255, 215, 0, 0.2);
+}
+
+.cash-card-modern.active {
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.card-header-cash {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.mesa-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #FFD700;
+}
+
+.badge-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-active {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.status-closed {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
+  border: 1px solid rgba(158, 158, 158, 0.4);
+}
+
+.card-body-cash {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.info-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  color: #dfe6ff;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  color: #fff;
+  font-weight: 500;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.3s ease;
+  min-width: 0;
+  flex: 1;
+}
+
+.stat-box:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 215, 0, 0.2);
+  transform: scale(1.02);
+}
+
+.stat-icon {
+  font-size: 1.8rem;
+}
+
+.stat-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: #dfe6ff;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value {
+  font-size: 1rem;
+  color: #FFD700;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stat-value.success {
+  color: #4caf50;
+}
+
+.stat-value.tip {
+  color: #ff9800;
+}
+
+.dealer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.dealer-icon {
+  font-size: 1.3rem;
+}
+
+.dealer-label {
+  font-size: 0.85rem;
+  color: #dfe6ff;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+.dealer-name {
+  font-size: 0.95rem;
+  color: #FFD700;
+  font-weight: 600;
+}
+
+.card-footer-cash {
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.btn-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  background: rgba(255, 215, 0, 0.1);
+  color: #FFD700;
+  font-weight: 600;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-view:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
+  transform: translateX(4px);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.pagination .btn {
+  padding: 0.8rem 1.5rem;
+  background: rgba(255, 215, 0, 0.1);
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pagination .btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
+}
+
+.pagination .disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #dfe6ff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 1200px) {
+  .cash-grid-modern {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cash-grid-modern {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-box {
+    padding: 0.6rem;
+    gap: 0.5rem;
+  }
+
+  .stat-icon {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+  }
+
+  .stat-value {
+    font-size: 0.9rem;
+  }
+}
 </style>
-{{/layouts/main}}
+ 

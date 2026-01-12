@@ -1,0 +1,493 @@
+<div class="debtors-modern">
+  <div class="page-header">
+    <h1>⚠️ {{#if showAll}}Todos los Deudores{{else}}{{#if date}}Deudores Diarios{{else}}Deudores de Hoy{{/if}}{{/if}}</h1>
+  </div>
+
+  <div class="filters-section">
+    <form method="get" action="/admin/debtors" class="filter-form">
+      <div class="form-group">
+        <label for="date">📅 Fecha específica:</label>
+        <input type="date" id="date" name="date" value="{{#if date}}{{formatDateISO date}}{{/if}}" class="date-input" />
+      </div>
+      <div class="form-group">
+        <label for="username">👤 Usuario:</label>
+        <input type="text" id="username" name="username" value="{{filters.username}}" placeholder="Buscar por nombre..." class="text-input" />
+      </div>
+      <button type="submit" class="btn-filter">🔍 Filtrar por fecha</button>
+      <a href="/admin/debtors?all=true" class="btn-all">📊 Ver todos los deudores</a>
+      <a href="/admin/debtors" class="btn-clear">📅 Deudores de hoy</a>
+    </form>
+  </div>
+
+  {{#if rows.length}}
+    <div class="summary-bar">
+      {{#if showAll}}
+        <span class="summary-label">Deuda total acumulada:</span>
+        <span class="summary-amount">💰 {{currency grandTotalDebt}}</span>
+      {{else}}
+        <span class="summary-label">Deuda {{#if date}}del día{{else}}de hoy{{/if}}:</span>
+        <span class="summary-amount">💰 {{currency totalDebt}}</span>
+        <span class="summary-separator">|</span>
+        <span class="summary-label">Deuda total:</span>
+        <span class="summary-amount">💰 {{currency grandTotalDebt}}</span>
+      {{/if}}
+      <span class="summary-count">({{rows.length}} deudores)</span>
+    </div>
+    
+    <div class="table-container">
+      <table class="debtors-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="username">Username <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-sort="fullname">Nombre Completo <span class="sort-icon">⇅</span></th>
+            {{#unless showAll}}
+            <th class="sortable" data-sort="debt">Deuda {{#if date}}del Día{{else}}de Hoy{{/if}} <span class="sort-icon">⇅</span></th>
+            {{/unless}}
+            <th class="sortable" data-sort="totalDebt">Deuda Total <span class="sort-icon">⇅</span></th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="debtorsTableBody">
+          {{#each rows}}
+            <tr data-username="{{this.user.username}}" data-fullname="{{this.user.full_name}}" data-debt="{{this.amountDue}}" data-totaldebt="{{this.totalDebt}}">
+              <td class="username-cell">{{this.user.username}}</td>
+              <td class="fullname-cell">{{this.user.full_name}}</td>
+              {{#unless ../showAll}}
+              <td class="debt-cell">${{currency this.amountDue}}</td>
+              {{/unless}}
+              <td class="debt-cell total-debt">${{currency this.totalDebt}}</td>
+              <td class="actions-cell">
+                <a class="btn-ledger" href="/admin/users/{{this.user.id}}/ledger">
+                  📊 Libro mayor
+                </a>
+                <button class="btn-pay" onclick="openQuickPayModal({{this.user.id}}, '{{this.user.full_name}}', {{this.totalDebt}})">
+                  💰 Pagar rápido
+                </button>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}
+    <div class="empty-state">
+      <span class="empty-icon">✅</span>
+      <p>No hay deudores para la fecha seleccionada</p>
+    </div>
+  {{/if}}
+</div>
+
+<script>
+// Ordenamiento de tabla
+(function() {
+  const table = document.querySelector('.debtors-table');
+  if (!table) return;
+  
+  const headers = table.querySelectorAll('th.sortable');
+  let sortDirection = {};
+  
+  headers.forEach(header => {
+    const sortKey = header.dataset.sort;
+    sortDirection[sortKey] = 'asc';
+    
+    header.addEventListener('click', () => {
+      const tbody = document.getElementById('debtorsTableBody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      
+      const direction = sortDirection[sortKey];
+      const isAsc = direction === 'asc';
+      
+      rows.sort((a, b) => {
+        let aVal = a.dataset[sortKey];
+        let bVal = b.dataset[sortKey];
+        
+        if (sortKey === 'debt' || sortKey === 'totaldebt') {
+          aVal = parseFloat(aVal);
+          bVal = parseFloat(bVal);
+        } else {
+          aVal = (aVal || '').toLowerCase();
+          bVal = (bVal || '').toLowerCase();
+        }
+        
+        if (aVal < bVal) return isAsc ? -1 : 1;
+        if (aVal > bVal) return isAsc ? 1 : -1;
+        return 0;
+      });
+      
+      tbody.innerHTML = '';
+      rows.forEach(row => tbody.appendChild(row));
+      
+      sortDirection[sortKey] = isAsc ? 'desc' : 'asc';
+      
+      // Update sort icons
+      headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
+      header.classList.add(isAsc ? 'sorted-asc' : 'sorted-desc');
+    });
+  });
+})();
+</script>
+
+<style>
+.debtors-modern {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header h1 {
+  color: #FFD700;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.filters-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filter-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.form-group {
+  flex: 1;
+  max-width: 300px;
+}
+
+.form-group label {
+  display: block;
+  color: #dfe6ff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.btn-filter {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  color: #FFD700;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.15));
+  transform: translateY(-2px);
+}
+
+.btn-all {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, rgba(107, 178, 255, 0.2), rgba(107, 178, 255, 0.1));
+  border: 2px solid #6BB2FF;
+  border-radius: 8px;
+  color: #6BB2FF;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.btn-all:hover {
+  background: linear-gradient(135deg, rgba(107, 178, 255, 0.3), rgba(107, 178, 255, 0.15));
+  transform: translateY(-2px);
+}
+
+.btn-clear {
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #dfe6ff;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.btn-clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.summary-bar {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 107, 107, 0.1));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 1.2rem;
+}
+
+.summary-label {
+  color: #dfe6ff;
+  font-weight: 600;
+}
+
+.summary-amount {
+  color: #FFD700;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.summary-count {
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+.summary-separator {
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 300;
+  font-size: 1.5rem;
+}
+
+.table-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.debtors-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.debtors-table thead {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.debtors-table th {
+  padding: 1rem;
+  text-align: left;
+  color: #FFD700;
+  font-weight: 700;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.debtors-table th.sortable:hover {
+  background: rgba(255, 215, 0, 0.15);
+}
+
+.debtors-table th.sorted-asc .sort-icon::after {
+  content: ' ▲';
+  color: #FFD700;
+}
+
+.debtors-table th.sorted-desc .sort-icon::after {
+  content: ' ▼';
+  color: #FFD700;
+}
+
+.debtors-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+}
+
+.debtors-table tbody tr:hover {
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.debtors-table td {
+  padding: 1rem;
+  color: #dfe6ff;
+}
+
+.username-cell {
+  font-weight: 700;
+  color: #FFD700;
+}
+
+.debt-cell {
+  font-weight: 700;
+  color: #FF6B6B;
+}
+
+.debt-cell.total-debt {
+  font-weight: 800;
+  color: #FFD700;
+  font-size: 1.1em;
+  background: rgba(255, 215, 0, 0.1);
+}
+}
+
+.debt-cell {
+  font-weight: 700;
+  color: #FF6B6B;
+  font-size: 1.1rem;
+}
+
+.btn-ledger {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 6px;
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-ledger:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.15));
+  border-color: #FFD700;
+  transform: translateY(-2px);
+}
+
+.btn-pay {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.btn-pay:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #dfe6ff;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .debtors-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .form-group {
+    max-width: none;
+  }
+  
+  .btn-filter {
+    width: 100%;
+  }
+}
+</style>
+
+
+<!-- Modal de pago rápido -->
+<div id="quickPayModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeQuickPayModal()">&times;</span>
+    <h2>💰 Pago Rápido</h2>
+    <form id="quickPayForm" method="post" action="">
+      <div class="modal-info">
+        <p><strong>Usuario:</strong> <span id="modalUserName"></span></p>
+        <p><strong>Deuda total:</strong> `$<span id="modalDebt"></span></p>
+      </div>
+      <div class="form-group">
+        <label for="quickAmount">Monto a pagar:</label>
+        <input type="number" step="0.01" id="quickAmount" name="amount" required class="input-amount" />
+      </div>
+      <div class="form-group">
+        <label for="quickMethod">Método de pago:</label>
+        <select id="quickMethod" name="method" required class="select-method">
+          <option value="cash">💵 Efectivo</option>
+          <option value="card">💳 Tarjeta</option>
+          <option value="transfer">🏦 Transferencia</option>
+          <option value="other">📋 Otro</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeQuickPayModal()">Cancelar</button>
+        <button type="submit" class="btn-submit">Pagar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; }
+.modal-content { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; border: 2px solid rgba(255, 215, 0, 0.3); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+.modal-content h2 { color: #FFD700; margin-bottom: 1.5rem; }
+.close { float: right; font-size: 2rem; font-weight: bold; color: rgba(255, 255, 255, 0.5); cursor: pointer; line-height: 1; }
+.close:hover { color: #fff; }
+.modal-info { background: rgba(255, 215, 0, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 215, 0, 0.2); }
+.modal-info p { margin: 0.5rem 0; color: rgba(255, 255, 255, 0.9); }
+.modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+.btn-cancel { padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-cancel:hover { background: rgba(255, 255, 255, 0.15); }
+.btn-submit { padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+.modal-content .select-method { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 0.75rem; border-radius: 6px; width: 100%; }
+.modal-content .select-method option { background: #1a1a2e; color: #fff; }
+.modal-content .input-amount { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 0.75rem; border-radius: 6px; width: 100%; }
+.modal-content .form-group { margin-bottom: 1rem; }
+.modal-content .form-group label { display: block; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.5rem; font-weight: 500; }
+</style>
+
+<script>
+function openQuickPayModal(userId, fullName, debt) {
+  document.getElementById('modalUserName').textContent = fullName;
+  document.getElementById('modalDebt').textContent = debt.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  document.getElementById('quickAmount').value = debt;
+  document.getElementById('quickPayForm').action = `/admin/users/${userId}/payments/quick-pay`;
+  document.getElementById('quickPayModal').style.display = 'flex';
+}
+function closeQuickPayModal() { document.getElementById('quickPayModal').style.display = 'none'; }
+window.onclick = function(event) {
+  const modal = document.getElementById('quickPayModal');
+  if (event.target == modal) { closeQuickPayModal(); }
+}
+</script>
+
+<script src="/js/date-input-validator.js"></script>

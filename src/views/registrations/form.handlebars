@@ -1,23 +1,254 @@
-<div class="registration-form-container">
-  <h2>{{formTitle}}</h2>
-  <form action="{{formAction}}" method="POST">
-    <label for="user_id">Jugador:</label>
-    <select name="user_id" id="user_id">
-      {{#each users}}
-        <option value="{{id}}">{{username}} - {{full_name}}</option>
-      {{/each}}
-    </select>
+<div class="registration-form-modern">
+  <div class="form-header">
+    <h2>🎮 {{formTitle}}</h2>
+  </div>
+  
+  <form action="{{formAction}}" method="POST" class="modern-form" id="registrationForm">
+    <!-- Sección 1: Datos del torneo -->
+    <div class="form-section">
+      <h3 class="section-title">🏆 Seleccionar Torneo</h3>
+      <div class="form-group">
+        <label for="tournament_id">Torneo:</label>
+        <select name="tournament_id" id="tournament_id" required class="select-modern">
+          <option value="">-- Selecciona un torneo --</option>
+          {{#each tournaments}}
+            <option value="{{id}}">{{tournament_name}} ({{formatDate start_date}})</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
 
-    <label for="tournament_id">Torneo:</label>
-    <select name="tournament_id" id="tournament_id">
-      {{#each tournaments}}
-        <option value="{{id}}">{{tournament_name}} ({{start_date}})</option>
-      {{/each}}
-    </select>
+    <!-- Sección 2: Datos del jugador -->
+    <div class="form-section">
+      <h3 class="section-title">👤 Seleccionar Jugador</h3>
+      <div class="form-group">
+        <label for="user_id">Jugador:</label>
+        <select name="user_id" id="user_id" required class="select-modern">
+          <option value="">-- Selecciona un jugador --</option>
+          {{#each users}}
+            <option value="{{id}}">{{full_name}} ({{username}})</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
 
-    <label for="punctuality">Puntualidad:</label>
-    <input type="checkbox" name="punctuality" id="punctuality" value="true">
+    <!-- Sección 3: Tipo de acción -->
+    <div class="form-section">
+      <h3 class="section-title">🎯 Tipo de Inscripción</h3>
+      <div class="form-group">
+        <label for="action_type">Tipo de acción:</label>
+        <select name="action_type" id="action_type" required class="select-modern">
+          <option value="1">💰 Buy-in (Entrada inicial)</option>
+          <option value="2">🔄 Re-entry (Reentrada)</option>
+          <option value="3">✨ Duplo (Doble)</option>
+        </select>
+        <small class="form-help">
+          ℹ️ Solo puede haber UN buy-in por jugador. Re-entry y Duplo se permiten después del buy-in inicial.
+        </small>
+      </div>
+    </div>
 
-    <button type="submit" class="btn btn-primary">Registrar</button>
+    <!-- Sección 4: Puntualidad -->
+    <div class="form-section">
+      <h3 class="section-title">⏰ Puntualidad</h3>
+      <div class="form-group checkbox-group">
+        <input type="hidden" name="punctuality" value="false">
+        <label class="checkbox-label">
+          <input type="checkbox" name="punctuality" id="punctuality" value="true">
+          <span>✅ El jugador llegó a tiempo</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">✔️ Registrar Inscripción</button>
+      <a href="/admin/games/tournaments" class="btn-cancel">✖️ Cancelar</a>
+    </div>
   </form>
 </div>
+
+<style>
+.registration-form-modern {
+  max-width: 800px;
+  margin: 2rem auto;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.form-header h2 {
+  color: #FFD700;
+  font-size: 2rem;
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.section-title {
+  color: #FFD700;
+  font-size: 1.3rem;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #dfe6ff;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.select-modern {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.select-modern:focus {
+  border-color: #FFD700;
+  outline: none;
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.select-modern option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.form-help {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.checkbox-group {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  color: #dfe6ff;
+  font-size: 1.1rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.btn-submit {
+  padding: 1rem 3rem;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.1));
+  border: 2px solid #4CAF50;
+  border-radius: 10px;
+  color: #4CAF50;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.4), rgba(76, 175, 80, 0.2));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+}
+
+.btn-cancel {
+  padding: 1rem 3rem;
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+  border-radius: 10px;
+  color: #f44336;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .registration-form-modern {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn-submit,
+  .btn-cancel {
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+// Validar que no haya dos buy-ins para el mismo jugador en el mismo torneo
+document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+  const actionType = document.getElementById('action_type').value;
+  const userId = document.getElementById('user_id').value;
+  const tournamentId = document.getElementById('tournament_id').value;
+  
+  if (actionType === '1' && userId && tournamentId) { // Buy-in
+    e.preventDefault();
+    
+    // Verificar si ya existe un buy-in
+    const response = await fetch(`/admin/registrations/check-buyin?user_id=${userId}&tournament_id=${tournamentId}`);
+    const data = await response.json();
+    
+    if (data.exists) {
+      alert('⚠️ Este jugador ya tiene un Buy-in registrado en este torneo. Solo puede haber UN buy-in por participante. Use Re-entry o Duplo para acciones adicionales.');
+      return false;
+    }
+    
+    // Si no existe, continuar con el submit
+    this.submit();
+  }
+});
+</script>

@@ -1,21 +1,161 @@
-{{#> layouts/main title="Admin - Torneos" }}
-<div class="admin-tournaments">
-  <header class="admin-header">
-    <h1>Gestión de Torneos</h1>
-    <a href="/admin/games/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
-  </header>
+ 
+<div class="admin-tournaments-modern">
+  <div class="page-header-modern">
+    <h1>🏆 Gestión de Torneos</h1>
+    <a href="/admin/games/tournaments/new" class="btn-create">+ Nuevo Torneo</a>
+  </div>
+
+  <div class="filters-bar-modern">
+    <form method="get" action="/admin/games/tournaments/list">
+      <!-- Fila 1: Búsqueda y fechas -->
+      <div class="filter-row">
+        <div class="filter-group-modern">
+          <label for="search">🔍 Buscar nombre:</label>
+          <input type="text" id="search" name="search" value="{{search}}" placeholder="Nombre del torneo..." class="filter-input-modern">
+        </div>
+        <div class="filter-group-modern">
+          <label for="date_from">📅 Desde:</label>
+          <input type="text" id="date_from" name="date_from" value="{{dateFrom}}" placeholder="dd/mm/yyyy" class="filter-input-modern date-input">
+        </div>
+        <div class="filter-group-modern">
+          <label for="date_to">📅 Hasta:</label>
+          <input type="text" id="date_to" name="date_to" value="{{dateTo}}" placeholder="dd/mm/yyyy" class="filter-input-modern date-input">
+        </div>
+        <div class="filter-group-modern">
+          <label for="day_of_week">📆 Día semana:</label>
+          <select id="day_of_week" name="day_of_week" class="filter-input-modern">
+            <option value="">Todos los días</option>
+            <option value="0" {{#ifEquals dayOfWeek '0'}}selected{{/ifEquals}}>Domingo</option>
+            <option value="1" {{#ifEquals dayOfWeek '1'}}selected{{/ifEquals}}>Lunes</option>
+            <option value="2" {{#ifEquals dayOfWeek '2'}}selected{{/ifEquals}}>Martes</option>
+            <option value="3" {{#ifEquals dayOfWeek '3'}}selected{{/ifEquals}}>Miércoles</option>
+            <option value="4" {{#ifEquals dayOfWeek '4'}}selected{{/ifEquals}}>Jueves</option>
+            <option value="5" {{#ifEquals dayOfWeek '5'}}selected{{/ifEquals}}>Viernes</option>
+            <option value="6" {{#ifEquals dayOfWeek '6'}}selected{{/ifEquals}}>Sábado</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fila 2: Buy-in, Temporada y Estado -->
+      <div class="filter-row">
+        <div class="filter-group-modern">
+          <label for="buy_in_range">💰 Buy-in:</label>
+          <select id="buy_in_range" name="buy_in_range" class="filter-input-modern">
+            <option value="">Todos los buy-ins</option>
+            <option value="0-50" {{#ifEquals buyInRange '0-50'}}selected{{/ifEquals}}>$0 - $50</option>
+            <option value="50-100" {{#ifEquals buyInRange '50-100'}}selected{{/ifEquals}}>$50 - $100</option>
+            <option value="100-200" {{#ifEquals buyInRange '100-200'}}selected{{/ifEquals}}>$100 - $200</option>
+            <option value="200-500" {{#ifEquals buyInRange '200-500'}}selected{{/ifEquals}}>$200 - $500</option>
+            <option value="500+" {{#ifEquals buyInRange '500+'}}selected{{/ifEquals}}>$500+</option>
+          </select>
+        </div>
+        <div class="filter-group-modern">
+          <label for="season_id">🏅 Temporada:</label>
+          <select id="season_id" name="season_id" class="filter-input-modern">
+            <option value="">Todas las temporadas</option>
+            {{#each seasons}}
+              <option value="{{id}}" {{#ifEquals id ../seasonId}}selected{{/ifEquals}}>{{nombre}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="filter-group-modern">
+          <label for="status">📊 Estado:</label>
+          <select id="status" name="status" class="filter-input-modern">
+            <option value="">Todos</option>
+            <option value="open" {{#ifEquals status 'open'}}selected{{/ifEquals}}>🟢 Abierto</option>
+            <option value="closed" {{#ifEquals status 'closed'}}selected{{/ifEquals}}>🔒 Cerrado</option>
+            <option value="finished" {{#ifEquals status 'finished'}}selected{{/ifEquals}}>✅ Finalizado</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fila 3: Características especiales -->
+      <div class="filter-row filter-checkboxes">
+        <div class="filter-group-modern checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="double_points" value="true" {{#if doublePoints}}checked{{/if}}>
+            <span>⚡ Doble puntos</span>
+          </label>
+        </div>
+        <div class="filter-group-modern checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="knockout" value="true" {{#if knockout}}checked{{/if}}>
+            <span>💀 Knockout</span>
+          </label>
+        </div>
+        <div class="filter-group-modern checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="count_ranking" value="true" {{#if countRanking}}checked{{/if}}>
+            <span>⭐ Cuenta ranking</span>
+          </label>
+        </div>
+        <div class="filter-group-modern checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="show_closed" value="true" {{#unless showClosedExplicitlyFalse}}checked{{/unless}}>
+            <span>Incluir cerrados</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="filter-actions">
+        <button type="submit" class="btn-filter">🔍 Filtrar</button>
+        <a href="/admin/games/tournaments/list" class="btn-clear">✕ Limpiar</a>
+      </div>
+    </form>
+  </div>
 
   {{#if tournaments.length}}
-    <div class="tournaments-grid">
+    <div class="tournaments-grid-modern">
       {{#each tournaments}}
-        <article class="t-card">
-          <h3 class="t-title"><a href="/admin/games/tournaments/{{id}}">{{tournament_name}}</a></h3>
-          <div class="t-meta">Fecha: <strong>{{start_date}}</strong></div>
-          <div class="t-meta">Buy-in: <strong>${{buy_in}}</strong> — Stack: <strong>{{starting_stack}}</strong></div>
-          <div class="t-actions">
-            <a class="btn btn-sm" href="/admin/games/tournaments/{{id}}">Ver / Editar</a>
-            <form method="post" action="/admin/games/tournaments/{{id}}/delete" style="display:inline;">
-              <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+        <article class="tournament-card-modern {{#unless registration_open}}closed{{/unless}}">
+          <div class="card-header-modern">
+            <span class="tournament-badge">🏆 Torneo</span>
+            {{#if registration_open}}
+              <span class="status-badge status-open">✅ Abierto</span>
+            {{else}}
+              <span class="status-badge status-closed">🔒 Cerrado</span>
+            {{/if}}
+          </div>
+          
+          <div class="card-body-modern">
+            <h3 class="tournament-title">{{tournament_name}}</h3>
+            
+            <div class="info-rows">
+              <div class="info-row-modern">
+                <span class="info-icon">📅</span>
+                <span class="info-label">Fecha:</span>
+                <span class="info-value">{{start_date}}</span>
+              </div>
+              <div class="info-row-modern">
+                <span class="info-icon">💰</span>
+                <span class="info-label">Buy-in:</span>
+                <span class="info-value">${{buy_in}}</span>
+              </div>
+              <div class="info-row-modern">
+                <span class="info-icon">🎲</span>
+                <span class="info-label">Stack Inicial:</span>
+                <span class="info-value">{{starting_stack}}</span>
+              </div>
+            </div>
+
+            <div class="tournament-features">
+              {{#if double_points}}
+                <span class="feature-tag special">⚡ Doble puntos</span>
+              {{/if}}
+              {{#if knockout_bounty}}
+                <span class="feature-tag knockout">💀 Knockout</span>
+              {{/if}}
+              {{#if count_to_ranking}}
+                <span class="feature-tag ranking">⭐ Cuenta ranking</span>
+              {{/if}}
+            </div>
+          </div>
+          
+          <div class="card-footer-modern">
+            <a href="/admin/games/tournaments/{{id}}" class="btn-details">📋 Ver / Editar</a>
+            <form method="post" action="/admin/games/tournaments/{{id}}/delete" class="delete-form">
+              <button class="btn-delete" type="submit" onclick="return confirm('¿Eliminar torneo {{tournament_name}}?')">🗑️ Eliminar</button>
             </form>
           </div>
         </article>
@@ -34,7 +174,7 @@
           {{#ifEquals this ../meta.page}}
             <span class="page current">{{this}}</span>
           {{else}}
-            <a class="page" href="/admin/games/tournaments/list?page={{this}}&per_page={{../meta.per_page}}">{{this}}</a>
+            <a class="page" href="/admin/games/tournaments/list?page={{this}}&{{../queryString}}">{{this}}</a>
           {{/ifEquals}}
         {{/each}}
       </div>
@@ -45,23 +185,578 @@
 </div>
 
 <style>
-.admin-tournaments { max-width: 1100px; margin: 2rem auto; padding: 1rem; }
-.admin-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem }
-.tournaments-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem }
-.t-card { background:#ffffff; color:#111; border-radius:8px; padding:1rem; box-shadow:0 4px 12px rgba(0,0,0,0.08) }
-.t-title { margin:0 0 0.5rem 0 }
-.t-meta { color:#444; font-size:0.95rem; margin-bottom:0.25rem }
-.t-actions { margin-top:0.5rem }
-.btn { display:inline-block; padding:0.4rem 0.8rem; border-radius:6px; text-decoration:none }
-.btn-primary { background:#007bff; color:#fff }
-.btn-sm { font-size:0.9rem; padding:0.25rem 0.5rem }
-.btn-danger { background:#dc3545; color:#fff }
-.pagination { display:flex; gap:1rem; align-items:center; justify-content:center; margin-top:1rem }
-.page-numbers { display:flex; gap:0.5rem; justify-content:center; margin-top:0.5rem }
-.page { padding:0.3rem 0.55rem; border-radius:4px; background:#f1f1f1; color:#111; text-decoration:none }
-.page.current { background:#007bff; color:#fff; font-weight:bold }
-.disabled { opacity:0.45 }
-@media (max-width: 900px) { .tournaments-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .tournaments-grid { grid-template-columns: 1fr; } }
+.admin-tournaments-modern {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 2rem;
+}
+
+.page-header-modern {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 2rem;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.page-header-modern h1 {
+	color: #FFD700;
+	font-size: 2rem;
+	margin: 0;
+	font-weight: 700;
+}
+
+.btn-create {
+	padding: 0.875rem 2rem;
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+	border: 2px solid #FFD700;
+	border-radius: 8px;
+	color: #FFD700;
+	text-decoration: none;
+	font-weight: 700;
+	font-size: 1rem;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.btn-create:hover {
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+	border-color: #FFD700;
+}
+
+.filters-bar-modern {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+	padding: 1.5rem;
+	margin-bottom: 2rem;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.filters-bar-modern form {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.filter-row {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-end;
+	flex-wrap: wrap;
+}
+
+.filter-checkboxes {
+	align-items: center;
+}
+
+.filter-actions {
+	display: flex;
+	gap: 1rem;
+	margin-top: 0.5rem;
+}
+
+.filter-group-modern {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 160px;
+}
+
+.filter-group-modern label {
+	color: #dfe6ff;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.filter-input-modern,
+.filter-input-modern select {
+	padding: 0.625rem 0.875rem;
+	background: rgba(255, 255, 255, 0.05);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
+	color: #fff;
+	font-size: 0.95rem;
+	transition: all 0.3s ease;
+}
+
+.filter-input-modern:focus,
+.filter-input-modern select:focus {
+	outline: none;
+	border-color: rgba(255, 215, 0, 0.4);
+	box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+select.filter-input-modern {
+	cursor: pointer;
+}
+
+select.filter-input-modern option {
+	background: #1a1a2e;
+	color: #fff;
+}
+
+/* Estilos para inputs de fecha */
+.date-input::placeholder {
+	color: rgba(255, 255, 255, 0.4);
+	font-size: 0.85rem;
+}
+
+.date-input.invalid {
+	border-color: rgba(244, 67, 54, 0.6);
+	box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+.checkbox-group {
+	justify-content: flex-end;
+	min-width: auto;
+}
+
+.checkbox-label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+	padding: 0.5rem 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+}
+
+.checkbox-label span {
+	color: #dfe6ff;
+	font-weight: 500;
+}
+
+.btn-filter,
+.btn-clear {
+	padding: 0.625rem 1.5rem;
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 0.95rem;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	border: 2px solid;
+	cursor: pointer;
+}
+
+.btn-filter {
+	background: rgba(255, 215, 0, 0.15);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.btn-filter:hover {
+	background: rgba(255, 215, 0, 0.25);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.btn-clear {
+	background: rgba(158, 158, 158, 0.1);
+	border-color: rgba(158, 158, 158, 0.3);
+	color: #9e9e9e;
+	display: inline-block;
+}
+
+.btn-clear:hover {
+	background: rgba(158, 158, 158, 0.2);
+	border-color: #9e9e9e;
+	transform: translateY(-2px);
+}
+
+.tournaments-grid-modern {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+	gap: 1.5rem;
+}
+
+.tournament-card-modern {
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid rgba(255, 215, 0, 0.2);
+	border-radius: 12px;
+	overflow: hidden;
+	transition: all 0.3s ease;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+.tournament-card-modern::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.tournament-card-modern:hover::before {
+	opacity: 1;
+}
+
+.tournament-card-modern:hover {
+	transform: translateY(-6px);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+	border-color: rgba(255, 215, 0, 0.5);
+}
+
+.tournament-card-modern.closed {
+	opacity: 0.7;
+	border-color: rgba(158, 158, 158, 0.3);
+}
+
+.tournament-card-modern.closed::before {
+	background: linear-gradient(90deg, #757575 0%, #9e9e9e 50%, #757575 100%);
+}
+
+.card-header-modern {
+	background: rgba(255, 255, 255, 0.02);
+	padding: 1rem 1.25rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tournament-badge {
+	color: #FFD700;
+	font-weight: 700;
+	font-size: 0.85rem;
+}
+
+.status-badge {
+	padding: 0.375rem 0.875rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.status-open {
+	background: rgba(76, 175, 80, 0.2);
+	color: #4CAF50;
+	border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.status-closed {
+	background: rgba(158, 158, 158, 0.2);
+	color: #9e9e9e;
+	border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.card-body-modern {
+	padding: 1.5rem 1.25rem;
+	flex: 1;
+}
+
+.tournament-title {
+	color: #fff;
+	font-size: 1.25rem;
+	font-weight: 700;
+	margin: 0 0 1.25rem 0;
+	line-height: 1.3;
+}
+
+.info-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.info-row-modern {
+	display: grid;
+	grid-template-columns: 30px auto 1fr;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.9rem;
+}
+
+.info-icon {
+	font-size: 1.1rem;
+}
+
+.info-label {
+	color: #dfe6ff;
+	opacity: 0.7;
+	font-weight: 500;
+}
+
+.info-value {
+	color: #FFD700;
+	font-weight: 700;
+	text-align: right;
+}
+
+.tournament-features {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.feature-tag {
+	padding: 0.3rem 0.75rem;
+	border-radius: 12px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	border: 1px solid;
+}
+
+.feature-tag.special {
+	background: rgba(255, 215, 0, 0.1);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.feature-tag.knockout {
+	background: rgba(244, 67, 54, 0.1);
+	border-color: rgba(244, 67, 54, 0.3);
+	color: #f44336;
+}
+
+.feature-tag.ranking {
+	background: rgba(57, 73, 171, 0.1);
+	border-color: rgba(57, 73, 171, 0.3);
+	color: #7B93FF;
+}
+
+.card-footer-modern {
+	background: rgba(255, 255, 255, 0.02);
+	padding: 1rem 1.25rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+	display: flex;
+	gap: 0.75rem;
+}
+
+.delete-form {
+	flex: 1;
+	margin: 0;
+}
+
+.btn-details,
+.btn-delete {
+	padding: 0.625rem 1.25rem;
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	border: 2px solid;
+	text-align: center;
+	cursor: pointer;
+	flex: 1;
+}
+
+.btn-details {
+	background: rgba(255, 215, 0, 0.1);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.btn-details:hover {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.btn-delete {
+	background: rgba(244, 67, 54, 0.1);
+	border-color: rgba(244, 67, 54, 0.3);
+	color: #f44336;
+}
+
+.btn-delete:hover {
+	background: rgba(244, 67, 54, 0.2);
+	border-color: #f44336;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.pagination {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: center;
+	margin-top: 2rem;
+}
+
+.pagination .btn,
+.pagination .disabled {
+	padding: 0.625rem 1.25rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	transition: all 0.3s ease;
+}
+
+.pagination .btn {
+	background: rgba(255, 215, 0, 0.1);
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+}
+
+.pagination .btn:hover {
+	background: rgba(255, 215, 0, 0.2);
+	border-color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.pagination .disabled {
+	opacity: 0.3;
+	color: #9e9e9e;
+}
+
+.page-info {
+	color: #dfe6ff;
+	font-weight: 600;
+}
+
+.page-numbers {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: center;
+	margin-top: 1rem;
+	flex-wrap: wrap;
+}
+
+.page {
+	padding: 0.5rem 0.875rem;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	background: rgba(255, 255, 255, 0.03);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	color: #dfe6ff;
+}
+
+.page:hover {
+	background: rgba(255, 215, 0, 0.1);
+	border-color: rgba(255, 215, 0, 0.3);
+	color: #FFD700;
+	transform: translateY(-2px);
+}
+
+.page.current {
+	background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+	border-color: #FFD700;
+	color: #FFD700;
+	font-weight: 700;
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+@media (max-width: 1200px) {
+	.tournaments-grid-modern {
+		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	}
+}
+
+@media (max-width: 768px) {
+	.admin-tournaments-modern {
+		padding: 1rem;
+	}
+
+	.page-header-modern {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.btn-create {
+		width: 100%;
+		text-align: center;
+	}
+
+	.tournaments-grid-modern {
+		grid-template-columns: 1fr;
+	}
+
+	.filters-bar-modern form {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.filter-group-modern {
+		width: 100%;
+	}
+
+	.btn-filter,
+	.btn-clear {
+		width: 100%;
+	}
+}
 </style>
-{{/layouts/main}}
+
+<script>
+// Validación y formato de fechas dd/mm/yyyy
+document.addEventListener('DOMContentLoaded', function() {
+	const dateInputs = document.querySelectorAll('.date-input');
+	
+	dateInputs.forEach(input => {
+		// Validar al escribir
+		input.addEventListener('input', function(e) {
+			let value = e.target.value.replace(/[^0-9/]/g, '');
+			
+			// Auto-agregar barras
+			if (value.length === 2 && !value.includes('/')) {
+				value += '/';
+			} else if (value.length === 5 && value.split('/').length === 2) {
+				value += '/';
+			}
+			
+			// Limitar a 10 caracteres (dd/mm/yyyy)
+			value = value.substring(0, 10);
+			e.target.value = value;
+			
+			// Validar formato completo
+			if (value.length === 10) {
+				const isValid = validateDateDMY(value);
+				e.target.classList.toggle('invalid', !isValid);
+			} else {
+				e.target.classList.remove('invalid');
+			}
+		});
+		
+		// Validar al salir del campo
+		input.addEventListener('blur', function(e) {
+			const value = e.target.value.trim();
+			if (value && value.length === 10) {
+				const isValid = validateDateDMY(value);
+				if (!isValid) {
+					alert('Fecha inválida. Use el formato dd/mm/yyyy (ej: 31/12/2025)');
+					e.target.focus();
+				}
+			}
+		});
+	});
+	
+	function validateDateDMY(dateStr) {
+		const parts = dateStr.split('/');
+		if (parts.length !== 3) return false;
+		
+		const day = parseInt(parts[0], 10);
+		const month = parseInt(parts[1], 10);
+		const year = parseInt(parts[2], 10);
+		
+		if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+		if (day < 1 || day > 31) return false;
+		if (month < 1 || month > 12) return false;
+		if (year < 1900 || year > 2100) return false;
+		
+		// Verificar fecha válida
+		const date = new Date(year, month - 1, day);
+		return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+	}
+});
+</script>
+ 

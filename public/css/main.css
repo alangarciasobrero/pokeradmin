@@ -8,6 +8,17 @@ body {
   min-height: 100vh;
 }
 
+/* Theme variables for cards and muted surfaces */
+:root {
+  --card-bg: rgba(20, 20, 30, 0.78);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-glow: rgba(255, 215, 0, 0.06);
+  --muted-surface: rgba(255,255,255,0.02);
+  --input-bg: rgba(255,255,255,0.04);
+  --input-color: #ffffff;
+  --accent: #1976d2; /* primary accent for tabs/buttons */
+}
+
 /* Contenedor principal de cada vista */
 .main-wrapper, .home-wrapper {
   display: flex;
@@ -20,22 +31,22 @@ body {
   z-index: 1;
 }
 
-/* Cartas animadas (puedes usar en cualquier vista) */
-.card {
+/* Cartas decorativas animadas (usa .decor-card para evitar colisiones con .card de UI) */
+.decor-card {
   position: absolute;
   width: 90px;
   height: 130px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   transform: rotate(15deg);
   animation: floatCard 12s infinite ease-in-out;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.1));
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.08));
 }
-.card::before {
+.decor-card::before {
   content: "♠";
-  font-size: 1.8rem;
-  color: rgba(255, 255, 255, 0.2);
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.18);
   position: absolute;
   top: 6px; left: 10px;
 }
@@ -62,11 +73,12 @@ body {
 
 /* Tarjetas principales */
 .home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {
-  background: rgba(30, 30, 45, 0.85);
+  /* use theme variables so we can tweak card contrast easily */
+  background: var(--card-bg);
   backdrop-filter: blur(6px);
   border-radius: 20px;
-  border: 1.2px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+  border: 1.2px solid var(--card-border);
+  box-shadow: 0 0 26px var(--card-glow);
   padding: 2.8rem 3rem;
   max-width: 650px;
   margin: 48px auto;
@@ -99,6 +111,71 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Tournament detail tweaks: prevent oversized SVG and reduce visual scale on large screens */
+.tournament-detail-container {
+  max-width: 1400px; /* give more room for the wider layout */
+  padding: 1.5rem 2rem;
+  margin: 24px auto;
+}
+.tournament-detail-container h1 { font-size: 1.8rem; display:flex; align-items:center; gap:1rem; margin-bottom: 1.5rem; }
+.trophy-icon { width: 60px; height: auto; flex-shrink: 0; }
+
+/* layout the tournament info in a grid to prevent overlap */
+.tournament-info { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.tournament-info p { 
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(57, 73, 171, 0.08) 0%, rgba(33, 150, 243, 0.06) 100%);
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(100, 181, 246, 0.2);
+  transition: all 0.2s ease;
+}
+.tournament-info p:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 181, 246, 0.15);
+  border-color: rgba(100, 181, 246, 0.3);
+}
+.tournament-info .label { 
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #90caf9;
+  flex: 1;
+}
+.tournament-info p > span:last-child,
+.tournament-info p > .badge {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  min-width: 80px;
+  text-align: right;
+}
+.tournament-info .icon { width: 32px; height: 32px; margin-right: 0.8rem; flex-shrink: 0; }
+
+/* If the trophy SVG is still too big on very large screens, cap it */
+@media (min-width: 1400px) {
+  .trophy-icon { width: 140px; }
+}
+@media (max-width: 900px) {
+  .trophy-icon { width: 88px; }
+  .tournament-detail-container h1 { font-size: 1.3rem; }
+  .tournament-info { grid-template-columns: 44px 1fr; }
+}
+
+/* Tone down giant decorative elements that can push content down */
+.home-card img, .pa-card img { max-width: 180px; }
+
 .home-card p, .pa-card p, .tournament-list-container p, .tournament-detail-container p, .tournament-form-container p {
   font-size: 1.15rem;
   color: #dfe6ff;
@@ -125,6 +202,41 @@ body {
   background: linear-gradient(90deg, #b71c1c 0%, #e53935 100%);
   transform: translateY(-2px);
   box-shadow: 0 5px 20px rgba(229, 57, 53, 0.8);
+}
+
+/* Admin actions section in tournament detail */
+.admin-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 8px;
+}
+
+.admin-actions .btn-warning {
+  background: linear-gradient(90deg, #f57c00 0%, #e65100 100%);
+}
+
+.admin-actions .btn-warning:hover {
+  background: linear-gradient(90deg, #e65100 0%, #f57c00 100%);
+}
+
+.admin-actions .btn-danger {
+  background: linear-gradient(90deg, #c62828 0%, #b71c1c 100%);
+}
+
+.admin-actions .btn-danger:hover {
+  background: linear-gradient(90deg, #b71c1c 0%, #c62828 100%);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 /* Listas y cajas de torneos */
@@ -158,6 +270,8 @@ body {
   transition: box-shadow 0.2s, color 0.2s;
   cursor: pointer;
 }
+.tournament-list .tournament-box-link { flex-wrap: wrap; gap: 0.6rem; }
+.tournament-list .tournament-box-link .meta { color: #dfe6ff; font-weight: 500; font-size: 0.98rem; }
 .tournament-list .tournament-box-link:hover {
   box-shadow: 0 4px 16px #FFD700;
   color: #fff;
@@ -186,10 +300,71 @@ body {
   border-radius: 8px;
   border: 1.5px solid #FFD700;
   font-size: 1.12rem;
-  background: #fff;
-  color: #23243a;
+  background: var(--input-bg);
+  color: var(--input-color);
   transition: border 0.2s, box-shadow 0.2s;
   box-shadow: 0 1px 6px #FFD70033;
+}
+/* Tournament registrations section */
+.tournament-registrations {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.tournament-registrations h2 {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 3px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 0.75rem;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tournament-registrations h3 {
+  color: #FFD700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+  padding-bottom: 0.5rem;
+  font-size: 1.4rem;
+}
+
+.tournament-registrations form { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 12px 20px; 
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+.tournament-registrations label { color: #ffd884; font-weight:700; }
+.tournament-registrations input[type="number"], 
+.tournament-registrations input[type="text"], 
+.tournament-registrations input[list], 
+.tournament-registrations select { 
+  width: 100%; 
+  box-sizing: border-box;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: var(--input-bg);
+  color: var(--input-color);
+}
+.tournament-registrations .full-row { grid-column: 1 / -1; }
+.tournament-registrations .actions-row { grid-column: 1 / -1; display:flex; gap:12px; align-items:center; }
+.tournament-registrations .btn { margin: 0; }
+
+/* When viewport is narrow, make form single-column */
+@media (max-width:900px) {
+  .tournament-registrations form { grid-template-columns: 1fr; }
 }
 .tournament-form input:focus,
 .tournament-form select:focus {
@@ -253,6 +428,7 @@ body {
   letter-spacing: 2px;
   box-shadow: none;
   position: relative;
+  z-index: 1000; /* ensure header sits above other content so links are clickable */
 }
 .pa-header .logo {
   display: inline-block;
@@ -274,15 +450,844 @@ body {
   color: #fff;
 }
 
+/* Generic page header used across admin pages */
+.page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+
+/* Typeahead dropdown styles */
+.ta-dropdown { position: absolute; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); z-index: 10000; max-height: 240px; overflow: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.6); border-radius:6px; }
+.ta-item { padding: 6px 8px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.ta-item:hover { background: rgba(255,255,255,0.02); }
+
+/* Quick-create modal for typeahead */
+.ta-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); z-index: 20000; }
+.ta-modal-content { background: var(--card-bg); padding: 1rem; border-radius: 6px; width: 480px; color: inherit; }
+.ta-modal .actions { display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.5rem; }
+.ta-modal input { width: 100%; padding: 0.6rem; border-radius:6px; border:1px solid var(--card-border); background: var(--input-bg); color: var(--input-color); }
+
+/* Registrations UI improvements */
+.registrations-controls {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.registrations-filters { display:flex; gap:0.6rem; align-items:center; margin:0.75rem 0; flex-wrap:wrap; }
+.registrations-filters label { display:flex; gap:0.4rem; align-items:center; color: #dfe6ff; }
+
+.registrations-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; table-layout: auto; }
+.registrations-table th, .registrations-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); text-align:left }
+.registration-row { background: transparent; transition: background 0.18s, transform 0.18s; }
+.registration-row:hover { background: rgba(255,255,255,0.02); transform: translateY(-2px); }
+.registration-row.unpaid { box-shadow: inset 0 0 0 1px rgba(255,204,0,0.06); }
+
+.punctuality-badge { display:inline-block; padding:0.18rem 0.45rem; border-radius:6px; font-weight:700; font-size:0.85rem; color:#fff; }
+.punctuality-badge.on-time { background: #43a047; }
+.punctuality-badge.late { background: #e53935; }
+.punctuality-badge.unknown { background: var(--muted-surface); color: #ffd884; }
+
+.registration-actions { display:flex; gap:0.4rem; align-items:center; }
+.registration-actions .btn { padding:0.35rem 0.6rem; border-radius:6px; }
+.quick-pay-btn { background: linear-gradient(90deg,#43a047 0%, #1b5e20 100%); color:#fff; border:none; padding:0.45rem 0.8rem; border-radius:6px; font-weight:700; cursor:pointer; }
+.quick-pay-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+
+@media (max-width:900px) {
+  .registrations-table th:nth-child(1), .registrations-table td.col-index { display:none; }
+}
+
+
+
 /* Utilidades */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-left { text-align: left; }
 
+/* Form fields: use muted surfaces instead of bright white so forms fit the dark theme */
+input[type="text"], input[type="password"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="file"], input[list], input[type="email"], select, textarea {
+  background: var(--muted-surface);
+  border: 1px solid var(--card-border);
+  color: #fff;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.45); }
+select { appearance: none; -webkit-appearance: none; }
+
+/* Estilos para las opciones del dropdown */
+select option {
+  background: #1e1e1e;
+  color: #fff;
+  padding: 0.5rem;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background: #2d2d2d;
+  color: #FFD700;
+}
+
+input[type="file"] { background: transparent; border: 1px dashed rgba(255,255,255,0.04); padding: 0.45rem; }
+label { color: #ffd884; font-weight:600; display:block; margin:0.6rem 0 0.25rem; }
+
+/* Make checkboxes and radios visible on dark background */
+input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-right:0.4rem; }
+
 /* Responsive básico */
+@media (max-width: 900px) {
+  .tournament-detail-container {
+    padding: 1rem;
+  }
+  
+  .tournament-info { 
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-actions {
+    flex-direction: column;
+  }
+  
+  .admin-actions .btn {
+    width: 100%;
+  }
+}
+
 @media (max-width: 700px) {
   .home-card, .pa-card, .tournament-list-container, .tournament-detail-container, .tournament-form-container {
     padding: 1.2rem 0.5rem;
     max-width: 98vw;
   }
+  
+  .tournament-detail-container h1 {
+    font-size: 1.4rem;
+    flex-direction: column;
+    text-align: center;
+  }
 }
+
+/* Admin dashboard customizations */
+.admin-dashboard.container { max-width: 1100px; margin: 20px auto; padding: 12px; }
+.admin-dashboard .active-screens h2, .admin-dashboard .live-summary h2, .admin-dashboard h2 { color: #FFD700; }
+.admin-dashboard .card { background: linear-gradient(180deg, var(--muted-surface), rgba(255,255,255,0.004)); padding:1rem; border-radius:10px; color:#fff; border:1px solid var(--card-border); }
+.admin-dashboard .tournament-box-link { align-items: center; gap:1rem; }
+.admin-dashboard .tournament-box-link .btn { padding:0.6rem 1rem; border-radius:8px; }
+.admin-dashboard .tournament-list .tournament-box-link { background: linear-gradient(90deg,#1f2230 0%, #252634 100%); border: 1px solid rgba(255,215,0,0.06); }
+.admin-dashboard .tournament-list .tournament-box-link strong { color: #FFD700; font-size:1.05rem; }
+
+/* table utility in admin */
+.pa-table { width:100%; border-collapse:collapse; }
+.pa-table th, .pa-table td { padding:0.6rem 0.8rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+
+/* QuickPay modal and helpers (replace inline styles in JS modal builder) */
+.qp-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1200; }
+.qp-modal-content { background: var(--card-bg); padding: 1rem; border-radius: 6px; max-width: 720px; width: 100%; color: inherit; }
+.qp-actions { margin-top:1rem; display:flex; gap:0.5rem; justify-content:flex-end; }
+.qp-overpay { margin-top:0.6rem; display:none; color:#900; border:1px solid #fcc; padding:0.5rem; border-radius:4px; }
+.qp-table { width:100%; border-collapse:collapse; margin-top:0.4rem; }
+.qp-table thead th { text-align:left; padding:0.25rem 0.4rem; }
+.qp-table td { padding:0.35rem 0.4rem; }
+.qp-input { width:10rem; }
+
+/* small helpers */
+.form-inline { display:inline-flex; gap:0.4rem; align-items:center; }
+.hidden { display:none !important; }
+
+/* stronger text color for meta info in tournament cards */
+.t-meta { color: #dfe6ff; }
+
+
+/* Improve table readability: sticky headers, zebra rows, wrapping cells */
+.pa-table th {
+  background: rgba(0,0,0,0.35);
+  color: #FFD700;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  text-align: left;
+}
+.pa-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.pa-table td { font-size: 0.98rem; vertical-align: middle; word-break: break-word; }
+.pa-table th, .pa-table td { white-space: normal; }
+
+/* Make tables scroll horizontally on small screens */
+.table-responsive { 
+  overflow-x: auto; 
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Registrations table specific improvements */
+.registrations-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  table-layout: fixed;
+}
+.registrations-table th, 
+.registrations-table td { 
+  padding: 0.6rem 0.5rem; 
+  border-bottom: 1px solid rgba(255,255,255,0.04); 
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.registrations-table th { 
+  background: rgba(0,0,0,0.35); 
+  color: #ffd884; 
+  font-weight: 700; 
+  text-align: left; 
+  position: sticky; 
+  top: 0; 
+  z-index: 6;
+  white-space: nowrap;
+}
+.registrations-table td { 
+  vertical-align: middle; 
+  font-size: 0.95rem; 
+}
+
+/* Column widths */
+.registrations-table .col-index { width: 40px; text-align: center; }
+.registrations-table .col-name { min-width: 180px; max-width: 250px; }
+.registrations-table .col-action { width: 90px; }
+.registrations-table .col-punctuality { width: 50px; text-align: center; }
+.registrations-table .col-time { width: 130px; }
+.registrations-table .col-paid { width: 50px; text-align: center; }
+.registrations-table .col-method { width: 90px; }
+.registrations-table .col-partial { width: 80px; }
+.registrations-table .col-personal { width: 50px; text-align: center; }
+.registrations-table .col-debt { width: 80px; }
+.registrations-table .col-pot { width: 80px; }
+.registrations-table .action-column { width: 120px; }
+.registrations-table .col-position { width: 80px; text-align: center; }
+
+.registrations-table .participant-username { color: #ffd884; font-weight: 700; }
+.registrations-table .participant-full { color: #dfe6ff; font-weight: 500; display: inline; }
+
+/* Enlaces de usuario en tablas */
+a.user-link {
+  color: #ffd884;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+a.user-link:hover {
+  color: #ffeb99;
+  border-bottom-color: #ffd884;
+  transform: translateY(-1px);
+}
+
+a.user-link:active {
+  transform: translateY(0);
+}
+
+/* Para el contexto de cash games */
+.user-cell a.user-link {
+  color: #ffd884;
+  font-weight: 600;
+}
+
+.user-cell a.user-link:hover {
+  color: #ffeb99;
+  border-bottom-color: #ffd884;
+}
+
+.registrations-table .action-column { position: sticky; right: 0; background: linear-gradient(90deg, rgba(0,0,0,0.02), rgba(0,0,0,0.0)); padding-left:0.6rem; }
+.registrations-table .action-column .quick-pay-btn { min-width:110px; }
+.registrations-table .col-debt { color: #ffcf66; font-weight:800; background: rgba(255,204,0,0.03); text-align: right; padding-right: 1rem !important; }
+.registrations-table .col-pot { color: #4caf50; font-weight: 700; text-align: right; padding-right: 1rem !important; }
+.registrations-table .col-partial { color: #ff9800; text-align: right; padding-right: 1rem !important; }
+.registrations-table .col-paid { text-align: center; font-size: 1.2rem; font-weight: bold; }
+.registrations-table .col-punctuality { text-align: center; font-size: 1.2rem; font-weight: bold; }
+.registrations-table .col-personal { text-align: center; font-size: 1.2rem; font-weight: bold; color: #4caf50; }
+.registrations-table .col-method { text-transform: capitalize; }
+.registrations-table .col-position { text-align: center; }
+.registrations-table .text-success { color: #4caf50; }
+.registrations-table .text-danger { color: #f44336; }
+.registrations-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+@media (max-width:1200px) {
+  .registrations-table .col-time { display: none; }
+  .registrations-table .col-method { display: none; }
+  .registrations-table .col-personal { display: none; }
+}
+
+@media (max-width:900px) {
+  .registrations-table .col-index { display: none; }
+  .registrations-table .col-punctuality { display: none; }
+  .registrations-table .col-partial { display: none; }
+  .registrations-table .col-pot { display: none; }
+  
+  .registrations-controls {
+    padding: 0.75rem;
+  }
+  
+  .registrations-controls > div {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  
+  .registrations-controls > div > div {
+    width: 100%;
+  }
+  
+  .registrations-controls input,
+  .registrations-controls select {
+    width: 100% !important;
+  }
+}
+
+/* Scrollable wrapper so the table header can stick inside it and not overlap page header */
+/* removed registrations-wrapper; table is back in the document flow so header sticks to viewport offset */
+
+
+/* Flash messages */
+.flash { padding: 0.8rem; margin: 1rem auto; max-width: 1100px; border-radius: 4px; text-align: center; }
+.flash-success { background:#e6ffed; color:#0b6623; border:1px solid #0b6623; }
+.flash-error { background: rgba(255,0,0,0.04); color:#ffb3b3; border:1px solid rgba(255,0,0,0.12); }
+
+/* Logout button in header */
+.btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: #FFD700; padding: 0.4rem 0.8rem; border-radius: 6px; margin-left: 0.6rem; cursor: pointer; }
+.btn-logout:hover { background: rgba(255,255,255,0.03); }
+
+/* Users table / admin users view improvements (replace inline styles) */
+.users-container { max-width: 900px; margin: 0 auto; }
+.users-table { width: 100%; border-collapse: separate; border-spacing: 0 0.7rem; }
+.users-table thead tr { background: rgba(255,255,255,0.04); color: #FFD700; }
+.users-table th, .users-table td { padding: 0.7rem 0.5rem; }
+.users-table tbody tr.user-row { background: var(--card-bg); box-shadow: 0 2px 12px rgba(255,215,0,0.14); border-radius: 12px; }
+.users-table tbody tr.user-row td { background: transparent; }
+
+.avatar-img { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #FFD700; display:inline-block; }
+.no-avatar { color: #aaa; }
+
+.role-badge { color: #fff; padding: 0.3em 1em; border-radius: 8px; font-size: 0.98em; font-weight: 600; display:inline-block; }
+.role-badge.admin { background: #3949ab; }
+.role-badge.player { background: #43a047; }
+
+.btn.small { padding: 0.4em 1.2em; font-size: 0.98em; margin-right: 0.5em; border-radius: 6px; }
+.btn.danger { background: #23243a; color: #FFD700; border: 1.2px solid #FFD700; }
+
+/* ========== MEJORAS GLOBALES DE FORMULARIOS Y TABLAS ========== */
+
+/* Formularios mejorados */
+form {
+	max-width: 100%;
+}
+
+form .form-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+form .form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+form .form-group label {
+	color: #ffd884;
+	font-weight: 600;
+	font-size: 0.9rem;
+	letter-spacing: 0.3px;
+}
+
+form .form-group input,
+form .form-group select,
+form .form-group textarea {
+	padding: 0.7rem 1rem;
+	border-radius: 6px;
+	border: 1px solid rgba(255, 215, 0, 0.3);
+	background: var(--input-bg);
+	color: var(--input-color);
+	font-size: 1rem;
+	transition: all 0.2s;
+}
+
+form .form-group input:focus,
+form .form-group select:focus,
+form .form-group textarea:focus {
+	outline: none;
+	border-color: #FFD700;
+	box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+form .form-group input:disabled,
+form .form-group select:disabled,
+form .form-group textarea:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+form .form-actions {
+	display: flex;
+	gap: 1rem;
+	justify-content: flex-end;
+	margin-top: 1.5rem;
+	flex-wrap: wrap;
+}
+
+/* Tablas mejoradas globalmente */
+table {
+	width: 100%;
+	border-collapse: collapse;
+	background: rgba(255, 255, 255, 0.02);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+table thead {
+	background: rgba(0, 0, 0, 0.35);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+table th {
+	padding: 1rem 0.75rem;
+	text-align: left;
+	color: #ffd884;
+	font-weight: 700;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+table td {
+	padding: 0.75rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	color: #dfe6ff;
+}
+
+table tbody tr {
+	transition: background 0.2s;
+}
+
+table tbody tr:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+
+table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+/* Cards consistentes */
+.card, .info-card, .stats-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 12px;
+	padding: 1.5rem;
+	transition: all 0.3s;
+}
+
+.card:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 215, 0, 0.2);
+}
+
+.card h2, .card h3, .info-card h2, .info-card h3, .stats-card h2, .stats-card h3 {
+	color: #FFD700;
+	margin-top: 0;
+	margin-bottom: 1rem;
+	border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+	padding-bottom: 0.5rem;
+}
+
+/* Badges consistentes */
+.badge {
+	display: inline-block;
+	padding: 0.4rem 0.9rem;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.badge-success {
+	background: #4caf50;
+	color: #fff;
+}
+
+.badge-warning {
+	background: #ff9800;
+	color: #fff;
+}
+
+.badge-error, .badge-danger {
+	background: #f44336;
+	color: #fff;
+}
+
+.badge-info {
+	background: #2196f3;
+	color: #fff;
+}
+
+.badge-primary {
+	background: #FFD700;
+	color: #1a1a2e;
+}
+
+/* Alerts y mensajes flash mejorados */
+.alert, .flash {
+	padding: 1rem 1.5rem;
+	border-radius: 8px;
+	margin-bottom: 1.5rem;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.alert-success, .flash-success {
+	background: rgba(76, 175, 80, 0.15);
+	border: 1px solid #4caf50;
+	color: #4caf50;
+}
+
+.alert-warning, .flash-warning {
+	background: rgba(255, 152, 0, 0.15);
+	border: 1px solid #ff9800;
+	color: #ff9800;
+}
+
+.alert-error, .flash-error {
+	background: rgba(244, 67, 54, 0.15);
+	border: 1px solid #f44336;
+	color: #f44336;
+}
+
+.alert-info, .flash-info {
+	background: rgba(33, 150, 243, 0.15);
+	border: 1px solid #2196f3;
+	color: #2196f3;
+}
+
+/* Loading states */
+.loading {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	border: 3px solid rgba(255, 215, 0, 0.3);
+	border-radius: 50%;
+	border-top-color: #FFD700;
+	animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+/* Empty states */
+.empty-state {
+	text-align: center;
+	padding: 3rem 1.5rem;
+	color: #dfe6ff;
+	opacity: 0.7;
+}
+
+.empty-state svg {
+	width: 80px;
+	height: 80px;
+	opacity: 0.5;
+	margin-bottom: 1rem;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1024px) {
+	.tournament-list-container,
+	.tournament-detail-container,
+	.tournament-form-container {
+		max-width: 95%;
+	}
+}
+
+@media (max-width: 768px) {
+	.tournament-list-container,
+	.tournament-detail-container,
+	.tournament-form-container {
+		padding: 1.5rem;
+		margin: 24px 0.6rem;
+	}
+
+	.home-card, .pa-card {
+		padding: 2rem 1.5rem;
+		margin: 24px 0.6rem;
+		max-width: none;
+	}
+
+	.pa-header {
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.pa-header .nav {
+		flex-direction: column;
+	}
+
+	form .form-row {
+		grid-template-columns: 1fr;
+	}
+
+	form .form-actions {
+		flex-direction: column;
+	}
+
+	form .form-actions button,
+	form .form-actions .btn {
+		width: 100%;
+	}
+
+	table {
+		font-size: 0.85rem;
+	}
+
+	table th,
+	table td {
+		padding: 0.5rem 0.4rem;
+	}
+
+	/* Ocultar columnas menos importantes en mobile */
+	table .hide-mobile {
+		display: none;
+	}
+}
+
+/* ===== ANIMACIONES Y MICRO-INTERACCIONES GLOBALES ===== */
+
+/* Fade in suave para todos los elementos principales */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Aplicar fade in a cards y secciones principales */
+.pa-card,
+.home-card,
+.admin-dashboard-modern,
+.admin-cash-modern,
+.admin-tournaments-modern,
+.registrations-modern {
+	animation: fadeIn 0.5s ease-out;
+}
+
+/* Hover suave para todos los botones */
+button,
+.btn,
+a.btn {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active,
+.btn:active,
+a.btn:active {
+	transform: scale(0.96);
+}
+
+/* Pulse sutil para badges importantes */
+@keyframes pulseGlow {
+	0%, 100% {
+		box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 16px rgba(255, 215, 0, 0.6);
+	}
+}
+
+/* Shimmer effect para loading states */
+@keyframes shimmer {
+	0% {
+		background-position: -1000px 0;
+	}
+	100% {
+		background-position: 1000px 0;
+	}
+}
+
+.loading {
+	background: linear-gradient(
+		90deg,
+		rgba(255, 255, 255, 0.02) 0%,
+		rgba(255, 255, 255, 0.08) 50%,
+		rgba(255, 255, 255, 0.02) 100%
+	);
+	background-size: 1000px 100%;
+	animation: shimmer 2s infinite linear;
+}
+
+/* Smooth transitions para inputs */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+textarea,
+select {
+	transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.15);
+}
+
+/* Ripple effect para clicks en botones */
+@keyframes ripple {
+	from {
+		opacity: 1;
+		transform: scale(0);
+	}
+	to {
+		opacity: 0;
+		transform: scale(2.5);
+	}
+}
+
+/* Bounce sutil para elementos interactivos */
+@keyframes subtleBounce {
+	0%, 100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-4px);
+	}
+}
+
+/* Glow effect para elementos destacados */
+.glow-effect {
+	animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Smooth scroll behavior */
+html {
+	scroll-behavior: smooth;
+}
+
+/* Transiciones para modales y overlays */
+.modal,
+.overlay {
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover lift para cards */
+.tournament-card-modern:hover,
+.cash-card-modern:hover,
+.content-card:hover {
+	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.spinner {
+	animation: spin 1s linear infinite;
+}
+
+/* Success/Error message fade out */
+@keyframes messageFadeOut {
+	0% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	80% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+}
+
+.message-auto-hide {
+	animation: messageFadeOut 4s ease-out forwards;
+}
+
+/* Tooltip smooth appear */
+@keyframes tooltipAppear {
+	from {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+[title]:hover::after {
+	animation: tooltipAppear 0.2s ease-out;
+}
+
+/* Scale on hover for interactive elements */
+.interactive:hover {
+	transform: scale(1.02);
+	transition: transform 0.2s ease;
+}
+
+/* Gradient animation for special elements */
+@keyframes gradientShift {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+.gradient-animated {
+	background-size: 200% 200%;
+	animation: gradientShift 3s ease infinite;
+}
+
+/* Debt Display Styles */
+.debt-owed {
+	color: #f44336;
+	font-weight: 700;
+	padding: 0.25rem 0.5rem;
+	background: rgba(244, 67, 54, 0.1);
+	border-radius: 4px;
+	cursor: help;
+}
+
+.debt-credit {
+	color: #4CAF50;
+	font-weight: 700;
+	padding: 0.25rem 0.5rem;
+	background: rgba(76, 175, 80, 0.1);
+	border-radius: 4px;
+	cursor: help;
+}
+
+.debt-zero {
+	color: #9e9e9e;
+	font-weight: 600;
+}
+
+

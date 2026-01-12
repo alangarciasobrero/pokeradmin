@@ -1,0 +1,64 @@
+<header class="pa-header pa-header-player">
+    <a href="/" class="brand logo-enhanced" style="text-decoration:none; color:inherit; display:inline-flex; align-items:center; gap:0.8rem;">
+        <span class="logo-wrapper">
+            <img src="/images/ramos-poker-logo.svg" alt="Ramos Poker" class="logo-img" width="48" height="48" />
+        </span>
+        <span class="brand-title-enhanced">Ramos Poker</span>
+    </a>
+    <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/tournaments/upcoming">Próximos Torneos</a>
+        <a href="/stats/leaderboard">📊 Ranking</a>
+        {{#if currentUser.id}}
+        <a href="/stats/user/{{currentUser.id}}">📈 Mis Estadísticas</a>
+        {{/if}}
+    </nav>
+    <div class="actions">
+        {{#if username}}
+            <a href="/profile" class="btn-link">Mi perfil ({{username}})</a>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit" class="btn-logout">Salir</button>
+            </form>
+        {{else}}
+            <a href="/login">Iniciar sesión</a>
+        {{/if}}
+    </div>
+</header>
+
+<style>
+.logo-enhanced {
+    transition: all 0.3s ease;
+}
+.logo-enhanced:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.4));
+}
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: logoFloat 3s ease-in-out infinite;
+}
+.logo-img {
+    filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3));
+    transition: all 0.3s ease;
+}
+.logo-enhanced:hover .logo-img {
+    filter: drop-shadow(0 4px 16px rgba(255, 215, 0, 0.6));
+    transform: scale(1.05);
+}
+.brand-title-enhanced {
+    font-weight: 700;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    letter-spacing: 1px;
+}
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+</style>

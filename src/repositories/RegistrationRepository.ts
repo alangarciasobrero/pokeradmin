@@ -1,6 +1,7 @@
 // Repositorio para la entidad Registration
 // Encapsula la lógica de acceso a datos y operaciones sobre inscripciones
 import { Registration } from '../models/Registration';
+import fs from 'fs';
 
 /**
  * Clase RegistrationRepository
@@ -11,18 +12,8 @@ export class RegistrationRepository {
    * Obtiene todas las inscripciones
    */
   async getAll(): Promise<Registration[]> {
-    try {
-      return await Registration.findAll();
-    } catch (err: any) {
-      // Fallback for legacy schema where column might be `player_id` instead of `user_id`
-      if (err && err.parent && err.parent.errno === 1054) {
-        const sequelize = (Registration as any).sequelize;
-        const rows: any[] = await sequelize.query('SELECT id, player_id as user_id, tournament_id, registration_date, punctuality FROM registrations', { type: (sequelize as any).QueryTypes.SELECT });
-        // Map raw rows to Registration-like objects (lightweight)
-        return rows.map(r => (Registration.build ? Registration.build(r) : r));
-      }
-      throw err;
-    }
+    // Simple read via Sequelize. After DB migration to `user_id` this should work without fallbacks.
+    return await Registration.findAll();
   }
 
   /**
@@ -33,34 +24,18 @@ export class RegistrationRepository {
     const perPage = Math.min(200, Math.max(5, Number(options.perPage) || 20));
     const offset = (page - 1) * perPage;
 
-    try {
-      const result = await Registration.findAndCountAll({
-        where: options.where || {},
-        limit: perPage,
-        offset,
-        order: [['registration_date', 'DESC']]
-      });
-      return {
-        rows: result.rows,
-        count: Number(result.count),
-        page,
-        perPage
-      };
-    } catch (err: any) {
-      // If column user_id missing, fallback to raw query and implement pagination manually
-      if (err && err.parent && err.parent.errno === 1054) {
-        const sequelize = (Registration as any).sequelize;
-        // simple raw select with limit/offset
-        const rows: any[] = await sequelize.query(
-          `SELECT id, player_id as user_id, tournament_id, registration_date, punctuality FROM registrations ORDER BY registration_date DESC LIMIT ${perPage} OFFSET ${offset}`,
-          { type: (sequelize as any).QueryTypes.SELECT }
-        );
-        const countRows: any[] = await sequelize.query(`SELECT COUNT(*) as c FROM registrations`, { type: (sequelize as any).QueryTypes.SELECT });
-        const cnt = Number(countRows[0].c || 0);
-        return { rows: rows.map(r => (Registration.build ? Registration.build(r) : r)), count: cnt, page, perPage };
-      }
-      throw err;
-    }
+    const result = await Registration.findAndCountAll({
+      where: options.where || {},
+      limit: perPage,
+      offset,
+      order: [['registration_date', 'DESC']]
+    });
+    return {
+      rows: result.rows,
+      count: Number(result.count),
+      page,
+      perPage
+    };
   }
 
   /**
@@ -74,7 +49,18 @@ export class RegistrationRepository {
    * Crea una nueva inscripción
    */
   async create(data: Partial<Registration>): Promise<Registration> {
-    return Registration.create(data);
+    try {
+      return await Registration.create(data);
+    } catch (err: any) {
+      // Persist error details for debugging, but rethrow so route can handle it
+      try {
+        const logPath = 'logs/registration_errors.log';
+        const payload = { time: new Date().toISOString(), error: { message: err && err.message ? err.message : String(err), errno: err && err.parent && err.parent.errno ? err.parent.errno : null, sqlMessage: err && err.parent && err.parent.sqlMessage ? err.parent.sqlMessage : null, stack: err && err.stack ? err.stack : null }, attempted: data };
+        try { fs.mkdirSync('logs', { recursive: true }); } catch (_) {}
+        fs.appendFileSync(logPath, JSON.stringify(payload) + '\n');
+      } catch (_) {}
+      throw err;
+    }
   }
 
   /**

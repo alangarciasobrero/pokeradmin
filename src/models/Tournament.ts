@@ -6,6 +6,7 @@ export class Tournament extends Model {
   public id!: number;
   public tournament_name!: string;
   public start_date!: Date;
+  public gaming_date?: Date | null;
   public buy_in!: number;
   public re_entry!: number;
   public knockout_bounty!: number;
@@ -15,6 +16,11 @@ export class Tournament extends Model {
   public blind_levels!: number;
   public small_blind!: number;
   public punctuality_discount!: number;
+  public punctuality_bonus_chips!: number;
+  public registration_open!: boolean;
+  public end_date?: Date | null;
+  public pinned!: boolean;
+  public season_id?: number | null;
 }
 
 Tournament.init(
@@ -28,9 +34,22 @@ Tournament.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    name: {
+      type: DataTypes.VIRTUAL,
+      get(this: any) {
+        return this.getDataValue('tournament_name');
+      },
+      set(this: any, val: any) {
+        this.setDataValue('tournament_name', val);
+      }
+    },
     start_date: {
       type: DataTypes.DATE,
       allowNull: false,
+    },
+    gaming_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
     },
     buy_in: {
       type: DataTypes.DECIMAL(15,2),
@@ -39,35 +58,52 @@ Tournament.init(
     re_entry: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 0,
     },
     knockout_bounty: {
       type: DataTypes.DECIMAL(15,2),
       allowNull: false,
+      defaultValue: 0,
     },
     starting_stack: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 1000,
     },
     count_to_ranking: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
+      defaultValue: false,
     },
     double_points: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
+      defaultValue: false,
     },
     blind_levels: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 10,
     },
     small_blind: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 10,
     },
     punctuality_discount: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false,
+      defaultValue: 0,
     },
+    punctuality_bonus_chips: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    registration_open: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    end_date: { type: DataTypes.DATE, allowNull: true },
+    pinned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    season_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   },
   {
     sequelize,
@@ -76,3 +112,7 @@ Tournament.init(
     timestamps: false,
   }
 );
+
+// Import Season after model initialization to avoid circular dependencies
+import { Season } from './Season';
+Tournament.belongsTo(Season, { foreignKey: 'season_id', as: 'season' });

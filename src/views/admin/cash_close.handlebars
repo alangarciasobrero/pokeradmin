@@ -1,0 +1,82 @@
+<section class="pa-card cash-close">
+  <h1 style="color:#f9a825">💰 Resumen de Cierre — Mesa {{cash.id}}</h1>
+  <p style="color:#999">Inicio: {{formatDateTime cash.start_datetime}} — Dealer: {{cash.dealer}}</p>
+
+  <div class="summary-grid">
+    <div class="summary-card commission">
+      <h3>💵 Total Comisión</h3>
+      <div class="amount">${{currency totalCommission}}</div>
+      <p class="detail">Suma de {{shifts.length}} turno(s)</p>
+    </div>
+    
+    <div class="summary-card tips">
+      <h3>💸 Total Propinas</h3>
+      <div class="amount">${{currency totalTips}}</div>
+      <p class="detail">Para el dealer</p>
+    </div>
+  </div>
+
+  {{#if debtors.length}}
+  <div class="debtors-section">
+    <h2>📋 Jugadores con deuda (FIADO)</h2>
+    <table class="debtors-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombre</th>
+          <th>Pedido</th>
+          <th>Pagado</th>
+          <th>Deuda</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each debtors}}
+        <tr>
+          <td><strong>{{this.username}}</strong></td>
+          <td>{{this.fullName}}</td>
+          <td>${{currency this.requested}}</td>
+          <td>${{currency this.paid}}</td>
+          <td class="debt-amount">${{currency this.debt}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div style="padding:1rem;background:#e8f5e9;border-radius:8px;margin:1rem 0;">
+    <p style="margin:0;color:#2e7d32">✅ No hay deudores pendientes</p>
+  </div>
+  {{/if}}
+
+  <form method="post" action="/admin/games/cash/{{cash.id}}/close">
+    <input type="hidden" name="total_commission" value="{{totalCommission}}" />
+    <input type="hidden" name="total_tips" value="{{totalTips}}" />
+    
+    <div style="margin-top:2rem;padding:1rem;background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.3);border-radius:8px;">
+      <p style="margin:0 0 1rem 0;font-weight:600;color:#d32f2f;">⚠️ ¿Confirmar cierre definitivo?</p>
+      <p style="margin:0 0 1rem 0;color:#666;font-size:0.9rem;">Se registrarán los pagos de comisión y propinas al sistema</p>
+      <button class="btn btn-danger" type="submit" style="background:#c62828;color:#fff">✓ Cerrar mesa y registrar pagos</button>
+      <a class="btn" href="/admin/games/cash/{{cash.id}}" style="margin-left:0.6rem;background:#757575;color:#fff;text-decoration:none">Cancelar</a>
+    </div>
+  </form>
+
+  <style>
+    .cash-close { max-width: 800px; margin: 2rem auto; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
+    .summary-card { padding: 1.5rem; border-radius: 12px; text-align: center; }
+    .summary-card.commission { background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%); color: white; }
+    .summary-card.tips { background: linear-gradient(135deg, #ffa726 0%, #ffb74d 100%); color: white; }
+    .summary-card h3 { margin: 0 0 1rem 0; font-size: 1.1rem; opacity: 0.9; }
+    .summary-card .amount { font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; }
+    .summary-card .detail { margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.8; }
+    
+    .debtors-section { margin: 2rem 0; }
+    .debtors-section h2 { color: #f44336; margin-bottom: 1rem; }
+    .debtors-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    .debtors-table th { background: rgba(255,255,255,0.1); color: #fff; padding: 0.75rem; text-align: left; }
+    .debtors-table td { padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; }
+    .debtors-table .debt-amount { color: #ff5252; font-weight: 700; font-size: 1.1rem; }
+    
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-block; }
+  </style>
+</section>

@@ -1,15 +1,363 @@
-{{!-- Cash game form (used by admin) --}}
-<div class="cash-form">
-  <h1>{{formTitle}}</h1>
-  <form action="{{formAction}}" method="POST">
-    <label for="user_id">User ID</label>
-    <input type="number" name="user_id" id="user_id" required>
-    <label for="amount">Amount</label>
-    <input type="number" name="amount" id="amount" step="0.01" required>
-    <label for="date">Date</label>
-    <input type="datetime-local" name="date" id="date" required>
-    <label for="description">Description</label>
-    <input type="text" name="description" id="description">
-    <button type="submit">Guardar</button>
+{{!-- Formulario de mesa cash moderna --}}
+<div class="cash-form-modern">
+  <div class="form-header">
+    <h1>🎲 {{formTitle}}</h1>
+    <a href="/admin/games/cash/list" class="btn-back">← Volver</a>
+  </div>
+
+  {{#if error}}
+    <div class="alert alert-error">
+      <strong>⚠️ Error:</strong> {{error}}
+    </div>
+  {{/if}}
+
+  <form action="{{formAction}}" method="POST" class="modern-form">
+    <div class="form-section">
+      <h3>💰 Configuración de la Mesa</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="initial_pot">💵 Caja Inicial Requerida *</label>
+          <input 
+            type="number" 
+            name="initial_pot" 
+            id="initial_pot" 
+            min="0"
+            required 
+            value="{{#if cash}}{{cash.initial_pot}}{{/if}}"
+            class="form-input"
+            placeholder="Ej: 1000"
+          >
+          <small class="form-hint">Monto mínimo que cada jugador debe tener en caja para entrar a la mesa</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="small_blind">🎯 Ciega Chica *</label>
+          <input 
+            type="number" 
+            name="small_blind" 
+            id="small_blind" 
+            min="1"
+            required 
+            value="{{#if cash}}{{cash.small_blind}}{{/if}}"
+            class="form-input"
+            placeholder="Ej: 5"
+          >
+          <small class="form-hint">Valor de la ciega chica</small>
+        </div>
+
+        <div class="form-group">
+          <label for="big_blind">🎯 Ciega Grande *</label>
+          <input 
+            type="number" 
+            name="big_blind"
+            id="big_blind" 
+            class="form-input" 
+            min="1"
+            required
+            placeholder="Por defecto 2x ciega pequeña"
+            value="{{#if cash}}{{cash.big_blind}}{{/if}}"
+          >
+          <small class="form-hint">Se calcula automáticamente (2x ciega pequeña) pero puede modificarse</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>👤 Repartidor</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dealer">🎴 Repartidor Inicial</label>
+          <input 
+            type="text" 
+            name="dealer" 
+            id="dealer" 
+            value="{{#if cash}}{{cash.dealer}}{{/if}}"
+            class="form-input"
+            placeholder="Nombre del repartidor (opcional)"
+          >
+          <small class="form-hint">Quién reparte las cartas al inicio</small>
+        </div>
+      </div>
+    </div>
+
+    {{#if cash}}
+    <div class="form-section">
+      <h3>⌛ Fecha y Hora</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="start_datetime">📅 Fecha/Hora Inicio</label>
+          <input 
+            type="datetime-local" 
+            name="start_datetime" 
+            id="start_datetime" 
+            value="{{cash.start_datetime}}" 
+            class="form-input"
+          >
+        </div>
+        
+        {{#if cash.end_datetime}}
+        <div class="form-group">
+          <label for="end_datetime">📅 Fecha/Hora Fin</label>
+          <input 
+            type="datetime-local" 
+            name="end_datetime" 
+            id="end_datetime" 
+            value="{{cash.end_datetime}}" 
+            class="form-input"
+          >
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="form-actions">
+      <a href="/admin/games/cash/list" class="btn-cancel">Cancelar</a>
+      <button type="submit" class="btn-submit">
+        {{#if cash}}✅ Actualizar Mesa{{else}}➕ Crear Mesa{{/if}}
+      </button>
+    </div>
   </form>
 </div>
+
+<style>
+.cash-form-modern {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.form-header h1 {
+  color: #FFD700;
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.btn-back {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #dfe6ff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateX(-4px);
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.alert-error {
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.modern-form {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.form-section h3 {
+  color: #FFD700;
+  font-size: 1.3rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #dfe6ff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-input {
+  padding: 0.875rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.form-input:read-only {
+  background: rgba(255, 255, 255, 0.02);
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form-hint {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-cancel {
+  padding: 0.875rem 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #dfe6ff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-submit {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  color: #FFD700;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .cash-form-modern {
+    padding: 1rem;
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-back {
+    width: 100%;
+    text-align: center;
+  }
+
+  .modern-form {
+    padding: 1.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+
+<script>
+// Calcular ciega grande automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+  const smallBlindInput = document.getElementById('small_blind');
+  const bigBlindInput = document.getElementById('big_blind');
+  
+  if (smallBlindInput && bigBlindInput) {
+    smallBlindInput.addEventListener('input', function() {
+      const smallBlind = parseFloat(this.value) || 0;
+      bigBlindInput.value = (smallBlind * 2).toFixed(2);
+    });
+    
+    // Calcular al cargar si hay valor
+    if (smallBlindInput.value) {
+      const smallBlind = parseFloat(smallBlindInput.value) || 0;
+      bigBlindInput.value = (smallBlind * 2).toFixed(2);
+    }
+  }
+});
+</script>

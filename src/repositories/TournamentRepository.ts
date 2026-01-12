@@ -1,4 +1,5 @@
 import { Tournament } from '../models/Tournament';
+import { Season } from '../models/Season';
 
 /**
  * Repositorio para la entidad Tournament
@@ -6,11 +7,17 @@ import { Tournament } from '../models/Tournament';
  */
 export class TournamentRepository {
     /**
-     * Obtiene todos los torneos registrados en la base de datos
+     * Obtiene todos los torneos activos (sin finalizar - end_date es null)
+     * Incluye torneos con inscripciones cerradas pero aún en curso
      * @returns Promise<Tournament[]>
      */
     async getAll(): Promise<Tournament[]> {
-        return Tournament.findAll();
+        return Tournament.findAll({
+            where: {
+                end_date: null  // Solo torneos sin finalizar
+            },
+            order: [['start_date', 'DESC']]
+        });
     }
 
     /**
@@ -30,6 +37,7 @@ export class TournamentRepository {
         blind_levels: number;
         small_blind: number;
         punctuality_discount: number;
+        punctuality_bonus_chips?: number;
     }): Promise<Tournament> {
         return Tournament.create(data);
     }
@@ -40,7 +48,9 @@ export class TournamentRepository {
      * @returns Promise<Tournament | null>
      */
     async getById(id: number): Promise<Tournament | null> {
-        return Tournament.findByPk(id);
+        return Tournament.findByPk(id, {
+            include: [{ model: Season, as: 'season' }]
+        });
     }
 
     /**
@@ -61,6 +71,7 @@ export class TournamentRepository {
         blind_levels: number;
         small_blind: number;
         punctuality_discount: number;
+        pinned: boolean;
     }>): Promise<[number, Tournament[]]> {
         return Tournament.update(data, {
             where: { id },
@@ -76,5 +87,17 @@ export class TournamentRepository {
         async deleteById(id: number): Promise<number> {
             const result = await (await import('../models/Tournament')).Tournament.destroy({ where: { id } });
             return result;
+        }
+
+        /**
+         * Obtiene torneos que cuentan para ranking (o todos si includeAll=true)
+         * Opcionalmente filtra por temporada
+         */
+        async getTournamentsForRanking(includeAll = false, seasonId: number | null = null): Promise<Tournament[]> {
+            const where: any = includeAll ? {} : { count_to_ranking: true };
+            if (seasonId !== null) {
+                where.season_id = seasonId;
+            }
+            return Tournament.findAll({ where });
         }
 }

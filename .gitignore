@@ -8,6 +8,9 @@ dist/
 
 .vscode/
 
+# Scripts temporales (opcional, descomentar si no quieres versionarlos)
+# scripts/
+
 # Logs
 logs
 *.log
@@ -147,6 +150,15 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Archivos temporales y de prueba locales
 cookies.txt
 import_sample.csv
+errorlog.txt
+*.log.txt
+tmp_*.html
 qc/
+
+# Archivos de backup y dumps antiguos
+*.bak
+dumps/*.sql

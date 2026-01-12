@@ -4,8 +4,19 @@
     <form class="tournament-form" action="{{formAction}}" method="POST">
         <label for="tournament_name">Nombre del torneo:</label>
         <input type="text" id="tournament_name" name="tournament_name" value="{{tournament.tournament_name}}" required>
-        <label for="start_date">Fecha:</label>
-        <input type="date" id="start_date" name="start_date" value="{{tournament.start_date}}" required>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div>
+                <label for="start_date">📅 Fecha:</label>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <input type="text" id="start_date" name="start_date" value="{{formatDateInput tournament.start_date}}" placeholder="dd/mm/yyyy" class="date-input" required style="flex:1;">
+                    <button type="button" id="todayBtn" style="padding:0.5rem 1rem;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Hoy</button>
+                </div>
+            </div>
+            <div>
+                <label for="start_time">⏰ Hora:</label>
+                <input type="time" id="start_time" name="start_time" value="{{formatTimeInput tournament.start_date}}" required style="padding:0.5rem;border:1px solid #ddd;border-radius:4px;width:100%;">
+            </div>
+        </div>
         <div class="tournament-form-columns">
             <div class="tournament-form-col">
                 <label for="buy_in">Buy-in:</label>
@@ -23,19 +34,78 @@
                 </select>
             </div>
             <div class="tournament-form-col">
-                <label for="blind_levels">Niveles de ciegas:</label>
+                <label for="blind_levels">🔄 Niveles de Re-entry:</label>
                 <input type="number" id="blind_levels" name="blind_levels" value="{{tournament.blind_levels}}" required>
-                <label for="small_blind">Small Blind:</label>
-                <input type="number" id="small_blind" name="small_blind" value="{{tournament.small_blind}}" required>
-                <label for="punctuality_discount">Descuento por puntualidad:</label>
-                <input type="number" id="punctuality_discount" name="punctuality_discount" value="{{tournament.punctuality_discount}}" required>
+                <small style="color:#888;font-size:0.85rem;display:block;margin-top:-5px;margin-bottom:10px;">Cuántos niveles de ciegas antes de cerrar registros</small>
+                <label for="small_blind">⏱️ Duración de cada ciega (minutos):</label>
+                <input type="number" id="small_blind" name="small_blind" value="{{#if tournament.small_blind}}{{tournament.small_blind}}{{else}}10{{/if}}" required min="1" max="60">
+                <small style="color:#888;font-size:0.85rem;display:block;margin-top:-5px;margin-bottom:10px;">Cuánto dura cada nivel de ciega</small>
+                <label for="punctuality_apply" class="checkbox-inline">
+                    <input type="checkbox" id="punctuality_apply" name="punctuality_apply" {{#if tournament.punctuality_discount}}checked{{/if}}> Aplicar puntualidad
+                </label>
+                <label for="punctuality_discount">Descuento por puntualidad (%):</label>
+                <input type="number" id="punctuality_discount" name="punctuality_discount" value="{{tournament.punctuality_discount}}" min="0" max="100" {{#unless tournament.punctuality_discount}}disabled{{/unless}}>
+                <label for="punctuality_bonus_chips">🎁 Fichas extras por puntualidad:</label>
+                <input type="number" id="punctuality_bonus_chips" name="punctuality_bonus_chips" value="{{tournament.punctuality_bonus_chips}}" min="0" step="100" {{#unless tournament.punctuality_discount}}disabled{{/unless}}>
+                <small style="color:#888;font-size:0.85rem;display:block;margin-top:-5px;margin-bottom:10px;">Fichas adicionales para jugadores puntuales</small>
                 <label for="count_to_ranking">Cuenta para ranking:</label>
                 <select id="count_to_ranking" name="count_to_ranking" required>
                     <option value="true" {{#if tournament.count_to_ranking}}selected{{/if}}>Sí</option>
                     <option value="false" {{#unless tournament.count_to_ranking}}selected{{/unless}}>No</option>
+                </select>
+                <label for="pinned" class="checkbox-inline">
+                    <input type="checkbox" id="pinned" name="pinned" {{#if tournament.pinned}}checked{{/if}}> ⭐ Destacar en dashboard (máximo 5)
+                </label>
+                <label for="season_id">Temporada / Ranking:</label>
+                <select id="season_id" name="season_id">
+                    <option value="">Sin temporada</option>
+                    {{#each seasons}}
+                    <option value="{{this.id}}" {{#ifEquals this.id ../tournament.season_id}}selected{{/ifEquals}}>
+                        {{this.nombre}} ({{formatDate this.fecha_inicio}} - {{formatDate this.fecha_fin}})
+                    </option>
+                    {{/each}}
                 </select>
             </div>
         </div>
         <button type="submit">Guardar</button>
     </form>
 </div>
+
+<script src="/js/date-input-validator.js"></script>
+<script>
+    (function(){
+        // Toggle puntualidad
+        const chk = document.getElementById('punctuality_apply');
+        const input = document.getElementById('punctuality_discount');
+        const bonusInput = document.getElementById('punctuality_bonus_chips');
+        if (chk && input && bonusInput) {
+            function toggle() {
+                if (chk.checked) {
+                    input.removeAttribute('disabled');
+                    bonusInput.removeAttribute('disabled');
+                    if (!input.value) input.value = '20';
+                    if (!bonusInput.value) bonusInput.value = '0';
+                } else {
+                    input.setAttribute('disabled','disabled');
+                    bonusInput.setAttribute('disabled','disabled');
+                }
+            }
+            chk.addEventListener('change', toggle);
+            toggle();
+        }
+        
+        // Botón "Hoy"
+        const todayBtn = document.getElementById('todayBtn');
+        const dateInput = document.getElementById('start_date');
+        if (todayBtn && dateInput) {
+            todayBtn.addEventListener('click', function() {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+                dateInput.value = `${day}/${month}/${year}`;
+                dateInput.classList.remove('invalid');
+            });
+        }
+    })();
+</script>

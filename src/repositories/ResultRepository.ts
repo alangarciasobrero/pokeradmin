@@ -14,6 +14,9 @@ export class ResultRepository {
     return Result.findAll();
   }
 
+  // Cache for table columns to avoid repeated describeTable calls and race conditions
+  private static resultsTableCols: string[] | null = null;
+
   /**
    * Obtiene un resultado por su ID
    */
@@ -25,7 +28,17 @@ export class ResultRepository {
    * Crea un nuevo resultado
    */
   async create(data: Partial<Result>): Promise<Result> {
-    return Result.create(data);
+    try {
+      return await Result.create(data);
+    } catch (err: any) {
+      try {
+        const fs = await import('fs');
+        try { fs.mkdirSync('logs', { recursive: true }); } catch (_) {}
+        const payload = { time: new Date().toISOString(), error: { message: err && err.message ? err.message : String(err), errno: err && err.parent && err.parent.errno ? err.parent.errno : null, sqlMessage: err && err.parent && err.parent.sqlMessage ? err.parent.sqlMessage : null, stack: err && err.stack ? err.stack : null }, attempted: data };
+        try { fs.appendFileSync('logs/result_errors.log', JSON.stringify(payload) + '\n'); } catch (_) {}
+      } catch (_) {}
+      throw err;
+    }
   }
 
   /**
@@ -43,5 +56,19 @@ export class ResultRepository {
    */
   async deleteById(id: number): Promise<number> {
     return Result.destroy({ where: { id } });
+  }
+
+  /**
+   * Obtiene todos los resultados agrupados por torneo
+   */
+  async getByTournament(): Promise<Record<number, Result[]>> {
+    const rows = await Result.findAll();
+    const map: Record<number, Result[]> = {};
+    for (const r of rows) {
+      const tid = Number((r as any).tournament_id);
+      if (!map[tid]) map[tid] = [];
+      map[tid].push(r);
+    }
+    return map;
   }
 }

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dumps/
+logs/
+tmp/
+.git/
+**/*.sql
+**/*.log

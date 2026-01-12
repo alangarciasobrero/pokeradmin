@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
   blind_levels INT DEFAULT 0,
   small_blind INT DEFAULT 0,
   punctuality_discount INT DEFAULT 0,
+  punctuality_bonus_chips INT DEFAULT 0 COMMENT 'Fichas extras otorgadas por llegar puntual',
   season_id INT,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

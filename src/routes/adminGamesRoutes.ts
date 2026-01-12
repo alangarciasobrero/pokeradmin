@@ -1,38 +1,77 @@
 import { Router, Request, Response } from 'express';
+import { requireAdmin } from '../middleware/requireAuth';
 import { Tournament } from '../models/Tournament';
 import CashGame from '../models/CashGame';
+import { getCurrentGamingDate, formatGamingDateSQL } from '../utils/gamingDate';
 
 
 const router = Router();
 
-// Middleware para proteger solo admin (igual que en adminUserRoutes)
-function requireAdmin(req: Request, res: Response, next: Function) {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.status(403).send('Acceso denegado');
-  }
-  next();
-}
+// use central requireAdmin middleware imported above
 
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
-  // Obtener torneos y cash games
+  // Obtener torneos y cash games de la jornada actual
   let tournaments: any[] = [];
   let cashGames: any[] = [];
+  let activeTournament: any = null;
   let summary: any = {};
+  
+  const currentGamingDate = formatGamingDateSQL(getCurrentGamingDate());
+  
   try {
-    tournaments = await Tournament.findAll({ order: [['start_date', 'DESC']] });
+    // Obtener torneos de hoy (por gaming_date) ordenados por pinned y fecha
+    tournaments = await Tournament.findAll({ 
+      where: { gaming_date: currentGamingDate },
+      order: [['pinned', 'DESC'], ['start_date', 'DESC']] 
+    });
+    
+    // Buscar torneo activo (registration_open = true Y no cerrado)
+    const now = new Date();
+    activeTournament = tournaments.find((t: any) => 
+      t.registration_open === true && 
+      (!t.end_date || new Date(t.end_date) >= now)
+    );
   } catch (err) {
     console.error('Error loading tournaments', err);
     tournaments = [];
   }
+  
   try {
-    cashGames = await CashGame.findAll({ order: [['start_datetime', 'DESC']] });
+    // Obtener cash games activas (no cerradas) o de la jornada actual
+    const { Op } = await import('sequelize');
+    cashGames = await CashGame.findAll({ 
+      where: {
+        [Op.or]: [
+          { end_datetime: null }, // Mesas activas (no cerradas)
+          { gaming_date: currentGamingDate } // O de hoy (aunque estén cerradas)
+        ]
+      },
+      order: [['start_datetime', 'DESC']] 
+    });
   } catch (err) {
     console.error('Error loading cash games', err);
     cashGames = [];
   }
+  
+  // Build simple summary
+  try {
+    const now = new Date();
+    const activeTournaments = tournaments.filter((t: any) => new Date(t.start_date) <= now && (!t.end_date || new Date(t.end_date) >= now)).length;
+    const activeCashGames = cashGames.filter((c: any) => !c.end_datetime).length;
+    // estimate players playing by counting registrations for tournaments starting today or active
+  const registrationRepo = await import('../repositories/RegistrationRepository');
+  const regs = await (new registrationRepo.RegistrationRepository()).getAll();
+    const playersPlaying = regs.length; // rough estimate for now
+    summary = { activeTournaments, activeCashGames, playersPlaying };
+  } catch (err) {
+    console.error('Error building summary', err);
+    summary = { activeTournaments: 0, activeCashGames: cashGames.length, playersPlaying: 0 };
+  }
+
   res.render('admin_games', {
     tournaments,
     cashGames,
+    activeTournament,
     summary,
     username: req.session.username,
     role: req.session.role
@@ -49,8 +88,7 @@ router.get('/cash', requireAdmin, (req: Request, res: Response) => {
   res.redirect('/admin/games/cash/list');
 });
 
-router.get('/ranking', requireAdmin, (req: Request, res: Response) => {
-  res.redirect('/admin/games/ranking');
-});
+// Note: The ranking page is handled by the dedicated adminRankingRoutes mounted at
+// /admin/games/ranking. Do not intercept or redirect here to avoid redirect loops.
 
 export default router;

@@ -1,7 +1,30 @@
 {{! admin_games.handlebars }}
-{{#> layouts/main title="Gestión de Partidas" }}
 <div class="admin-games-dashboard">
   <h1>Gestión de Partidas</h1>
+  
+  {{#if activeTournament}}
+  <div class="active-tournament-banner">
+    <div class="banner-content">
+      <div class="banner-icon">🎯</div>
+      <div class="banner-info">
+        <h2>🔥 TORNEO ACTIVO</h2>
+        <h3>{{activeTournament.tournament_name}}</h3>
+        <div class="tournament-meta">
+          <span>📅 {{activeTournament.start_date}}</span>
+          <span>💰 Buy-in: ${{activeTournament.buy_in}}</span>
+          <span>🎰 Stack: {{activeTournament.starting_stack}}</span>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <a href="/admin/games/tournaments/{{activeTournament.id}}" class="btn btn-action">📊 Ver Detalle</a>
+        <a href="/admin/games/tournaments/{{activeTournament.id}}/close-registration" class="btn btn-warning">🔒 Cerrar Registro</a>
+        <a href="/admin/games/tournaments/{{activeTournament.id}}/pool" class="btn btn-info">💵 Ver Pozo</a>
+        <a href="/admin/games/tournaments/{{activeTournament.id}}/close" class="btn btn-danger">🏁 Cerrar Torneo</a>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+  
   <div class="tabs">
   <a href="/admin/games/tournaments/list" class="tab-link active" data-tab="torneos">Torneos</a>
   <a href="/admin/games/cash/list" class="tab-link" data-tab="cash">Cash Games</a>
@@ -10,22 +33,22 @@
   <div class="tab-content" id="tab-torneos">
     <div class="tab-header">
       <h2>Torneos</h2>
-      <a href="/admin/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
+      <a href="/admin/games/tournaments/new" class="btn btn-primary">+ Nuevo Torneo</a>
     </div>
     <div id="tournaments-list">
       {{> tournaments/list tournaments=tournaments}}
     </div>
   </div>
-  <div class="tab-content" id="tab-cash" style="display:none;">
+  <div class="tab-content is-hidden" id="tab-cash">
     <div class="tab-header">
       <h2>Cash Games</h2>
-      <a href="/admin/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
+      <a href="/admin/games/cash/new" class="btn btn-primary">+ Nueva Mesa Cash</a>
     </div>
     <div id="cashgames-list">
       {{> cash/list cashGames=cashGames}}
     </div>
   </div>
-  <div class="tab-content" id="tab-resumen" style="display:none;">
+  <div class="tab-content is-hidden" id="tab-resumen">
     <div class="tab-header">
       <h2>Resumen en Vivo</h2>
     </div>
@@ -34,6 +57,18 @@
     </div>
   </div>
 </div>
+  <aside class="admin-quick-links">
+    <h3>Atajos Rápidos</h3>
+    <div class="links">
+      <a href="/admin/games/tournaments/list">Torneos (admin)</a> ·
+      <a href="/admin/registrations/list">Inscripciones</a> ·
+      <a href="/admin/games/cash/list">Mesas Cash</a> ·
+      <a href="/admin/games/ranking">Ranking</a> ·
+      <a href="/admin/debtors" class="link-debt">💸 Ver Deudores</a> ·
+      <a href="/admin/users">Usuarios</a> ·
+      <a href="/admin/users/import">Importar usuarios</a>
+    </div>
+  </aside>
 <script>
   // Simple tab logic
   document.addEventListener('DOMContentLoaded', function() {
@@ -51,12 +86,107 @@
 </script>
 <style>
   .admin-games-dashboard { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  
+  /* Banner Torneo Activo */
+  .active-tournament-banner {
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3); }
+    50% { box-shadow: 0 8px 32px rgba(255, 107, 107, 0.5); }
+  }
+  .banner-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    color: white;
+  }
+  .banner-icon {
+    font-size: 4rem;
+    animation: bounce 1s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .banner-info { flex: 1; }
+  .banner-info h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+  .banner-info h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+  .tournament-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 1rem;
+    opacity: 0.95;
+  }
+  .banner-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .btn-action, .btn-warning, .btn-info, .btn-danger {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-action {
+    background: white;
+    color: #FF6B6B;
+  }
+  .btn-action:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+  }
+  .btn-warning {
+    background: #FFA726;
+    color: white;
+  }
+  .btn-warning:hover {
+    background: #FB8C00;
+    transform: scale(1.05);
+  }
+  .btn-info {
+    background: #26A69A;
+    color: white;
+  }
+  .btn-info:hover {
+    background: #00897B;
+    transform: scale(1.05);
+  }
+  .btn-danger {
+    background: #EF5350;
+    color: white;
+  }
+  .btn-danger:hover {
+    background: #E53935;
+    transform: scale(1.05);
+  }
+  
   .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; }
-  .tab-link { background: #f5f5f5; border: none; padding: 1rem 2rem; cursor: pointer; border-radius: 8px 8px 0 0; font-weight: bold; }
-  .tab-link.active { background: #fff; border-bottom: 2px solid #007bff; color: #007bff; }
-  .tab-content { background: #fff; border-radius: 0 8px 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 2rem; }
+  .tab-link { background: var(--muted-surface); border: none; padding: 1rem 2rem; cursor: pointer; border-radius: 8px 8px 0 0; font-weight: bold; color: var(--input-color); }
+  .tab-link.active { background: var(--card-bg); border-bottom: 2px solid var(--accent); color: var(--accent); }
+  .tab-content { background: var(--card-bg); border-radius: 0 8px 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 2rem; }
   .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .btn.btn-primary { background: #007bff; color: #fff; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: bold; }
-  .btn.btn-primary:hover { background: #0056b3; }
+  .btn.btn-primary { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: bold; }
+  .btn.btn-primary:hover { background: #135ea8; }
 </style>
-{{/layouts/main}}
+ 

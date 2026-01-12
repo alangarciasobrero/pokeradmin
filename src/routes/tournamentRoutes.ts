@@ -142,6 +142,32 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/tournaments/:id/toggle-pin
+ * Alterna el estado de torneo destacado (pinned)
+ */
+router.post('/:id/toggle-pin', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  
+  if (!id || isNaN(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID de torneo inválido' });
+  }
+
+  try {
+    const tournament = await tournamentRepo.getById(id);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Torneo no encontrado' });
+    }
+
+    const newPinnedState = !tournament.pinned;
+    await tournamentRepo.updateById(id, { pinned: newPinnedState });
+
+    res.json({ success: true, pinned: newPinnedState, message: newPinnedState ? 'Torneo destacado' : 'Torneo desmarcado' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al cambiar estado de torneo', details: error });
+  }
+});
+
+/**
  * Exporta el router para ser usado en app.ts
  */
 export default router;
@@ -153,6 +179,89 @@ export default router;
  * @returns null si es válido, o un string con el error
  */
 function validarTorneo(data: any, parcial = false): string | null {
+  // intentar normalizar valores booleanos que vienen desde formularios HTML (strings)
+  function parseBool(v: any): boolean | undefined {
+    if (v === true || v === false) return v;
+    if (v === 1 || v === 0) return Boolean(v);
+    if (typeof v === 'string') {
+      const s = v.trim().toLowerCase();
+      if (s === 'true' || s === '1' || s === 'on' || s === 'yes') return true;
+      if (s === 'false' || s === '0' || s === 'off' || s === 'no') return false;
+    }
+    return undefined;
+  }
+  // intenta convertir a número si viene como string
+  function parseNumber(v: any): number | undefined {
+    if (v == null || v === '') return undefined;
+    if (typeof v === 'number' && !isNaN(v)) return v;
+    const n = Number(v);
+    return isNaN(n) ? undefined : n;
+  }
+  // intenta convertir a Date si viene como string
+  function parseDate(v: any): Date | undefined {
+    if (!v) return undefined;
+    if (v instanceof Date && !isNaN(v.getTime())) return v;
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? undefined : d;
+  }
+  // mapear variantes de nombres de campo (por si un formulario mal construido envía espacios o guiones)
+  if (data && typeof data === 'object') {
+    const aliasMap: { [k: string]: string } = {
+      'starting stack': 'starting_stack',
+      'starting-stack': 'starting_stack',
+      'small blind': 'small_blind',
+      'small-blind': 'small_blind',
+      'punctuality discount': 'punctuality_discount',
+      'punctuality-discount': 'punctuality_discount'
+    };
+    for (const k of Object.keys(aliasMap)) {
+      if (data[k] !== undefined && data[aliasMap[k]] === undefined) {
+        data[aliasMap[k]] = data[k];
+      }
+    }
+  }
+  if (data && typeof data === 'object') {
+    // booleanos
+    if (data.count_to_ranking !== undefined) {
+      const b = parseBool(data.count_to_ranking);
+      if (b !== undefined) data.count_to_ranking = b;
+    }
+    if (data.double_points !== undefined) {
+      const b2 = parseBool(data.double_points);
+      if (b2 !== undefined) data.double_points = b2;
+    }
+    // números
+    const numFields = ['buy_in', 're_entry', 'knockout_bounty', 'starting_stack', 'blind_levels', 'small_blind', 'punctuality_discount', 'punctuality_bonus_chips'];
+    for (const f of numFields) {
+      if (data[f] !== undefined) {
+        const n = parseNumber(data[f]);
+        if (n !== undefined) data[f] = n;
+      }
+    }
+    // fechas
+    if (data.start_date !== undefined) {
+      const d = parseDate(data.start_date);
+      if (d !== undefined) data.start_date = d;
+    }
+    // puntualidad: checkbox que activa el descuento
+    if (data.punctuality_apply !== undefined) {
+      const pa = parseBool(data.punctuality_apply);
+      if (pa === false) {
+        // si no aplica, forzar descuento a 0 y bonus chips a 0
+        data.punctuality_discount = 0;
+        data.punctuality_bonus_chips = 0;
+      } else if (pa === true) {
+        // si aplica y no viene valor, preset 20
+        if (data.punctuality_discount === undefined || data.punctuality_discount === '') {
+          data.punctuality_discount = 20;
+        }
+        // si no viene bonus chips, default 0
+        if (data.punctuality_bonus_chips === undefined || data.punctuality_bonus_chips === '') {
+          data.punctuality_bonus_chips = 0;
+        }
+      }
+    }
+  }
   if (!parcial || data.tournament_name !== undefined) {
     if (!data.tournament_name || typeof data.tournament_name !== 'string') {
       return 'El nombre del torneo es obligatorio y debe ser texto';
@@ -201,6 +310,11 @@ function validarTorneo(data: any, parcial = false): string | null {
   if (!parcial || data.small_blind !== undefined) {
     if (data.small_blind == null || isNaN(Number(data.small_blind)) || Number(data.small_blind) <= 0) {
       return 'El small blind es obligatorio y debe ser mayor a cero';
+    }
+  }
+  if (!parcial || data.punctuality_bonus_chips !== undefined) {
+    if (data.punctuality_bonus_chips == null || isNaN(Number(data.punctuality_bonus_chips)) || Number(data.punctuality_bonus_chips) < 0) {
+      return 'Las fichas extras por puntualidad deben ser un número positivo';
     }
   }
   if (!parcial || data.punctuality_discount !== undefined) {

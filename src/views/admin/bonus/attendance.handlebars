@@ -1,0 +1,483 @@
+{{> header_admin}}
+
+<div class="content-wrapper">
+  <div class="page-header">
+    <h1>🎁 Bonus por Asistencia</h1>
+    {{#if activeSeason}}
+    <div class="season-badge">
+      <span class="season-icon">🏆</span>
+      <div class="season-info">
+        <strong>{{activeSeason.name}}</strong>
+        <small>{{formatDate activeSeason.start_date}} - {{formatDate activeSeason.end_date}}</small>
+      </div>
+    </div>
+    {{else}}
+    <p class="no-season">⚠️ No hay temporada activa</p>
+    {{/if}}
+  </div>
+
+  <div class="bonus-legend">
+    <h3>Criterios de Bonus</h3>
+    <div class="legend-grid">
+      <div class="legend-item">
+        <span class="badge bronze">🥉 Bronce</span>
+        <small>3+ jornadas en última semana</small>
+      </div>
+      <div class="legend-item">
+        <span class="badge silver">🥈 Plata</span>
+        <small>10+ jornadas en el mes actual</small>
+      </div>
+      <div class="legend-item">
+        <span class="badge gold">🥇 Oro</span>
+        <small>28+ jornadas en la temporada</small>
+      </div>
+      <div class="legend-item">
+        <span class="badge diamond">💎 Diamante</span>
+        <small>32+ jornadas en la temporada</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="attendance-table-wrapper">
+    <table class="attendance-table">
+      <thead>
+        <tr>
+          <th>Jugador</th>
+          <th>Total</th>
+          <th>Temporada</th>
+          <th>Mes Actual</th>
+          <th>Última Semana</th>
+          <th>Bonuses Activos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each attendanceData}}
+        <tr class="player-row" data-username="{{this.username}}">
+          <td>
+            <a href="#" class="player-link" onclick="togglePlayerDetail('{{this.username}}'); return false;">
+              <strong>{{this.fullName}}</strong>
+              <small class="username-small">@{{this.username}}</small>
+            </a>
+          </td>
+          <td class="count-cell">{{this.totalCount}}</td>
+          <td class="count-cell">{{this.seasonCount}}</td>
+          <td class="count-cell">{{this.monthCount}}</td>
+          <td class="count-cell">{{this.weekCount}}</td>
+          <td class="bonuses-cell">{{this.bonuses}}</td>
+        </tr>
+        <tr class="player-detail-row" id="detail-{{this.username}}" style="display:none;">
+          <td colspan="6">
+            <div class="player-detail-content">
+              <h4>📋 Torneos de la temporada - {{this.fullName}}</h4>
+              <div class="tournaments-list" id="tournaments-{{this.username}}">
+                <div class="loading">Cargando...</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {{else}}
+        <tr>
+          <td colspan="6" style="text-align:center; padding:2rem; color:#999;">
+            No hay datos de asistencia disponibles
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box">
+    <strong>ℹ️ Cómo funcionan los bonus:</strong>
+    <p>Los bonus se otorgan automáticamente al cerrar cada torneo según la asistencia acumulada del jugador. No es necesario calcularlos manualmente.</p>
+  </div>
+
+  <div class="actions-footer">
+    <a href="/admin/bonus/attendance-calendar" class="btn-primary">📅 Calendario de Asistencias</a>
+    <a href="/admin/games/settings" class="btn-secondary">Volver a Configuración</a>
+  </div>
+</div>
+
+<style>
+.content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #e0e0e0;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #FFD700;
+}
+
+.season-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+}
+
+.season-icon {
+  font-size: 1.5rem;
+}
+
+.season-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.season-info strong {
+  color: #FFD700;
+  font-size: 1.1rem;
+}
+
+.season-info small {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.no-season {
+  color: #ff6b6b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.bonus-legend {
+  background: rgba(255, 215, 0, 0.05);
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bonus-legend h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #FFD700;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legend-item small {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.badge.bronze {
+  background: linear-gradient(135deg, #cd7f32 0%, #8b4513 100%);
+  color: white;
+}
+
+.badge.silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #808080 100%);
+  color: white;
+}
+
+.badge.gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+  color: white;
+}
+
+.badge.diamond {
+  background: linear-gradient(135deg, #b9f2ff 0%, #0077be 100%);
+  color: white;
+}
+
+.attendance-table-wrapper {
+  overflow-x: auto;
+  background: rgba(30, 30, 30, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.attendance-table thead {
+  background: rgba(255, 215, 0, 0.15);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.attendance-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #FFD700;
+}
+
+.attendance-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+}
+
+.attendance-table tbody tr:hover {
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.attendance-table td {
+  padding: 1rem;
+  color: #e0e0e0;
+}
+
+.username-small {
+  display: block;
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.player-link {
+  color: #FFD700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.player-link:hover {
+  color: #FFF;
+  text-decoration: underline;
+}
+
+.player-row {
+  cursor: pointer;
+}
+
+.player-row:hover {
+  background: rgba(255, 215, 0, 0.1) !important;
+}
+
+.player-detail-row {
+  background: rgba(255, 215, 0, 0.05) !important;
+}
+
+.player-detail-content {
+  padding: 1.5rem;
+  border-top: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.player-detail-content h4 {
+  color: #FFD700;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.tournaments-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tournament-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #FFD700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tournament-name {
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.tournament-date {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.tournament-position {
+  color: #FFD700;
+  font-size: 0.9rem;
+}
+
+.tournament-position strong {
+  color: #FFF;
+  font-size: 1.1rem;
+}
+
+.loading {
+  text-align: center;
+  color: #aaa;
+  padding: 1rem;
+}
+
+.count-cell {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #FFD700;
+}
+
+.bonuses-cell {
+  color: #5dd879;
+  font-weight: 500;
+}
+
+.info-box {
+  background: rgba(33, 150, 243, 0.1);
+  border: 2px solid rgba(33, 150, 243, 0.3);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-box strong {
+  color: #64B5F6;
+  font-size: 1.05rem;
+}
+
+.info-box p {
+  color: #e0e0e0;
+  margin: 0.5rem 0 0 0;
+}
+
+.actions-footer {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  color: #000;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+
+  .legend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-table {
+    font-size: 0.85rem;
+  }
+
+  .attendance-table th,
+  .attendance-table td {
+    padding: 0.5rem;
+  }
+
+  .actions-footer {
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+
+<script>
+const loadedDetails = {};
+
+async function togglePlayerDetail(username) {
+  const detailRow = document.getElementById('detail-' + username);
+  
+  if (detailRow.style.display === 'none') {
+    detailRow.style.display = 'table-row';
+    
+    // Load tournaments if not loaded yet
+    if (!loadedDetails[username]) {
+      const container = document.getElementById('tournaments-' + username);
+      try {
+        const response = await fetch('/admin/bonus/player-tournaments/' + username);
+        const data = await response.json();
+        
+        if (data.tournaments && data.tournaments.length > 0) {
+          container.innerHTML = data.tournaments.map(t => `
+            <div class="tournament-item">
+              <div>
+                <div class="tournament-name">🏆 ${t.name}</div>
+                <div class="tournament-date">${t.date}</div>
+              </div>
+              <div class="tournament-position">
+                ${t.position ? `Posición: <strong>${t.position}º</strong>` : 'Participó'}
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<div class="loading">No hay torneos registrados</div>';
+        }
+        
+        loadedDetails[username] = true;
+      } catch (err) {
+        console.error('Error loading tournaments:', err);
+        container.innerHTML = '<div class="loading">Error cargando torneos</div>';
+      }
+    }
+  } else {
+    detailRow.style.display = 'none';
+  }
+}
+</script>
+
+{{> footer}}

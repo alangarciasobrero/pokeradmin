@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import User from '../models/User';
+import { Op } from 'sequelize';
 
 const router = Router();
 
@@ -28,6 +29,30 @@ router.get('/', async (req: Request, res: Response) => {
     res.json({ data: rows, meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages }, links });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener usuarios', details: err });
+  }
+});
+
+// GET /api/users/search?q= - minimal search used by client-side autocomplete
+router.get('/search', async (req: Request, res: Response) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    const limit = Math.min(100, Math.max(5, Number(req.query.limit) || 20));
+    if (!q) return res.json({ data: [] });
+    const users = await User.findAll({
+      where: {
+        is_deleted: false,
+        [Op.or]: [
+          { username: { [Op.like]: `%${q}%` } },
+          { full_name: { [Op.like]: `%${q}%` } }
+        ]
+      },
+      attributes: ['id', 'username', 'full_name'],
+      limit,
+      order: [['username', 'ASC']]
+    });
+    res.json({ data: users });
+  } catch (err) {
+    res.status(500).json({ error: 'Error searching users', details: err });
   }
 });
 

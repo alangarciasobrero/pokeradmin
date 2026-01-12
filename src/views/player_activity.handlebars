@@ -1,0 +1,570 @@
+<div class="player-activity-page">
+	<div class="page-header">
+		<a href="/" class="back-link">← Volver al Dashboard</a>
+		<h1>📋 Mi Actividad Completa</h1>
+		<p class="subtitle">Historial de inscripciones, pagos y participaciones</p>
+	</div>
+
+	<!-- Resumen financiero -->
+	<div class="financial-summary-card">
+		<h2>💰 Resumen Financiero</h2>
+		<div class="summary-grid">
+			<div class="summary-item">
+				<span class="summary-icon">💵</span>
+				<div class="summary-content">
+					<span class="summary-label">Total Pagado</span>
+					<span class="summary-value paid">${{currency financialSummary.total_paid}}</span>
+				</div>
+			</div>
+			<div class="summary-item">
+				<span class="summary-icon">⏳</span>
+				<div class="summary-content">
+					<span class="summary-label">Pendiente</span>
+					<span class="summary-value pending">${{currency financialSummary.total_pending}}</span>
+				</div>
+			</div>
+			<div class="summary-item">
+				<span class="summary-icon">📊</span>
+				<div class="summary-content">
+					<span class="summary-label">Total Transacciones</span>
+					<span class="summary-value">${{currency financialSummary.total_transactions}}</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Tabs para diferentes secciones -->
+	<div class="activity-tabs">
+		<button class="tab-btn active" data-tab="payments">💳 Pagos ({{payments.length}})</button>
+		<button class="tab-btn" data-tab="tournaments">🏆 Torneos ({{registrations.length}})</button>
+		<button class="tab-btn" data-tab="cash">🎲 Mesas Cash ({{cashSessions.length}})</button>
+	</div>
+
+	<!-- Tab: Pagos -->
+	<div class="tab-content active" id="payments-tab">
+		<div class="section-card">
+			<h2>💳 Historial de Pagos</h2>
+			{{#if payments.length}}
+				<div class="table-responsive">
+					<table class="activity-table">
+						<thead>
+							<tr>
+								<th>Fecha</th>
+								<th>Evento</th>
+								<th>Tipo</th>
+								<th>Monto</th>
+								<th>Pagado</th>
+								<th>Pendiente</th>
+								<th>Estado</th>
+								<th>Método</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each payments}}
+								<tr class="{{#if this.paid}}payment-paid{{else}}payment-pending{{/if}}">
+									<td>{{formatDateTime this.created_at}}</td>
+									<td>
+										<strong>{{this.event_name}}</strong>
+										{{#if this.description}}
+											<br><small>{{this.description}}</small>
+										{{/if}}
+									</td>
+									<td>
+										{{#if (eq this.type "tournament")}}
+											<span class="badge-tournament">🏆 Torneo</span>
+										{{else if (eq this.type "cash")}}
+											<span class="badge-cash">🎲 Cash</span>
+										{{else if (eq this.type "reentry")}}
+											<span class="badge-reentry">🔄 Re-entry</span>
+										{{else}}
+											<span class="badge-other">📝 {{this.type}}</span>
+										{{/if}}
+									</td>
+									<td class="amount-cell">${{currency this.amount}}</td>
+									<td class="amount-cell paid">${{currency this.paid_amount}}</td>
+									<td class="amount-cell pending">${{currency (subtract this.amount this.paid_amount)}}</td>
+									<td>
+										{{#if this.paid}}
+											<span class="status-badge paid">✓ Pagado</span>
+										{{else}}
+											<span class="status-badge pending">⏳ Pendiente</span>
+										{{/if}}
+									</td>
+									<td>
+										{{#if this.payment_method}}
+											{{this.payment_method}}
+										{{else}}
+											<span class="text-muted">-</span>
+										{{/if}}
+									</td>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+				</div>
+			{{else}}
+				<div class="empty-state">
+					<span class="empty-icon">💳</span>
+					<p>No hay pagos registrados</p>
+				</div>
+			{{/if}}
+		</div>
+	</div>
+
+	<!-- Tab: Torneos -->
+	<div class="tab-content" id="tournaments-tab">
+		<div class="section-card">
+			<h2>🏆 Inscripciones a Torneos</h2>
+			{{#if registrations.length}}
+				<div class="table-responsive">
+					<table class="activity-table">
+						<thead>
+							<tr>
+								<th>Fecha</th>
+								<th>Torneo</th>
+								<th>Buy-in</th>
+								<th>Posición</th>
+								<th>Puntos</th>
+								<th>Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each registrations}}
+								<tr>
+									<td>{{formatDateTime this.start_date}}</td>
+									<td>
+										<strong>{{this.tournament_name}}</strong>
+									</td>
+									<td class="amount-cell">${{currency this.buy_in}}</td>
+									<td class="position-cell">
+										{{this.position_display}}
+									</td>
+									<td class="points-cell">
+										{{#if this.points_earned}}
+											{{this.points_earned}} pts
+										{{else}}
+											-
+										{{/if}}
+									</td>
+									<td>
+										{{#if this.end_date}}
+											<span class="status-badge completed">✓ Finalizado</span>
+										{{else}}
+											<span class="status-badge active">⚡ Activo</span>
+										{{/if}}
+									</td>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+				</div>
+			{{else}}
+				<div class="empty-state">
+					<span class="empty-icon">🏆</span>
+					<p>No has participado en torneos todavía</p>
+				</div>
+			{{/if}}
+		</div>
+	</div>
+
+	<!-- Tab: Mesas Cash -->
+	<div class="tab-content" id="cash-tab">
+		<div class="section-card">
+			<h2>🎲 Participaciones en Mesas Cash</h2>
+			{{#if cashSessions.length}}
+				<div class="table-responsive">
+					<table class="activity-table">
+						<thead>
+							<tr>
+								<th>Fecha</th>
+								<th>Stakes</th>
+								<th>Dealer</th>
+								<th>Buy-in</th>
+								<th>Rebuys</th>
+								<th>Stack Final</th>
+								<th>Ganancia/Pérdida</th>
+								<th>Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each cashSessions}}
+								<tr>
+									<td>{{formatDateTime this.start_datetime}}</td>
+									<td>
+										<strong>{{this.stakes}}</strong>
+									</td>
+									<td>{{this.dealer}}</td>
+									<td class="amount-cell">${{currency this.buy_in}}</td>
+									<td class="amount-cell">
+										{{#if this.rebuys}}
+											${{currency this.rebuys}}
+										{{else}}
+											-
+										{{/if}}
+									</td>
+									<td class="amount-cell">
+										{{#if this.final_stack}}
+											${{currency this.final_stack}}
+										{{else}}
+											-
+										{{/if}}
+									</td>
+									<td class="profit-cell {{#if (gt this.profit 0)}}positive{{else if (lt this.profit 0)}}negative{{/if}}">
+										{{#if this.final_stack}}
+											${{currency this.profit}}
+										{{else}}
+											-
+										{{/if}}
+									</td>
+									<td>
+										{{#if this.end_datetime}}
+											<span class="status-badge completed">✓ Finalizada</span>
+										{{else}}
+											<span class="status-badge active">⚡ En juego</span>
+										{{/if}}
+									</td>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+				</div>
+			{{else}}
+				<div class="empty-state">
+					<span class="empty-icon">🎲</span>
+					<p>No has participado en mesas cash todavía</p>
+				</div>
+			{{/if}}
+		</div>
+	</div>
+</div>
+
+<style>
+	.player-activity-page {
+		max-width: 1400px;
+		margin: 0 auto;
+		padding: 2rem;
+	}
+
+	.page-header {
+		margin-bottom: 2rem;
+	}
+
+	.page-header h1 {
+		margin: 0.5rem 0;
+		color: #1976d2;
+	}
+
+	.subtitle {
+		color: #666;
+		margin: 0;
+	}
+
+	.back-link {
+		display: inline-block;
+		color: #1976d2;
+		text-decoration: none;
+		margin-bottom: 1rem;
+		font-weight: 500;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
+	}
+
+	.financial-summary-card {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
+		padding: 2rem;
+		border-radius: 12px;
+		margin-bottom: 2rem;
+		box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+	}
+
+	.financial-summary-card h2 {
+		margin: 0 0 1.5rem 0;
+		font-size: 1.5rem;
+	}
+
+	.summary-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 1.5rem;
+	}
+
+	.summary-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		background: rgba(255,255,255,0.1);
+		padding: 1.5rem;
+		border-radius: 8px;
+		backdrop-filter: blur(10px);
+	}
+
+	.summary-icon {
+		font-size: 2.5rem;
+	}
+
+	.summary-content {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.summary-label {
+		font-size: 0.9rem;
+		opacity: 0.9;
+		margin-bottom: 0.25rem;
+	}
+
+	.summary-value {
+		font-size: 1.8rem;
+		font-weight: bold;
+	}
+
+	.summary-value.paid {
+		color: #4caf50;
+	}
+
+	.summary-value.pending {
+		color: #ff9800;
+	}
+
+	.activity-tabs {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 2rem;
+		border-bottom: 2px solid #e0e0e0;
+	}
+
+	.tab-btn {
+		background: none;
+		border: none;
+		padding: 1rem 1.5rem;
+		cursor: pointer;
+		font-size: 1rem;
+		font-weight: 500;
+		color: #666;
+		border-bottom: 3px solid transparent;
+		transition: all 0.3s;
+	}
+
+	.tab-btn:hover {
+		color: #1976d2;
+		background: #f5f5f5;
+	}
+
+	.tab-btn.active {
+		color: #1976d2;
+		border-bottom-color: #1976d2;
+	}
+
+	.tab-content {
+		display: none;
+	}
+
+	.tab-content.active {
+		display: block;
+	}
+
+	.section-card {
+		background: white;
+		border-radius: 8px;
+		padding: 2rem;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	}
+
+	.section-card h2 {
+		margin: 0 0 1.5rem 0;
+		color: #333;
+	}
+
+	.table-responsive {
+		overflow-x: auto;
+	}
+
+	.activity-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.activity-table thead {
+		background: #f5f5f5;
+	}
+
+	.activity-table th {
+		padding: 1rem;
+		text-align: left;
+		font-weight: 600;
+		color: #333;
+		border-bottom: 2px solid #e0e0e0;
+	}
+
+	.activity-table td {
+		padding: 1rem;
+		border-bottom: 1px solid #f0f0f0;
+	}
+
+	.activity-table tbody tr:hover {
+		background: #f9f9f9;
+	}
+
+	.payment-pending {
+		background: #fff3e0 !important;
+	}
+
+	.payment-paid {
+		background: #e8f5e9 !important;
+	}
+
+	.amount-cell {
+		text-align: right;
+		font-weight: 600;
+	}
+
+	.amount-cell.paid {
+		color: #4caf50;
+	}
+
+	.amount-cell.pending {
+		color: #ff9800;
+	}
+
+	.position-cell {
+		font-size: 1.2rem;
+		font-weight: bold;
+	}
+
+	.points-cell {
+		color: #1976d2;
+		font-weight: 600;
+	}
+
+	.profit-cell {
+		text-align: right;
+		font-weight: bold;
+		font-size: 1.1rem;
+	}
+
+	.profit-cell.positive {
+		color: #4caf50;
+	}
+
+	.profit-cell.negative {
+		color: #f44336;
+	}
+
+	.status-badge {
+		display: inline-block;
+		padding: 0.25rem 0.75rem;
+		border-radius: 12px;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+
+	.status-badge.paid {
+		background: #e8f5e9;
+		color: #2e7d32;
+	}
+
+	.status-badge.pending {
+		background: #fff3e0;
+		color: #f57c00;
+	}
+
+	.status-badge.completed {
+		background: #e3f2fd;
+		color: #1565c0;
+	}
+
+	.status-badge.active {
+		background: #fce4ec;
+		color: #c2185b;
+	}
+
+	.badge-tournament, .badge-cash, .badge-reentry, .badge-other {
+		display: inline-block;
+		padding: 0.25rem 0.75rem;
+		border-radius: 12px;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+
+	.badge-tournament {
+		background: #e3f2fd;
+		color: #1565c0;
+	}
+
+	.badge-cash {
+		background: #e8f5e9;
+		color: #2e7d32;
+	}
+
+	.badge-reentry {
+		background: #fff3e0;
+		color: #f57c00;
+	}
+
+	.badge-other {
+		background: #f5f5f5;
+		color: #666;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 4rem 2rem;
+		color: #999;
+	}
+
+	.empty-icon {
+		font-size: 4rem;
+		display: block;
+		margin-bottom: 1rem;
+	}
+
+	.text-muted {
+		color: #999;
+	}
+
+	@media (max-width: 768px) {
+		.player-activity-page {
+			padding: 1rem;
+		}
+
+		.summary-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.activity-tabs {
+			overflow-x: auto;
+		}
+
+		.tab-btn {
+			white-space: nowrap;
+		}
+
+		.activity-table {
+			font-size: 0.85rem;
+		}
+
+		.activity-table th,
+		.activity-table td {
+			padding: 0.5rem;
+		}
+	}
+</style>
+
+<script>
+	// Tab switching
+	document.querySelectorAll('.tab-btn').forEach(btn => {
+		btn.addEventListener('click', () => {
+			// Remove active from all tabs
+			document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+			document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+			
+			// Add active to clicked tab
+			btn.classList.add('active');
+			const tabId = btn.dataset.tab + '-tab';
+			document.getElementById(tabId).classList.add('active');
+		});
+	});
+</script>

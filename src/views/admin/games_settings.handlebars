@@ -1,0 +1,81 @@
+ 
+<div class="admin-settings">
+  <h1>Ajustes de Juegos</h1>
+  {{#if flash}}
+    <div class="flash flash-{{flash.type}}">{{flash.message}}</div>
+  {{/if}}
+  <form method="post" action="/admin/games/settings">
+    <section>
+      <h2>Points Table (points_table.json)</h2>
+      <p>Editar la tabla de puntos (JSON). Ejemplo: {"1":100, "2":70, "3":50}</p>
+      <textarea name="points_table" rows="12" style="width:100%; font-family: monospace;">{{pointsRaw}}</textarea>
+    </section>
+
+    <section style="margin-top:1.5rem;">
+      <h2>Prize Override (prize_override.json)</h2>
+      <p>Editar reglas de distribución de pozo (JSON). Ejemplo: {"1":0.5, "2":0.3, "3":0.2}</p>
+      <textarea name="prize_override" rows="12" style="width:100%; font-family: monospace;">{{prizeRaw}}</textarea>
+    </section>
+
+    <div style="margin-top:1rem;">
+      <button class="btn btn-primary" type="submit">Guardar cambios</button>
+    </div>
+  </form>
+  <hr />
+  <section>
+    <h3>Backups</h3>
+    <p>Los backups se guardan en <code>data/backups/</code> con timestamp al guardar.</p>
+  </section>
+  
+  <hr />
+  <section>
+    <h3>⚙️ Configuración Avanzada</h3>
+    <div class="settings-links">
+      <a href="/admin/games/settings/commissions" class="settings-link">
+        💰 <strong>Configurar Comisiones</strong>
+        <small>Editar porcentajes y destinos de comisiones</small>
+      </a>
+      <a href="/admin/games/settings/pools" class="settings-link">
+        📊 <strong>Ver Pozos Acumulados</strong>
+        <small>Dashboard de pozos mensual, trimestral, Copa Don Humberto, casa</small>
+      </a>
+      <a href="/admin/bonus/calculate" class="settings-link">
+        🎁 <strong>Calcular Bonus de Asistencia</strong>
+        <small>Otorgar bonus Bronce, Plata, Oro, Diamante y Black</small>
+      </a>
+    </div>
+  </section>
+</div>
+
+<style>
+  .settings-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .settings-link {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+  .settings-link:hover {
+    border-color: #3949ab;
+    box-shadow: 0 4px 12px rgba(57,73,171,0.15);
+    transform: translateY(-2px);
+  }
+  .settings-link strong {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  .settings-link small {
+    color: #666;
+  }
+</style>
+ 

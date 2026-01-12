@@ -1,0 +1,335 @@
+{{> header_admin}}
+
+<div class="pools-wrapper">
+  <div class="page-header">
+    <h1>💰 Pozos Acumulados</h1>
+    <p>Montos acumulados de comisiones por destino</p>
+  </div>
+
+  <div class="summary-cards">
+    <div class="summary-card house">
+      <div class="card-icon">🏠</div>
+      <h3>Casa</h3>
+      <div class="amount">${{summary.house}}</div>
+      <small>Acumulado total</small>
+    </div>
+
+    <div class="summary-card ranking">
+      <div class="card-icon">🏆</div>
+      <h3>Rankings de Temporada</h3>
+      <div class="amount">${{summary.season_ranking}}</div>
+      <small>Acumulado total</small>
+    </div>
+
+    <div class="summary-card special">
+      <div class="card-icon">👑</div>
+      <h3>Torneos Especiales</h3>
+      <div class="amount">${{summary.special_tournament}}</div>
+      <small>Acumulado total</small>
+    </div>
+  </div>
+
+  <h2>Detalle por Destino</h2>
+  {{#if poolsData.length}}
+    <div class="pools-grid">
+      {{#each poolsData}}
+        <div class="pool-card {{this.type}}">
+          <div class="pool-header">
+            <h3>{{this.name}}</h3>
+            <span class="pool-badge">
+              {{#if (eq this.type 'house')}}🏠 Casa{{/if}}
+              {{#if (eq this.type 'season_ranking')}}🏆 Ranking{{/if}}
+              {{#if (eq this.type 'special_tournament')}}👑 Especial{{/if}}
+            </span>
+          </div>
+
+          {{#if this.seasonName}}
+            <div class="pool-meta">📅 Temporada: {{this.seasonName}}</div>
+          {{/if}}
+          {{#if this.tournamentName}}
+            <div class="pool-meta">🎯 Torneo: {{this.tournamentName}}</div>
+          {{/if}}
+
+          <div class="pool-stats">
+            <div class="stat">
+              <div class="stat-label">Monto Acumulado</div>
+              <div class="stat-value">${{this.accumulated}}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">% Configurado</div>
+              <div class="stat-value">{{this.percentage}}%</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Torneos Contribuyentes</div>
+              <div class="stat-value">{{this.contributingTournaments}}</div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="empty-state">
+      <p>No hay pozos configurados</p>
+      <a href="/admin/commissions" class="btn-primary">Configurar Comisiones</a>
+    </div>
+  {{/if}}
+
+  <div class="actions-bar">
+    <a href="/admin/games/settings" class="btn-secondary">Volver a Configuración</a>
+    <a href="/admin/games/settings/commissions" class="btn-primary">⚙️ Configurar Comisiones</a>
+  </div>
+</div>
+
+<style>
+  .admin-pools {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
+  .alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+  }
+  .alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  .summary-cards {
+<style>
+.pools-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.page-header p {
+  color: #7f8c8d;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.summary-card {
+  border-radius: 12px;
+  padding: 2rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.summary-card.house {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.summary-card.ranking {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.summary-card.special {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.summary-card .card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.summary-card h3 {
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.summary-card .amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.summary-card small {
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+h2 {
+  margin: 2rem 0 1.5rem;
+  color: #2c3e50;
+}
+
+.pools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.pool-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left: 4px solid;
+}
+
+.pool-card.house {
+  border-left-color: #667eea;
+}
+
+.pool-card.season_ranking {
+  border-left-color: #f5576c;
+}
+
+.pool-card.special_tournament {
+  border-left-color: #4facfe;
+}
+
+.pool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pool-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.pool-badge {
+  background: #f8f9fa;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.pool-meta {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.pool-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #28a745;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.empty-state p {
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.actions-bar {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e9ecef;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: white;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.btn-secondary:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+@media (max-width: 768px) {
+  .pools-wrapper {
+    padding: 1rem;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .pools-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pool-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-bar {
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+
+{{> footer}}

@@ -1,31 +1,363 @@
-{{#> layouts/main title="Admin - Ranking" }}
+ 
 <div class="admin-ranking">
-  <h1>Ranking</h1>
-  {{#if users.length}}
-    <table class="ranking-table">
-      <thead>
-        <tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Ganancias</th></tr>
-      </thead>
-      <tbody>
-        {{#each users}}
-          <tr>
-            <td>{{inc @index}}</td>
-            <td>{{#if this.full_name}}{{this.full_name}}{{else}}{{this.username}}{{/if}} ({{this.username}})</td>
-            <td>{{this.current_points}}</td>
-            <td>{{#if this.total_winnings}}${{this.total_winnings}}{{else}}$0{{/if}}</td>
-          </tr>
+  {{#if activeSeason}}
+  <div class="active-season-banner">
+    <div class="season-content">
+      <div class="season-icon pulse">🏆</div>
+      <div class="season-info">
+        <h2>Temporada Activa: {{activeSeason.nombre}}</h2>
+        <p>{{formatDate activeSeason.fecha_inicio}} - {{formatDate activeSeason.fecha_fin}}</p>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+  
+  <div class="ranking-header">
+    <h1>🏆 Ranking</h1>
+    <div class="ranking-filters">
+      <label for="seasonFilter">Temporada:</label>
+      <select id="seasonFilter" onchange="window.location.href='/admin/games/ranking?season='+this.value">
+        <option value="">Todas las temporadas</option>
+        {{#each seasons}}
+        <option value="{{this.id}}" {{#ifEquals this.id ../selectedSeason}}selected{{/ifEquals}}>
+          {{this.nombre}} ({{formatDate this.fecha_inicio}} - {{formatDate this.fecha_fin}})
+        </option>
         {{/each}}
-      </tbody>
-    </table>
+      </select>
+    </div>
+  </div>
+  {{#if leaderboard.length}}
+    <div class="ranking-modern-grid">
+      {{#each leaderboard}}
+        <div class="ranking-card {{#ifEquals this.position 1}}gold{{else}}{{#ifEquals this.position 2}}silver{{else}}{{#ifEquals this.position 3}}bronze{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}">
+          <div class="ranking-position">
+            {{#ifEquals this.position 1}}🥇{{else}}{{#ifEquals this.position 2}}🥈{{else}}{{#ifEquals this.position 3}}🥉{{else}}{{this.position}}º{{/ifEquals}}{{/ifEquals}}{{/ifEquals}}
+          </div>
+          <div class="ranking-content">
+            <a href="/player/{{this.username}}" class="player-name">{{this.username}}</a>
+            <div class="ranking-stats">
+              <div class="stat-item">
+                <span class="stat-icon">🏆</span>
+                <div class="stat-value">
+                  <strong>{{this.total_points}}</strong>
+                  <small>puntos</small>
+                </div>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">📊</span>
+                <div class="stat-value">
+                  <strong>{{this.attendance_count}}</strong>
+                  <small>torneos</small>
+                </div>
+              </div>
+              {{#if this.bonus_points}}
+              <div class="stat-item bonus-stat">
+                <span class="stat-icon">🎁</span>
+                <div class="stat-value">
+                  <strong>+{{this.bonus_points}}</strong>
+                  <small>bonus</small>
+                </div>
+              </div>
+              {{/if}}
+              <div class="stat-item">
+                <span class="stat-icon">🎯</span>
+                <div class="stat-value">
+                  <strong>{{this.final_tables}}</strong>
+                  <small>mesas finales</small>
+                </div>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">👑</span>
+                <div class="stat-value">
+                  <strong>{{this.wins}}</strong>
+                  <small>victorias</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
   {{else}}
-    <div>No hay datos de ranking.</div>
+    <div class="empty-state">
+      <span class="empty-icon">🏆</span>
+      <p>No hay datos de ranking para esta temporada</p>
+    </div>
   {{/if}}
 </div>
 
 <style>
-.ranking-table { width:100%; border-collapse:collapse }
-.ranking-table th, .ranking-table td { padding:0.6rem 0.8rem; border-bottom:1px solid #eee }
-.ranking-table thead { background:#f8f9fa }
+.active-season-banner {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+  border: 3px solid rgba(255, 215, 0, 0.5);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
+}
+.season-content {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.season-icon {
+  font-size: 4rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+.season-info h2 {
+  margin: 0 0 0.5rem 0;
+  color: #FFD700;
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+.season-info p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+}
+
+.ranking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.ranking-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ranking-filters label {
+  font-weight: 600;
+  color: #FFD700;
+}
+.ranking-filters select {
+  padding: 0.5rem 1rem;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.ranking-filters select:hover {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.1);
+}
+.ranking-modern-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.ranking-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+.ranking-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+}
+.ranking-card.gold {
+  border-color: #FFD700;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+}
+.ranking-card.silver {
+  border-color: #C0C0C0;
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.05));
+}
+.ranking-card.bronze {
+  border-color: #CD7F32;
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.05));
+}
+.ranking-position {
+  font-size: 2rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+  color: #FFD700;
+}
+.ranking-content {
+  flex: 1;
+}
+.player-name {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FFD700;
+  text-decoration: none;
+  margin-bottom: 0.6rem;
+  transition: color 0.3s ease;
+}
+.player-name:hover {
+  color: #FFF;
+}
+.ranking-stats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.stat-item.bonus-stat {
+  background: rgba(255, 215, 0, 0.1);
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+.stat-item.bonus-stat .stat-icon {
+  font-size: 1.3rem;
+}
+.stat-item.bonus-stat .stat-value strong {
+  color: #FFD700;
+}
+.stat-item.bonus-stat .stat-value small {
+  color: rgba(255, 215, 0, 0.8);
+}
+.stat-icon {
+  font-size: 1.5rem;
+}
+.stat-value strong {
+  display: block;
+  font-size: 1.3rem;
+  color: #fff;
+  line-height: 1;
+}
+.stat-value small {
+  display: block;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
+}
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  margin-bottom: 3rem;
+}
+.empty-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+.empty-state p {
+  color: #dfe6ff;
+  font-size: 1.2rem;
+  margin: 0;
+}
+</style>
+<section class="ranking-config">
+  <div class="config-header">
+    <h2>⚙️ Distribución de Puntos</h2>
+    <a href="/admin/games/settings" class="btn-edit">✏️ Editar</a>
+  </div>
+  <div class="points-distribution">
+    <div class="distribution-grid">
+      <div class="dist-item"><strong>1º:</strong> 23%</div>
+      <div class="dist-item"><strong>2º:</strong> 17%</div>
+      <div class="dist-item"><strong>3º:</strong> 14%</div>
+      <div class="dist-item"><strong>4º:</strong> 11%</div>
+      <div class="dist-item"><strong>5º:</strong> 9%</div>
+      <div class="dist-item"><strong>6º:</strong> 8%</div>
+      <div class="dist-item"><strong>7º:</strong> 7%</div>
+      <div class="dist-item"><strong>8º:</strong> 6%</div>
+      <div class="dist-item"><strong>9º:</strong> 5%</div>
+    </div>
+  </div>
+</section>
+
+<style>
+.ranking-config {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+}
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.config-header h2 {
+  color: #FFD700;
+  margin: 0;
+  font-size: 1.8rem;
+}
+.btn-edit {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid #FFD700;
+  border-radius: 8px;
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.btn-edit:hover {
+  background: rgba(255, 215, 0, 0.2);
+  transform: translateY(-2px);
+}
+.distribution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.dist-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  text-align: center;
+  color: #dfe6ff;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+.dist-item:hover {
+  background: rgba(255, 215, 0, 0.1);
+  transform: translateY(-2px);
+}
+.dist-item strong {
+  color: #FFD700;
+  font-size: 1.3rem;
+}
+@media (max-width: 768px) {
+  .ranking-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ranking-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .ranking-position {
+    min-width: auto;
+  }
+  .ranking-stats {
+    justify-content: center;
+    gap: 2rem;
+  }
+  .distribution-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 </style>
 
-{{/layouts/main}}
+ 

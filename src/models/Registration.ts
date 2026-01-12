@@ -9,6 +9,8 @@ export class Registration extends Model {
   public tournament_id!: number;
   public registration_date!: Date;
   public punctuality!: boolean;
+  public position?: number | null;
+  public action_type?: number | null; // 1=buyin,2=reentry,3=duplo
 }
 
 /**
@@ -21,6 +23,7 @@ Registration.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    // Use canonical `user_id` referencing the `users` table.
     user_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
@@ -46,6 +49,8 @@ Registration.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },
+    position: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+    action_type: { type: DataTypes.TINYINT.UNSIGNED, allowNull: false, defaultValue: 1 },
   },
   {
     sequelize,
@@ -54,3 +59,10 @@ Registration.init(
     timestamps: false,
   }
 );
+
+// Define associations after model initialization
+import { Tournament } from './Tournament';
+import { User } from './User';
+
+Registration.belongsTo(Tournament, { foreignKey: 'tournament_id', as: 'tournament' });
+Registration.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
