@@ -74,10 +74,10 @@ const avatarStorage = multer.diskStorage({
 const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 3 * 1024 * 1024 } });
 router.post('/import', requireAdmin, upload.single('file'), async (req: Request, res: Response) => {
   try {
-  if (!(req as any).file) return res.status(400).send('No se subió ningún archivo');
+  if (!req.file) return res.status(400).send('No se subió ningún archivo');
 
   // Parsear buffer con xlsx (soporta CSV y XLSX)
-  const workbook = XLSX.read((req as any).file.buffer, { type: 'buffer' });
+  const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
