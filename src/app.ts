@@ -255,6 +255,39 @@ Handlebars.registerHelper('currency', function(n: any) {
 	if (n === null || n === undefined) return '';
 	return Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 });
+
+// Helper para traducir tipos de pagos al español
+Handlebars.registerHelper('paymentTypeLabel', function(source: any, referenceId: any) {
+	const sourceStr = String(source || '').toLowerCase();
+	const refId = referenceId ? `#${referenceId}` : '';
+	
+	const labels: Record<string, string> = {
+		'tournament': `🎰 Torneo ${refId}`,
+		'cash': `💰 Pago Cash ${refId}`,
+		'cash_request': `🎲 Solicitud Fichas ${refId}`,
+		'settlement': `✅ Liquidación ${refId}`,
+		'commission': `💼 Comisión ${refId}`,
+		'payout': `💸 Pago ${refId}`
+	};
+	
+	return labels[sourceStr] || `${sourceStr} ${refId}`;
+});
+
+// Helper para mostrar fecha con hora
+Handlebars.registerHelper('formatDateTimeShort', function(d: any) {
+	if (!d) return '';
+	const date = new Date(d);
+	if (isNaN(date.getTime())) return '';
+	
+	const day = String(date.getDate()).padStart(2, '0');
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const year = date.getFullYear();
+	const hours = String(date.getHours()).padStart(2, '0');
+	const minutes = String(date.getMinutes()).padStart(2, '0');
+	
+	return `${day}/${month}/${year} ${hours}:${minutes}`;
+});
+
 Handlebars.registerHelper('debtDisplay', function(n: any) {
 	if (n === null || n === undefined) return '';
 	const num = Number(n);

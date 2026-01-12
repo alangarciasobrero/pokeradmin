@@ -24,33 +24,55 @@ router.get('/', async (req, res) => {
 
 // GET /admin/payments/create - form to create a new payment
 router.get('/create', requireAdmin, async (req, res) => {
-  res.render('admin_payments_create', { formAction: '/admin/payments/create' });
+  try {
+    const users = await User.findAll({
+      order: [['username', 'ASC']]
+    });
+    res.render('admin_payments_create', { formAction: '/admin/payments/create', users });
+  } catch (e) {
+    console.error('Error loading users', e);
+    res.render('admin_payments_create', { formAction: '/admin/payments/create', error: 'Error cargando usuarios', users: [] });
+  }
 });
 
 // POST /admin/payments/create - create a new payment record
 router.post('/create', requireAdmin, async (req, res) => {
   try {
-    const { user_id, amount, source, reference_id, method, personal_account, paid } = req.body as any;
-    if (!user_id || !amount) return res.render('admin_payments_create', { error: 'user_id y amount son requeridos', formAction: '/admin/payments/create', form: req.body });
-  const methodWithActor = req.session && (req.session as any).username ? (method ? `${method}|by:${(req.session as any).username}:${(req.session as any).userId}` : `manual|by:${(req.session as any).username}:${(req.session as any).userId}`) : (method || null);
+    const { user_id, amount, source, reference_id, method, personal_account, paid, notes } = req.body as any;
+    if (!user_id || !amount) {
+      const users = await User.findAll({ order: [['username', 'ASC']] });
+      return res.render('admin_payments_create', { error: 'Jugador y monto son requeridos', formAction: '/admin/payments/create', form: req.body, users });
+    }
+    const methodWithActor = req.session && (req.session as any).username ? (method ? `${method}|by:${(req.session as any).username}:${(req.session as any).userId}` : `manual|by:${(req.session as any).username}:${(req.session as any).userId}`) : (method || null);
     const recordedByName = req.session && (req.session as any).username ? String((req.session as any).username) : null;
+    
+    // Add notes to method if provided
+    const finalMethod = notes ? `${methodWithActor}|notes:${notes}` : methodWithActor;
+    
     const p = await Payment.create({
       user_id: Number(user_id),
       amount: Number(amount),
       payment_date: new Date(),
-      source: source || null,
+      source: source || 'adjustment',
       reference_id: reference_id ? Number(reference_id) : null,
-      method: methodWithActor,
+      method: finalMethod,
       recorded_by_name: recordedByName,
       personal_account: personal_account === 'on' || personal_account === true ? true : false,
       paid: paid === 'on' || paid === true ? true : false,
       paid_amount: paid === 'on' || paid === true ? Number(amount) : 0
     });
-    req.session!.flash = { type: 'success', message: 'Pago creado' };
-    res.redirect('/admin/payments');
+    
+    const user = await User.findByPk(Number(user_id));
+    const userName = user ? user.username : 'Usuario';
+    const amountNum = Number(amount);
+    const actionType = amountNum < 0 ? 'Deuda registrada' : 'Abono registrado';
+    
+    req.session!.flash = { type: 'success', message: `${actionType}: $${Math.abs(amountNum)} para ${userName}` };
+    res.redirect('/admin/debtors');
   } catch (e) {
     console.error('Error creating payment', e);
-    res.render('admin_payments_create', { error: 'Error creando pago', formAction: '/admin/payments/create', form: req.body });
+    const users = await User.findAll({ order: [['username', 'ASC']] }).catch(() => []);
+    res.render('admin_payments_create', { error: 'Error creando ajuste', formAction: '/admin/payments/create', form: req.body, users });
   }
 });
 
@@ -353,13 +375,28 @@ router.get('/user/:id/movements', requireAdmin, async (req, res) => {
   try {
     const userId = Number(req.params.id);
     const q = req.query.date as string | undefined;
-    const date = q ? new Date(q) : new Date();
-    // compute start/end of day
-    const start = new Date(date); start.setHours(0,0,0,0);
-    const end = new Date(date); end.setHours(23,59,59,999);
+    
+    // Use the same gaming_date logic as the dashboard
+    const { getCurrentGamingDate, formatGamingDateSQL } = await import('../utils/gamingDate');
+    const gamingDate = getCurrentGamingDate();
+    const gamingDateStr = formatGamingDateSQL(gamingDate);
 
-    // fetch expectations (tournament/cash) created that day
-    const dayExps = await Payment.findAll({ where: { user_id: userId, source: ['tournament','cash'], payment_date: { [Op.between]: [start, end] } as any } as any, order: [['payment_date','ASC']] });
+    console.log(`[Movements API] userId=${userId}, gamingDateStr=${gamingDateStr}`);
+
+    // fetch expectations (tournament/cash) for the current gaming date
+    const dayExps = await Payment.findAll({ 
+      where: { 
+        user_id: userId, 
+        source: ['tournament','cash', 'cash_request'], 
+        gaming_date: gamingDateStr 
+      } as any, 
+      order: [['payment_date','ASC']] 
+    });
+
+    console.log(`[Movements API] Found ${dayExps.length} payments for user ${userId}`);
+    if (dayExps.length > 0) {
+      console.log('[Movements API] Sample payment:', JSON.stringify(dayExps[0], null, 2));
+    }
 
     const personalDebts = await Payment.findAll({ where: { user_id: userId, personal_account: true, paid: false } as any, order: [['payment_date','ASC']] });
 

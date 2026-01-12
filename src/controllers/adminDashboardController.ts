@@ -31,7 +31,14 @@ export async function getAdminDashboard(req: Request, res: Response) {
         
         const { getCurrentGamingDate } = await import('../utils/gamingDate');
         const currentGamingDate = getCurrentGamingDate();
-        const gamingDateStr = currentGamingDate.toISOString().split('T')[0];
+        
+        // Usar hora local para la comparación, no UTC
+        const year = currentGamingDate.getFullYear();
+        const month = String(currentGamingDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentGamingDate.getDate()).padStart(2, '0');
+        const gamingDateStr = `${year}-${month}-${day}`;
+        
+        console.log('[Dashboard] Current gaming date string:', gamingDateStr, 'from date:', currentGamingDate);
         
         const today = new Date();
         const isSameDay = (d1: Date, d2: Date) => {
@@ -41,8 +48,21 @@ export async function getAdminDashboard(req: Request, res: Response) {
         // Find tournaments that match the current gaming_date and are not finished (end_date is null)
         // Include both open and closed registrations
         const allTournaments = await tournamentRepo.getAll();
+        console.log('[Dashboard] Todos los torneos sin finalizar:', allTournaments.filter(t => !t.end_date).map(t => ({
+            id: t.id,
+            name: t.tournament_name,
+            gaming_date: (t as any).gaming_date,
+            start_date: t.start_date
+        })));
+        
         const tournamentsToday = allTournaments.filter(t => {
-            const tournamentGamingDate = (t as any).gaming_date ? new Date((t as any).gaming_date).toISOString().split('T')[0] : null;
+            // Si el torneo tiene gaming_date, úsalo; si no, usa la start_date para comparar
+            const tournamentGamingDate = (t as any).gaming_date 
+                ? (t as any).gaming_date
+                : (t.start_date ? new Date(t.start_date).toISOString().split('T')[0] : null);
+            
+            console.log(`[Dashboard] Torneo ${t.id}: gaming_date=${tournamentGamingDate}, comparando con ${gamingDateStr}, match=${tournamentGamingDate === gamingDateStr}, end_date=${t.end_date}`);
+            
             return tournamentGamingDate === gamingDateStr && !t.end_date;
         });
         const tournamentIds = tournamentsToday.map(t => t.id);
@@ -86,89 +106,16 @@ export async function getAdminDashboard(req: Request, res: Response) {
         // Prefer to compute debtors from payments table if available
         let debtorsToday: Array<{ userId: number; name: string; amountDue: number }> = [];
         try {
-            // Obtener gaming_dates únicos de los torneos y cash games de hoy
-            const { getCurrentGamingDate, getGamingDate } = await import('../utils/gamingDate');
+            // Usar directamente el gaming_date actual para buscar deudores
+            console.log(`[Dashboard] Buscando deudores para gaming_date: ${gamingDateStr}`);
             
-            // Buscar torneos que empezaron hoy
-            const todayStart = new Date(today);
-            todayStart.setHours(0, 0, 0, 0);
-            const todayEnd = new Date(today);
-            todayEnd.setHours(23, 59, 59, 999);
+            const paymentsDebtors = await paymentRepo.getDebtorsByDate(gamingDateStr);
+            console.log(`[Dashboard] Encontrados ${paymentsDebtors.length} deudores:`, paymentsDebtors);
             
-            console.log('[Dashboard] Buscando torneos entre:', todayStart.toISOString(), 'y', todayEnd.toISOString());
-            
-            const tournamentsTodayByDate = await Tournament.findAll({
-                where: {
-                    start_date: {
-                        [Op.between]: [todayStart, todayEnd]
-                    }
-                }
-            });
-            
-            console.log('[Dashboard] Torneos encontrados:', tournamentsTodayByDate.length, tournamentsTodayByDate.map(t => ({ id: t.id, start_date: t.start_date, gaming_date: t.gaming_date })));
-            
-            const cashGamesTodayByDate = await CashGame.findAll({
-                where: {
-                    start_datetime: {
-                        [Op.between]: [todayStart, todayEnd]
-                    }
-                }
-            });
-            
-            // Recolectar gaming_dates únicos
-            const gamingDates = new Set<string>();
-            tournamentsTodayByDate.forEach(t => {
-                if ((t as any).gaming_date) {
-                    const dateStr = new Date((t as any).gaming_date).toISOString().split('T')[0];
-                    gamingDates.add(dateStr);
-                }
-            });
-            cashGamesTodayByDate.forEach(c => {
-                if ((c as any).gaming_date) {
-                    const dateStr = new Date((c as any).gaming_date).toISOString().split('T')[0];
-                    gamingDates.add(dateStr);
-                }
-            });
-            
-            // Si no hay gaming_dates específicos, usar el getCurrentGamingDate como fallback
-            if (gamingDates.size === 0) {
-                const currentGamingDate = getCurrentGamingDate();
-                gamingDates.add(currentGamingDate.toISOString().split('T')[0]);
-            }
-            
-            console.log('[Dashboard] Gaming dates para buscar deudores:', Array.from(gamingDates));
-            
-            // Buscar deudores para todos los gaming_dates relevantes
+            // Obtener nombres de usuarios
             const debtorsMap = new Map<number, { userId: number; name: string; amountDue: number }>();
             
-            for (const gamingDate of gamingDates) {
-                console.log(`[Dashboard] Buscando deudores para gaming_date: ${gamingDate}`);
-                const paymentsDebtors = await paymentRepo.getDebtorsByDate(gamingDate);
-                console.log(`[Dashboard] Encontrados ${paymentsDebtors.length} deudores para ${gamingDate}:`, paymentsDebtors);
-                
-                for (const d of paymentsDebtors) {
-                    if (debtorsMap.has(d.userId)) {
-                        debtorsMap.get(d.userId)!.amountDue += d.amountDue;
-                    } else {
-                        const user = await User.findByPk(d.userId);
-                        debtorsMap.set(d.userId, {
-                            userId: d.userId,
-                            name: user ? (user.full_name || user.username) : `#${d.userId}`,
-                            amountDue: d.amountDue
-                        });
-                    }
-                }
-            }
-            
-            debtorsToday = Array.from(debtorsMap.values());
-            
-            // También buscar por payment_date de hoy (para cash games y otros pagos sin gaming_date específico)
-            const todayStr = today.toISOString().split('T')[0];
-            console.log(`[Dashboard] También buscando deudores por payment_date: ${todayStr}`);
-            const paymentsDebtorsToday = await paymentRepo.getDebtorsByPaymentDate(todayStr);
-            console.log(`[Dashboard] Encontrados ${paymentsDebtorsToday.length} deudores por payment_date:`, paymentsDebtorsToday);
-            
-            for (const d of paymentsDebtorsToday) {
+            for (const d of paymentsDebtors) {
                 if (debtorsMap.has(d.userId)) {
                     debtorsMap.get(d.userId)!.amountDue += d.amountDue;
                 } else {
@@ -182,6 +129,7 @@ export async function getAdminDashboard(req: Request, res: Response) {
             }
             
             debtorsToday = Array.from(debtorsMap.values());
+            console.log(`[Dashboard] Total deudores de la jornada: ${debtorsToday.length}`, debtorsToday);
             
             if (debtorsToday.length === 0) {
                 // fallback heuristic: registrations created today with punctuality === false
@@ -271,7 +219,8 @@ export async function getAdminDashboard(req: Request, res: Response) {
             cashGamesActive,
             debtorsToday,
             summary,
-            financialTotals
+            financialTotals,
+            gamingDateStr  // Pasar la fecha de jornada para mostrarla en el dashboard
         });
     } catch (err: any) {
         console.error('Error rendering admin dashboard', err);

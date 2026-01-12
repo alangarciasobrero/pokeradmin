@@ -107,6 +107,23 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
         data[f] = (v === true || v === 'true' || v === '1' || v === 1);
       }
     }
+    
+    // punctuality checkbox handling: if apply checkbox sent and false, zero the discount; if true and missing, default to 20
+    console.log('[tournamentWebRoutes] punctuality_apply:', data.punctuality_apply, 'punctuality_discount:', data.punctuality_discount);
+    if (data.punctuality_apply !== undefined) {
+      const pa = (data.punctuality_apply === true || data.punctuality_apply === 'true' || data.punctuality_apply === '1' || data.punctuality_apply === 1 || data.punctuality_apply === 'on');
+      console.log('[tournamentWebRoutes] pa:', pa);
+      if (!pa) {
+        data.punctuality_discount = 0;
+        data.punctuality_bonus_chips = 0;
+        console.log('[tournamentWebRoutes] Setting discount to 0 (checkbox off)');
+      } else if (data.punctuality_discount === undefined || data.punctuality_discount === null || data.punctuality_discount === '') {
+        data.punctuality_discount = 20;
+        console.log('[tournamentWebRoutes] Setting default discount to 20');
+      }
+    }
+    console.log('[tournamentWebRoutes] Final punctuality_discount:', data.punctuality_discount);
+    
     for (const f of dateFields) {
       if (data[f] !== undefined && data[f] !== null && data[f] !== '') {
         // Parse DD/MM/YYYY format (European/Argentine style)

@@ -12,8 +12,12 @@ export async function updateSeasonStates(): Promise<void> {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Obtener todas las temporadas
-        const seasons = await Season.findAll();
+        // Obtener todas las temporadas ordenadas por fecha de inicio (más reciente primero)
+        const seasons = await Season.findAll({
+            order: [['fecha_inicio', 'DESC']]
+        });
+
+        let hasActiveAssigned = false;
 
         for (const season of seasons) {
             const fechaInicio = new Date(season.fecha_inicio);
@@ -28,7 +32,14 @@ export async function updateSeasonStates(): Promise<void> {
             if (today < fechaInicio) {
                 newEstado = 'planificada';
             } else if (today >= fechaInicio && today <= fechaFin) {
-                newEstado = 'activa';
+                // Solo permitir UNA temporada activa (la primera que cumpla, que es la más reciente)
+                if (!hasActiveAssigned) {
+                    newEstado = 'activa';
+                    hasActiveAssigned = true;
+                } else {
+                    // Si ya hay una temporada activa, marcar esta como finalizada
+                    newEstado = 'finalizada';
+                }
             } else if (today > fechaFin) {
                 newEstado = 'finalizada';
             }

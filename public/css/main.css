@@ -123,7 +123,7 @@ body {
 /* layout the tournament info in a grid to prevent overlap */
 .tournament-info { 
   display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -131,12 +131,37 @@ body {
   margin: 0;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 0.6rem 0.8rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(57, 73, 171, 0.08) 0%, rgba(33, 150, 243, 0.06) 100%);
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(100, 181, 246, 0.2);
+  transition: all 0.2s ease;
 }
-.tournament-info .icon { width: 32px; height: 32px; margin-right: 0.6rem; flex-shrink: 0; }
+.tournament-info p:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 181, 246, 0.15);
+  border-color: rgba(100, 181, 246, 0.3);
+}
+.tournament-info .label { 
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #90caf9;
+  flex: 1;
+}
+.tournament-info p > span:last-child,
+.tournament-info p > .badge {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  min-width: 80px;
+  text-align: right;
+}
+.tournament-info .icon { width: 32px; height: 32px; margin-right: 0.8rem; flex-shrink: 0; }
 
 /* If the trophy SVG is still too big on very large screens, cap it */
 @media (min-width: 1400px) {
@@ -489,6 +514,21 @@ input[type="text"], input[type="password"], input[type="number"], input[type="da
 }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.45); }
 select { appearance: none; -webkit-appearance: none; }
+
+/* Estilos para las opciones del dropdown */
+select option {
+  background: #1e1e1e;
+  color: #fff;
+  padding: 0.5rem;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background: #2d2d2d;
+  color: #FFD700;
+}
+
 input[type="file"] { background: transparent; border: 1px dashed rgba(255,255,255,0.04); padding: 0.45rem; }
 label { color: #ffd884; font-weight:600; display:block; margin:0.6rem 0 0.25rem; }
 
@@ -625,6 +665,37 @@ input[type="checkbox"], input[type="radio"] { transform: scale(1.02); margin-rig
 
 .registrations-table .participant-username { color: #ffd884; font-weight: 700; }
 .registrations-table .participant-full { color: #dfe6ff; font-weight: 500; display: inline; }
+
+/* Enlaces de usuario en tablas */
+a.user-link {
+  color: #ffd884;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+a.user-link:hover {
+  color: #ffeb99;
+  border-bottom-color: #ffd884;
+  transform: translateY(-1px);
+}
+
+a.user-link:active {
+  transform: translateY(0);
+}
+
+/* Para el contexto de cash games */
+.user-cell a.user-link {
+  color: #ffd884;
+  font-weight: 600;
+}
+
+.user-cell a.user-link:hover {
+  color: #ffeb99;
+  border-bottom-color: #ffd884;
+}
+
 .registrations-table .action-column { position: sticky; right: 0; background: linear-gradient(90deg, rgba(0,0,0,0.02), rgba(0,0,0,0.0)); padding-left:0.6rem; }
 .registrations-table .action-column .quick-pay-btn { min-width:110px; }
 .registrations-table .col-debt { color: #ffcf66; font-weight:800; background: rgba(255,204,0,0.03); text-align: right; padding-right: 1rem !important; }

@@ -85,8 +85,10 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
         where: { user_id: p.user_id, source: 'cuenta_personal' } 
       });
       
+      const plainParticipant = p.get({ plain: true });
       return {
-        ...p.get({ plain: true }),
+        ...plainParticipant,
+        user: plainParticipant.user || null, // Asegurar que el usuario esté disponible
         requested_amount: requestPayment ? Number(requestPayment.amount) : 0,
         amount_paid: cashPayment ? Number(cashPayment.paid_amount || 0) : 0,
         method: cashPayment ? cashPayment.method : null,
@@ -99,6 +101,9 @@ router.get('/:id', requireAdmin, async (req: Request, res: Response) => {
     const users = await User.findAll({ where: { is_deleted: false }, order: [['username','ASC']] });
     const umap: any = {};
     users.forEach((u: any) => umap[u.id] = u);
+    
+    // Debug: ver la estructura de los participantes
+    console.log('[Cash Detail] Sample participant:', JSON.stringify(enrichedParticipants[0], null, 2));
     
     // Load dealer shifts history
     const DealerShift = (await import('../models/DealerShift')).default;
@@ -200,28 +205,29 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
       }
     }
 
-    // Record a payment row for any immediate payment (paid=true only if amountPaid > 0)
-    const paidFlag = amountPaid > 0;
-    // Si no pagó (amountPaid = 0), method debe ser null para mostrar FIADO
-    const methodWithActor = paidFlag && req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : null;
-    const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
-    try {
-      await Payment.create({ 
-        user_id: userId, 
-        amount: amountPaid, 
-        payment_date: now, 
-        gaming_date: cashGameGamingDate,
-        source: 'cash', 
-        reference_id: participant.id, 
-        paid: paidFlag, 
-        paid_amount: amountPaid, 
-        method: methodWithActor, 
-        personal_account: personalAccount, 
-        recorded_by_name: recordedByName 
-      });
-    } catch (err) {
-      console.error('Error recording payment for cash registration', err);
-      if (req.session) req.session.flash = { type: 'warning', message: 'Jugador registrado pero falló el registro de pago en ledger' };
+    // Record a payment row for any immediate payment (only if amountPaid > 0)
+    if (amountPaid > 0) {
+      const paidFlag = true;
+      const methodWithActor = req.session && req.session.username ? (method ? `${method}|by:${req.session.username}:${req.session.userId}` : `manual|by:${req.session.username}:${req.session.userId}`) : null;
+      const recordedByName = req.session && req.session.username ? String(req.session.username) : null;
+      try {
+        await Payment.create({ 
+          user_id: userId, 
+          amount: amountPaid, 
+          payment_date: now, 
+          gaming_date: cashGameGamingDate,
+          source: 'cash', 
+          reference_id: participant.id, 
+          paid: paidFlag, 
+          paid_amount: amountPaid, 
+          method: methodWithActor, 
+          personal_account: personalAccount, 
+          recorded_by_name: recordedByName 
+        });
+      } catch (err) {
+        console.error('Error recording payment for cash registration', err);
+        if (req.session) req.session.flash = { type: 'warning', message: 'Jugador registrado pero falló el registro de pago en ledger' };
+      }
     }
 
     if (req.session) req.session.flash = { type: 'success', message: 'Jugador registrado en la mesa cash' };

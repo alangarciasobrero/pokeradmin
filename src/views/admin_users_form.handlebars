@@ -1,7 +1,5 @@
- 
-
-<div class="admin-user-form">
-    <h1>{{formTitle}}</h1>
+<section class="pa-card user-form-container">
+    <h1>👤 {{formTitle}}</h1>
 
     {{#if flash}}
         <div class="flash flash-{{flash.type}}">{{flash.message}}</div>
@@ -10,73 +8,356 @@
         <div class="flash flash-error">{{error}}</div>
     {{/if}}
 
-    <form method="POST" action="{{formAction}}" enctype="multipart/form-data">
-        <div class="form-row">
-            <label for="username">Usuario</label>
-            <input type="text" id="username" name="username" value="{{user.username}}" required>
-        </div>
-        <div class="form-row">
-            <label for="full_name">Nombre completo</label>
-            <input type="text" id="full_name" name="full_name" value="{{user.full_name}}">
-        </div>
-        <div class="form-row">
-            <label for="role">Rol</label>
-            <select id="role" name="role">
-                <option value="admin" {{#if (eq user.role 'admin')}}selected{{/if}}>Admin</option>
-                <option value="user" {{#if (eq user.role 'user')}}selected{{/if}}>Usuario</option>
-            </select>
+    <form method="POST" action="{{formAction}}" enctype="multipart/form-data" class="modern-form">
+        
+        {{!-- Información básica --}}
+        <div class="form-section">
+            <h3 class="section-title">📝 Información básica</h3>
+            
+            <div class="form-group">
+                <label for="username">👤 Usuario *</label>
+                <input type="text" id="username" name="username" value="{{user.username}}" required placeholder="Ej: jperez" {{#if user.id}}readonly{{/if}}>
+                {{#if user.id}}<small class="hint">El usuario no puede ser modificado</small>{{/if}}
+            </div>
+
+            <div class="form-group">
+                <label for="full_name">✏️ Nombre completo</label>
+                <input type="text" id="full_name" name="full_name" value="{{user.full_name}}" placeholder="Ej: Juan Pérez">
+            </div>
+
+            <div class="form-group">
+                <label for="role">🎭 Rol</label>
+                <select id="role" name="role">
+                    <option value="user" {{#if (eq user.role 'user')}}selected{{else}}{{#unless user.role}}selected{{/unless}}{{/if}}>🎮 Player</option>
+                    <option value="admin" {{#if (eq user.role 'admin')}}selected{{/if}}>👑 Admin</option>
+                </select>
+                <small class="hint">Los Players solo ven su información, los Admins gestionan el sistema</small>
+            </div>
+
+            <div class="form-group">
+                <label for="password">🔒 Contraseña {{#unless user.id}}*{{else}}<span class="optional">(dejar vacío para no cambiar)</span>{{/unless}}</label>
+                <input type="password" id="password" name="password" {{#unless user.id}}required{{/unless}} placeholder="{{#unless user.id}}Mínimo 6 caracteres{{else}}●●●●●●●●{{/unless}}">
+            </div>
         </div>
 
-        <div class="form-row">
-            <label>Avatar</label>
-            <div style="display:flex; align-items:center; gap:1.5rem;">
-                <div id="avatar-preview" style="width:60px; height:60px; border-radius:50%; overflow:hidden; background:var(--muted-surface); display:flex; align-items:center; justify-content:center;">
+        {{!-- Avatar --}}
+        <div class="form-section">
+            <h3 class="section-title">🖼️ Avatar</h3>
+            
+            <div class="avatar-section">
+                <div id="avatar-preview" class="avatar-preview">
                     {{#if user.avatar}}
-                        <img id="avatar-img" src="{{user.avatar}}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">
+                        <img id="avatar-img" src="{{user.avatar}}" alt="avatar">
                     {{else}}
-                        <span id="avatar-placeholder" style="color:#aaa;">Sin avatar</span>
+                        <div id="avatar-placeholder" class="avatar-placeholder">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="#64b5f6">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                        </div>
                     {{/if}}
                 </div>
-                <input id="avatarFile" type="file" name="avatarFile" accept="image/*">
-            </div>
-        </div>
 
-        <div class="form-row" style="margin:1rem 0;">
-            <label>O elegir de la galería:</label>
-            <div id="gallery" style="display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.5rem;">
-                {{#each gallery}}
-                    <label style="cursor:pointer; display:inline-block; text-align:center;">
-                        <input type="radio" name="avatarGallery" value="{{this}}" style="display:none;" {{#if (eq ../user.avatar this)}}checked{{/if}}>
-                        <img class="gallery-thumb" src="{{this}}" alt="avatar" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #FFD700; display:block;">
+                <div class="avatar-options">
+                    <label for="avatarFile" class="upload-btn">
+                        📤 Subir imagen
+                        <input id="avatarFile" type="file" name="avatarFile" accept="image/*" style="display:none;">
                     </label>
-                {{/each}}
+                    <small class="hint">JPG, PNG o WEBP (max 2MB)</small>
+                </div>
             </div>
+
+            {{#if gallery.length}}
+            <div class="gallery-section">
+                <label class="gallery-label">O elegir de la galería:</label>
+                <div id="gallery" class="gallery-grid">
+                    {{#each gallery}}
+                        <label class="gallery-item">
+                            <input type="radio" name="avatarGallery" value="{{this}}" {{#if (eq ../user.avatar this)}}checked{{/if}}>
+                            <img class="gallery-thumb" src="{{this}}" alt="avatar">
+                            <div class="gallery-check">✓</div>
+                        </label>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
         </div>
 
-        <div class="form-row">
-            <label for="password">Contraseña {{#unless user.id}}(obligatoria){{else}}(dejar vacío para no cambiar){{/unless}}</label>
-            <input type="password" id="password" name="password" {{#unless user.id}}required{{/unless}}>
-        </div>
-
-        <div style="margin-top:1rem;">
-            <button type="submit" class="btn btn-primary">Guardar</button>
+        {{!-- Acciones --}}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 Guardar usuario</button>
+            <a href="/admin/users" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 
     {{#if user.id}}
-        <form method="POST" action="/admin/users/{{user.id}}/delete" style="margin-top:2rem;">
-            <button type="submit" onclick="return confirm('¿Eliminar usuario?')">Eliminar usuario</button>
-        </form>
+        <div class="danger-zone">
+            <h3>⚠️ Zona peligrosa</h3>
+            <p>Esta acción no se puede deshacer</p>
+            <form method="POST" action="/admin/users/{{user.id}}/delete" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Eliminar usuario permanentemente?')">🗑️ Eliminar usuario</button>
+            </form>
+        </div>
     {{/if}}
+</section>
 
-    <hr>
-    <h3>Importar usuarios desde archivo</h3>
-    <form method="POST" action="/admin/users/import" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".csv,.xlsx" required>
-        <button type="submit">Importar</button>
-    </form>
+<style>
+.user-form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+}
 
-</div>
+.user-form-container h1 {
+    margin-bottom: 2rem;
+    color: #fff;
+}
+
+.modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.form-section {
+    background: linear-gradient(135deg, rgba(57, 73, 171, 0.08) 0%, rgba(33, 150, 243, 0.06) 100%);
+    border: 1px solid rgba(100, 181, 246, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    color: #64b5f6;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(100, 181, 246, 0.2);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #90caf9;
+    font-size: 0.95rem;
+}
+
+.optional {
+    font-weight: normal;
+    color: #64b5f6;
+    font-size: 0.85rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 181, 246, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #64b5f6;
+    box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.form-group input[readonly] {
+    background: rgba(255, 255, 255, 0.02);
+    cursor: not-allowed;
+    color: #90caf9;
+}
+
+.hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #64b5f6;
+}
+
+.avatar-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(100, 181, 246, 0.1);
+    border: 3px solid rgba(100, 181, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-options {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3949ab 0%, #1976d2 100%);
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(57, 73, 171, 0.3);
+}
+
+.gallery-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(100, 181, 246, 0.2);
+}
+
+.gallery-label {
+    display: block;
+    margin-bottom: 1rem;
+    color: #90caf9;
+    font-weight: 600;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 1rem;
+}
+
+.gallery-item {
+    position: relative;
+    cursor: pointer;
+    display: block;
+}
+
+.gallery-item input[type="radio"] {
+    display: none;
+}
+
+.gallery-thumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(100, 181, 246, 0.3);
+    transition: all 0.2s ease;
+    display: block;
+}
+
+.gallery-item:hover .gallery-thumb {
+    transform: scale(1.05);
+    border-color: #64b5f6;
+}
+
+.gallery-check {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background: #4CAF50;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: 2px solid #1b5e20;
+}
+
+.gallery-item input[type="radio"]:checked ~ .gallery-thumb {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.gallery-item input[type="radio"]:checked ~ .gallery-check {
+    display: flex;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #90caf9;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.danger-zone {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 12px;
+}
+
+.danger-zone h3 {
+    color: #ff7043;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.danger-zone p {
+    color: #ffab91;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
+}
+</style>
 
 <script>
     // Preview uploaded file

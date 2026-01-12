@@ -845,10 +845,12 @@
 						<tr>
 							<td>{{this.id}}</td>
 							<td class="user-cell">
-								{{#if ../umap.[this.user_id]}}
-									<span class="username">{{../umap.[this.user_id].username}}</span>
-									{{#if ../umap.[this.user_id].full_name}}
-										<span class="fullname">{{../umap.[this.user_id].full_name}}</span>
+							{{#if this.user}}
+							<a href="/admin/users/{{this.user_id}}/ledger" class="user-link">
+								<span class="username">{{this.user.username}}</span>
+							</a>
+								{{#if this.user.full_name}}
+									<span class="fullname">{{this.user.full_name}}</span>
 									{{/if}}
 								{{else}}
 									User #{{this.user_id}}
@@ -862,10 +864,10 @@
 						<td>{{#if this.left_at}}{{formatDateTime this.left_at}}{{else}}<span class="text-success">En mesa</span>{{/if}}</td>
 					<td class="admin-cell">{{this.recorded_by}}</td>
 					<td class="actions-cell">
-						{{#if ../umap.[this.user_id]}}
-							<button class="quick-pay-btn" 
-									data-user-id="{{this.user_id}}" 
-									data-username="{{../umap.[this.user_id].username}}">
+					{{#if this.user}}
+						<button class="quick-pay-btn" 
+								data-user-id="{{this.user_id}}" 
+								data-username="{{this.user.username}}">
 								💰 Pagar
 							</button>
 						{{/if}}

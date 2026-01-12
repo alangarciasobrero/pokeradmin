@@ -30,28 +30,28 @@
     {{!-- Información detallada del torneo, cada campo con su icono --}}
     <div class="tournament-info">
     {{!-- Fecha del torneo --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V9h14v11Zm0-13H5V6h14v1Z"/><rect x="7" y="11" width="10" height="2" rx="1" fill="#3949ab"/></svg> Fecha:</span> {{formatDateTime tournament.start_date}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 16H5V9h14v11Zm0-13H5V6h14v1Z"/><rect x="7" y="11" width="10" height="2" rx="1" fill="#3949ab"/></svg> Fecha:</span> <span>{{formatDateTime tournament.start_date}}</span></p>
     {{!-- Buy-in del torneo --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#43a047"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">$</text></svg> Buy-in:</span> ${{tournament.buy_in}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#43a047"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">$</text></svg> Buy-in:</span> <span>${{tournament.buy_in}}</span></p>
     {{!-- Re-entry permitido --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#1976d2"><rect x="4" y="4" width="16" height="16" rx="8"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">R</text></svg> Re-entry:</span> {{tournament.re_entry}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#1976d2"><rect x="4" y="4" width="16" height="16" rx="8"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">R</text></svg> Re-entry:</span> <span>{{tournament.re_entry}}</span></p>
     {{!-- Premio por knockout --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">K</text></svg> Premio Knockout:</span> ${{tournament.knockout_bounty}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">K</text></svg> Premio Knockout:</span> <span>${{tournament.knockout_bounty}}</span></p>
     {{!-- Stack inicial --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#8e24aa"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">S</text></svg> Stack Inicial:</span> {{tournament.starting_stack}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#8e24aa"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">S</text></svg> Stack Inicial:</span> <span>{{tournament.starting_stack}}</span></p>
     {{!-- Cuenta para ranking --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#00bcd4"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">CR</text></svg> Cuenta para Ranking:</span> <span class="badge badge-{{tournament.count_to_ranking}}">{{#if tournament.count_to_ranking}}Sí{{else}}No{{/if}}</span></p>
     {{!-- Doble puntaje --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff7043"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">DP</text></svg> Doble Puntaje:</span> <span class="badge badge-{{tournament.double_points}}">{{#if tournament.double_points}}Sí{{else}}No{{/if}}</span></p>
     {{!-- Niveles de re-entry --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">RE</text></svg> Niveles Re-entry:</span> {{tournament.blind_levels}} niveles</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">RE</text></svg> Niveles Re-entry:</span> <span>{{tournament.blind_levels}} niveles</span></p>
     {{!-- Duración de ciegas --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FF6F00"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">⏱</text></svg> Duración Ciega:</span> {{tournament.small_blind}} minutos</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FF6F00"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">⏱</text></svg> Duración Ciega:</span> <span>{{tournament.small_blind}} minutos</span></p>
     {{!-- Descuento por puntualidad --}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Descuento Puntualidad:</span> ${{tournament.punctuality_discount}}</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#FFD600"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#3949ab" font-family="Arial" font-weight="bold">PD</text></svg> Descuento Puntualidad:</span> <span>{{tournament.punctuality_discount}}%</span></p>
     {{!-- Fichas extras por puntualidad --}}
     {{#if tournament.punctuality_bonus_chips}}
-    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#4CAF50"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">🎁</text></svg> Fichas Extras Puntualidad:</span> {{tournament.punctuality_bonus_chips}} fichas</p>
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#4CAF50"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">🎁</text></svg> Fichas Extras Puntualidad:</span> <span>{{tournament.punctuality_bonus_chips}} fichas</span></p>
     {{/if}}
     {{!-- Temporada --}}
     {{#if tournament.season}}
@@ -1091,7 +1091,7 @@
                                         tbody.innerHTML = '';
                                         parts.forEach((p, idx) => {
                                             const tr = document.createElement('tr');
-                                            const name = p.full_name ? (`<span class="participant-username">${p.username}</span> <span class="participant-full"> - ${p.full_name}</span>`) : `<span class="participant-username">${p.username}</span>`;
+                                            const name = p.full_name ? (`<a href="/admin/users/${p.user_id}/ledger" class="user-link"><span class="participant-username">${p.username}</span></a> <span class="participant-full"> - ${p.full_name}</span>`) : `<a href="/admin/users/${p.user_id}/ledger" class="user-link"><span class="participant-username">${p.username}</span></a>`;
                                             const isPaid = (p.paid && p.paid > 0);
                                             const isPartialPaid = isPaid && p.paid < p.expected;
                                             const paidLabel = isPaid ? "✓" : "✗";

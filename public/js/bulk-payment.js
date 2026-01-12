@@ -55,23 +55,67 @@ function toggleAllCheckboxes(masterCheckbox) {
   updateBulkPaymentInfo();
 }
 
+// Función para enviar el formulario de pago masivo
+function submitBulkPayment() {
+  const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
+  
+  if (checkboxes.length === 0) {
+    alert('⚠️ No seleccionaste ningún movimiento');
+    return false;
+  }
+  
+  const amountInput = document.getElementById('bulkAmount');
+  const methodSelect = document.querySelector('#bulkPaymentForm select[name="method"]');
+  
+  if (!amountInput || !amountInput.value || parseFloat(amountInput.value) <= 0) {
+    alert('⚠️ Ingresa un monto válido');
+    if (amountInput) amountInput.focus();
+    return false;
+  }
+  
+  if (!methodSelect || !methodSelect.value) {
+    alert('⚠️ Selecciona un método de pago');
+    return false;
+  }
+  
+  // Todo validado, enviar el formulario
+  const form = document.getElementById('bulkPaymentForm');
+  if (form) {
+    form.submit();
+  }
+}
+
+// Función para validar antes de enviar el formulario
+function validateBulkPayment(event) {
+  const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
+  
+  if (checkboxes.length === 0) {
+    event.preventDefault();
+    alert('⚠️ Selecciona al menos un movimiento para pagar');
+    return false;
+  }
+  
+  const amountInput = document.getElementById('bulkAmount');
+  if (!amountInput || !amountInput.value || parseFloat(amountInput.value) <= 0) {
+    event.preventDefault();
+    alert('⚠️ Ingresa un monto válido');
+    amountInput.focus();
+    return false;
+  }
+  
+  return true;
+}
+
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('bulkPaymentForm');
   if (form) {
     form.addEventListener('submit', function(e) {
-      // Solo validar si el submit viene del botón de pagar seleccionados
-      const submitButton = e.submitter;
-      if (submitButton && submitButton.classList.contains('btn-pay-selected')) {
-        const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
-        
-        if (checkboxes.length === 0) {
-          e.preventDefault();
-          alert('Selecciona al menos un movimiento para pagar');
-          return false;
-        }
+      // Validar formulario antes de enviar
+      const submitButton = e.submitter || document.activeElement;
+      if (submitButton && (submitButton.classList.contains('btn-pay-selected') || submitButton.getAttribute('data-action') === 'bulk-pay')) {
+        return validateBulkPayment(e);
       }
-      
       return true;
     });
   }
@@ -84,3 +128,43 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// Función para enviar pagos individuales sin conflicto con el bulk form
+function submitIndividualPayment(userId, paymentId) {
+  const amountInput = document.getElementById(`amount-${paymentId}`);
+  const methodSelect = document.getElementById(`method-${paymentId}`);
+  
+  if (!amountInput || !methodSelect) {
+    alert('Error: no se encontraron los campos del formulario');
+    return;
+  }
+  
+  const amount = amountInput.value;
+  const method = methodSelect.value;
+  
+  if (!amount || parseFloat(amount) <= 0) {
+    alert('Por favor ingresa un monto válido');
+    amountInput.focus();
+    return;
+  }
+  
+  // Crear y enviar un formulario temporal
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/admin/users/${userId}/payments/${paymentId}/mark-paid`;
+  
+  const amountField = document.createElement('input');
+  amountField.type = 'hidden';
+  amountField.name = 'paid_amount';
+  amountField.value = amount;
+  form.appendChild(amountField);
+  
+  const methodField = document.createElement('input');
+  methodField.type = 'hidden';
+  methodField.name = 'method';
+  methodField.value = method;
+  form.appendChild(methodField);
+  
+  document.body.appendChild(form);
+  form.submit();
+}

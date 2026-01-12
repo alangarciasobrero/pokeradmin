@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../services/database';
+import User from './User';
 
 export interface CashParticipantAttributes {
   id: number;
@@ -37,5 +38,8 @@ CashParticipant.init(
     timestamps: false
   }
 );
+
+// Associations
+CashParticipant.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 export default CashParticipant;

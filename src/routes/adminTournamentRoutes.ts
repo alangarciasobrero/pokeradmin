@@ -314,11 +314,19 @@ function normalizeTournamentInput(data: any) {
     }
   }
   // punctuality checkbox handling: if apply checkbox sent and false, zero the discount; if true and missing, default to 20
+  console.log('[normalizeTournamentInput] punctuality_apply:', out.punctuality_apply, 'punctuality_discount:', out.punctuality_discount);
   if (out.punctuality_apply !== undefined) {
-    const pa = (out.punctuality_apply === true || out.punctuality_apply === 'true' || out.punctuality_apply === '1' || out.punctuality_apply === 1);
-    if (!pa) out.punctuality_discount = 0;
-    else if (out.punctuality_discount === undefined || out.punctuality_discount === null || out.punctuality_discount === '') out.punctuality_discount = 20;
+    const pa = (out.punctuality_apply === true || out.punctuality_apply === 'true' || out.punctuality_apply === '1' || out.punctuality_apply === 1 || out.punctuality_apply === 'on');
+    console.log('[normalizeTournamentInput] pa:', pa);
+    if (!pa) {
+      out.punctuality_discount = 0;
+      console.log('[normalizeTournamentInput] Setting discount to 0 (checkbox off)');
+    } else if (out.punctuality_discount === undefined || out.punctuality_discount === null || out.punctuality_discount === '') {
+      out.punctuality_discount = 20;
+      console.log('[normalizeTournamentInput] Setting default discount to 20');
+    }
   }
+  console.log('[normalizeTournamentInput] Final punctuality_discount:', out.punctuality_discount);
   for (const f of dateFields) {
     if (out[f] !== undefined && out[f] !== null && out[f] !== '') {
       // Parse DD/MM/YYYY format (European/Argentine style)
@@ -433,24 +441,53 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
     const start = new Date(tournament.start_date as any);
     const punctuality = now <= start;
 
+  console.log('[Register] Tournament:', id, 'now:', now.toISOString(), 'start:', start.toISOString(), 'punctuality:', punctuality);
+
   // determine action type (1=buyin,2=reentry,3=duplo)
   const at = Number(data.action_type || 1);
   const action_type = isNaN(at) ? 1 : at;
+
+  // Validate re-entry: user must have a previous buy-in
+  if (action_type === 2) {
+    const existingBuyIn = await Registration.findOne({
+      where: { 
+        user_id: userId, 
+        tournament_id: id,
+        action_type: 1 // buy-in
+      }
+    });
+    if (!existingBuyIn) {
+      if (req.session) req.session.flash = { type: 'error', message: 'No se puede hacer re-entry sin un buy-in previo' };
+      return res.redirect(`/admin/games/tournaments/${id}`);
+    }
+  }
 
   // create registration (persist action_type)
   const registration = await Registration.create({ user_id: userId, tournament_id: id, registration_date: now, punctuality, action_type });
 
   // expected amount calculation depends on action_type
-  // Buy-in (1) and Re-entry (2): buy_in with punctuality discount
-  // Duplo (3): buy_in × 1.6 (80% de 2× buy_in = 20% descuento sobre doble caja)
   const pct = Number(tournament.punctuality_discount || 0);
   const baseBuyIn = Number(tournament.buy_in || 0);
-  let expectedAmount = baseBuyIn * (1 - (pct / 100));
+  const reEntryAmount = Number(tournament.re_entry || 0);
+  let expectedAmount = baseBuyIn;
   
-  if (action_type === 3) {
-    // Duplo: buy_in × 2 × 0.8 = buy_in × 1.6
+  console.log('[Register] pct:', pct, 'baseBuyIn:', baseBuyIn, 'reEntry:', reEntryAmount, 'actionType:', action_type);
+  
+  // Buy-in (1): Apply punctuality discount only if registration is punctual
+  if (action_type === 1 && punctuality && pct > 0) {
+    expectedAmount = baseBuyIn * (1 - (pct / 100));
+    console.log('[Register] Applied punctuality discount to buy-in:', expectedAmount);
+  } else if (action_type === 2) {
+    // Re-entry (2): Use re_entry amount, NO punctuality discount
+    expectedAmount = reEntryAmount;
+    console.log('[Register] Re-entry amount (no discount):', expectedAmount);
+  } else if (action_type === 3) {
+    // Duplo (3): buy_in × 2 × 0.8 = buy_in × 1.6
     expectedAmount = baseBuyIn * 1.6;
+    console.log('[Register] Duplo amount:', expectedAmount);
   }
+  
+  console.log('[Register] Final expectedAmount:', expectedAmount);
 
   // create payment record linking to registration
   // Support partial payments and debtors: paid = true only if amountPaid >= expectedAmount and amountPaid > 0

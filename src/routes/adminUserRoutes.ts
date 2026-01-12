@@ -13,28 +13,40 @@ const router = Router();
 
 // use central requireAdmin middleware imported above
 
-// GET /admin/users - Listado de usuarios
+// GET /admin/users - Listado de usuarios con búsqueda
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
   const page = Math.max(1, Number(req.query.page) || 1);
-  const perPage = Math.min(200, Math.max(5, Number(req.query.per_page) || 20));
+  const perPage = Math.min(200, Math.max(5, Number(req.query.per_page) || 50));
   const offset = (page - 1) * perPage;
+  const searchQuery = (req.query.search as string || '').trim();
 
   try {
+    const where: any = { is_deleted: false };
+    
+    // Si hay búsqueda, agregar filtro
+    if (searchQuery) {
+      const { Op } = require('sequelize');
+      where[Op.or] = [
+        { username: { [Op.like]: `%${searchQuery}%` } },
+        { full_name: { [Op.like]: `%${searchQuery}%` } }
+      ];
+    }
+
     const { rows, count } = await User.findAndCountAll({
-      where: { is_deleted: false },
+      where,
       attributes: ['id', 'username', 'full_name', 'role', 'avatar', 'createdAt'],
       limit: perPage,
       offset,
-      order: [['createdAt', 'DESC']]
+      order: [['username', 'ASC']]
     });
 
     const totalPages = Math.max(1, Math.ceil(Number(count) / perPage));
     const links = {
-      prev: page > 1 ? `/admin/users?page=${page - 1}&per_page=${perPage}` : null,
-      next: page < totalPages ? `/admin/users?page=${page + 1}&per_page=${perPage}` : null
+      prev: page > 1 ? `/admin/users?page=${page - 1}&per_page=${perPage}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}` : null,
+      next: page < totalPages ? `/admin/users?page=${page + 1}&per_page=${perPage}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}` : null
     };
 
-    res.render('admin_users', { users: rows, meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages }, links });
+    res.render('admin_users', { users: rows, meta: { page, per_page: perPage, total_items: Number(count), total_pages: totalPages }, links, searchQuery });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al listar usuarios');
@@ -128,11 +140,13 @@ router.get('/new', requireAdmin, (req: Request, res: Response) => {
   const galleryDir = path.join(process.cwd(), 'public', 'images', 'gallery');
   let gallery: string[] = [];
   try {
-    gallery = fs.readdirSync(galleryDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).map(f => `/images/gallery/${f}`);
+    if (fs.existsSync(galleryDir)) {
+      gallery = fs.readdirSync(galleryDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).map(f => `/images/gallery/${f}`);
+    }
   } catch (e) {
     gallery = [];
   }
-  res.render('admin_users_form', { formTitle: 'Nuevo usuario', formAction: '/admin/users', user: {}, gallery });
+  res.render('admin_users_form', { formTitle: 'Nuevo usuario', formAction: '/admin/users', user: { role: 'user' }, gallery });
 });
 
 // POST /admin/users - crear
@@ -145,13 +159,26 @@ router.post('/', requireAdmin, uploadAvatar.single('avatarFile'), async (req: Re
       // save relative path to public
       avatarPath = `/uploads/avatars/${(req as any).file.filename}`;
     }
-    if (!username || !password) return res.render('admin_users_form', { error: 'username y password son requeridos', formTitle: 'Nuevo usuario', formAction: '/admin/users', user: req.body });
+    if (!username || !password) return res.render('admin_users_form', { error: 'username y password son requeridos', formTitle: 'Nuevo usuario', formAction: '/admin/users', user: req.body, gallery: [] });
     const bcrypt = await import('bcrypt');
     const hash = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ username, password_hash: hash, full_name, role: role || 'user', avatar: avatarPath || null });
+    const finalRole = role || 'user'; // Default a 'user' (player) si no se especifica
+    const newUser = await User.create({ username, password_hash: hash, full_name, role: finalRole, avatar: avatarPath || null });
+    req.session!.flash = { type: 'success', message: `Usuario ${username} creado exitosamente como ${finalRole === 'admin' ? 'Admin' : 'Player'}` };
     res.redirect('/admin/users');
-  } catch (err) {
-    res.render('admin_users_form', { error: 'No se pudo crear usuario', details: err, formTitle: 'Nuevo usuario', formAction: '/admin/users', user: req.body });
+  } catch (err: any) {
+    console.error('Error creating user:', err);
+    const galleryDir = path.join(process.cwd(), 'public', 'images', 'gallery');
+    let gallery: string[] = [];
+    try {
+      if (fs.existsSync(galleryDir)) {
+        gallery = fs.readdirSync(galleryDir).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).map(f => `/images/gallery/${f}`);
+      }
+    } catch (e) {
+      gallery = [];
+    }
+    const errorMsg = err.name === 'SequelizeUniqueConstraintError' ? 'El nombre de usuario ya existe' : 'No se pudo crear usuario';
+    res.render('admin_users_form', { error: errorMsg, formTitle: 'Nuevo usuario', formAction: '/admin/users', user: req.body, gallery });
   }
 });
 
@@ -244,9 +271,14 @@ router.get('/:id/ledger', requireAdmin, async (req: Request, res: Response) => {
     const registrations = await Registration.findAll({ where: { user_id: id }, include: [] });
     const cashParts = await CashParticipant.findAll({ where: { user_id: id } });
 
-    // calcular totales: sum pagos pagados, sum inscripciones buy_in
-    const totalPaid = payments.reduce((s, p: any) => s + Number(p.paid ? (p.paid_amount || p.amount) : 0), 0);
-    // sumar buy_in de torneos vinculados a las inscripciones
+    // Calcular totales:
+    // 1. Total pagado (lo que el usuario ya pagó)
+    const totalPaid = payments.reduce((s, p: any) => s + Number(p.paid_amount || 0), 0);
+    
+    // 2. Total adeudado (suma de todos los montos de pagos)
+    const totalOwed = payments.reduce((s, p: any) => s + Number(p.amount || 0), 0);
+    
+    // 3. Sumar buy_in de torneos vinculados a las inscripciones (esto ya está incluido en payments si se registró correctamente)
     let totalRegistrationsCost = 0;
     for (const r of registrations) {
       // carga lazily el torneo si es necesario
@@ -254,9 +286,10 @@ router.get('/:id/ledger', requireAdmin, async (req: Request, res: Response) => {
       if (t) totalRegistrationsCost += Number((t as any).buy_in || 0);
     }
 
-    const balance = totalPaid - totalRegistrationsCost;
+    // Balance = Lo que pagó - Lo que debe
+    const balance = totalPaid - totalOwed;
 
-    res.render('admin_user_ledger', { user, payments, registrations, cashParts, totals: { totalPaid, totalRegistrationsCost, balance } });
+    res.render('admin_user_ledger', { user, payments, registrations, cashParts, totals: { totalPaid, totalRegistrationsCost: totalOwed, balance } });
   } catch (e) {
     console.error('Error ledger user', e);
     res.redirect('/admin/users');

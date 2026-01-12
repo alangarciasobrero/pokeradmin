@@ -1,30 +1,136 @@
 <section class="pa-card admin-payments-create">
-  <h1>Registrar pago manual</h1>
+  <h1>💰 Ajuste Manual de Cuenta</h1>
+  <p class="subtitle">Registra deudas históricas, abonos o ajustes manuales a la cuenta de un jugador</p>
 
   {{#if error}}
     <div class="flash flash-error">{{error}}</div>
   {{/if}}
 
   <form method="post" action="{{formAction}}" class="tournament-form">
-    <label for="user_id">User ID</label>
-    <input name="user_id" id="user_id" value="{{form.user_id}}" />
+    <div class="form-group">
+      <label for="user_id">🎭 Jugador *</label>
+      <select name="user_id" id="user_id" required>
+        <option value="">-- Seleccionar jugador --</option>
+        {{#each users}}
+          <option value="{{this.id}}" {{#if (eq this.id ../form.user_id)}}selected{{/if}}>
+            {{this.username}}{{#if this.full_name}} - {{this.full_name}}{{/if}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
 
-    <label for="amount">Monto</label>
-    <input name="amount" id="amount" value="{{form.amount}}" />
-    <p class="note">Nota: para ajustes manuales (credito/débito) usar signo negativo para débito o positivo para abono. Ej: -50000 para registrar una deuda.</p>
+    <div class="form-group">
+      <label for="amount">💵 Monto *</label>
+      <input type="number" name="amount" id="amount" value="{{form.amount}}" required step="0.01" placeholder="Ej: -50000 (deuda) o 25000 (abono)" />
+      <p class="note">💡 <strong>Deuda histórica:</strong> usar monto <strong>negativo</strong> (ej: -50000)<br>
+      💡 <strong>Abono/Crédito:</strong> usar monto <strong>positivo</strong> (ej: 25000)</p>
+    </div>
 
-    <label for="source">Fuente (tournament/cash/other)</label>
-    <input name="source" id="source" value="{{form.source}}" />
+    <div class="form-group">
+      <label for="source">📋 Origen</label>
+      <select name="source" id="source">
+        <option value="historical" {{#if (eq form.source 'historical')}}selected{{/if}}>Deuda histórica</option>
+        <option value="adjustment" {{#if (eq form.source 'adjustment')}}selected{{/if}}>Ajuste manual</option>
+        <option value="tournament" {{#if (eq form.source 'tournament')}}selected{{/if}}>Torneo</option>
+        <option value="cash" {{#if (eq form.source 'cash')}}selected{{/if}}>Mesa cash</option>
+        <option value="other" {{#if (eq form.source 'other')}}selected{{/if}}>Otro</option>
+      </select>
+    </div>
 
-    <label for="reference_id">Reference ID (opcional)</label>
-    <input name="reference_id" id="reference_id" value="{{form.reference_id}}" />
+    <div class="form-group">
+      <label for="notes">📝 Notas / Descripción</label>
+      <textarea name="notes" id="notes" rows="3" placeholder="Ej: Deuda pendiente de torneos 2024">{{form.notes}}</textarea>
+    </div>
 
-    <label for="method">Método</label>
-    <input name="method" id="method" value="{{form.method}}" />
+    <div class="form-group">
+      <label for="method">💳 Método de pago</label>
+      <input name="method" id="method" value="{{form.method}}" placeholder="efectivo, transferencia, etc." />
+    </div>
 
-    <label><input type="checkbox" name="personal_account" {{#if form.personal_account}}checked{{/if}} /> Cuenta personal (saldo)</label>
-    <label><input type="checkbox" name="paid" {{#if form.paid}}checked{{/if}} /> Marcar como pagado</label>
+    <div class="form-group checkbox-group">
+      <label><input type="checkbox" name="personal_account" {{#if form.personal_account}}checked{{/if}} /> 👤 Afecta cuenta personal (saldo del jugador)</label>
+      <p class="note">Marca esto para que el ajuste afecte el saldo personal del jugador</p>
+    </div>
 
-    <div style="margin-top:1rem;"><button class="btn" type="submit">Crear pago</button></div>
+    <div class="form-group checkbox-group">
+      <label><input type="checkbox" name="paid" {{#if form.paid}}checked{{/if}} /> ✅ Marcar como pagado</label>
+      <p class="note">Marca esto si el monto ya fue pagado/cobrado (no queda pendiente)</p>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">💾 Registrar ajuste</button>
+      <a href="/admin/debtors" class="btn btn-secondary">Cancelar</a>
+    </div>
   </form>
 </section>
+
+<style>
+.admin-payments-create {
+  max-width: 700px;
+  margin: 2rem auto;
+}
+.subtitle {
+  color: #64b5f6;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+.form-group {
+  margin-bottom: 1.5rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #90caf9;
+}
+.form-group input[type="number"],
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(100, 181, 246, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+}
+.form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #64b5f6;
+  box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
+}
+.note {
+  font-size: 0.85rem;
+  color: #90caf9;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+}
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #90caf9;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+</style>

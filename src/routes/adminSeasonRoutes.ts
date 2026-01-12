@@ -7,9 +7,12 @@ const router = Router();
 // GET /admin/seasons - Lista de temporadas
 router.get('/', requireAdmin, async (req: Request, res: Response) => {
     try {
-        // Actualizar automáticamente los estados basados en fechas
-        const seasonService = await import('../services/seasonService');
-        await seasonService.updateSeasonStates();
+        // NO actualizar estados automáticamente aquí para respetar cambios manuales
+        // Solo actualizar si viene de un parámetro específico
+        if (req.query.autoUpdate === 'true') {
+            const seasonService = await import('../services/seasonService');
+            await seasonService.updateSeasonStates();
+        }
         
         const seasons = await SeasonRepository.findAll();
         res.render('admin/seasons_list', {
@@ -66,6 +69,17 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
                 error: 'Formato de fecha inválido. Use dd/mm/yyyy',
                 username: req.session?.username
             });
+        }
+
+        // Si se está creando una temporada activa, desactivar todas las demás
+        if (estado === 'activa') {
+            const allSeasons = await SeasonRepository.findAll();
+            for (const s of allSeasons) {
+                if (s.estado === 'activa') {
+                    await SeasonRepository.update(s.id, { estado: 'finalizada' });
+                    console.log(`[Season] Desactivada temporada ${s.id} (${s.nombre}) al crear nueva temporada activa`);
+                }
+            }
         }
 
         await SeasonRepository.create({
@@ -137,6 +151,17 @@ router.post('/:id', requireAdmin, async (req: Request, res: Response) => {
                 error: 'Formato de fecha inválido. Use dd/mm/yyyy',
                 username: req.session?.username
             });
+        }
+
+        // Si se está activando esta temporada, desactivar todas las demás
+        if (estado === 'activa') {
+            const allSeasons = await SeasonRepository.findAll();
+            for (const s of allSeasons) {
+                if (s.id !== id && s.estado === 'activa') {
+                    await SeasonRepository.update(s.id, { estado: 'finalizada' });
+                    console.log(`[Season] Desactivada temporada ${s.id} (${s.nombre}) al activar temporada ${id}`);
+                }
+            }
         }
 
         await SeasonRepository.update(id, {

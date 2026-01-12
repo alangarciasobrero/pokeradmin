@@ -117,8 +117,11 @@
 	{{#if debtorsToday.length}}
 		<div class="section">
 			<div class="section-header">
-				<h2>⚠️ Deudores del Día</h2>
+				<h2>⚠️ Deudores de la Jornada</h2>
 				<span class="debtors-count">{{debtorsToday.length}} pendientes</span>
+				<span class="gaming-date-info" style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; font-style: italic;">
+					📅 Jornada: {{gamingDateStr}} (hasta 11:59 AM)
+				</span>
 			</div>
 			<div class="debtors-grid">
 			{{#each debtorsToday}}
@@ -135,11 +138,14 @@
 	{{else}}
 		<div class="section">
 			<div class="section-header">
-				<h2>✅ Deudores del Día</h2>
+				<h2>✅ Deudores de la Jornada</h2>
+				<span class="gaming-date-info" style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; font-style: italic;">
+					📅 Jornada: {{gamingDateStr}} (hasta 11:59 AM)
+				</span>
 			</div>
 			<div class="empty-state success">
 				<span class="empty-icon">✅</span>
-				<p>¡Sin deudas pendientes hoy!</p>
+				<p>¡Sin deudas pendientes en esta jornada!</p>
 			</div>
 		</div>
 	{{/if}}
