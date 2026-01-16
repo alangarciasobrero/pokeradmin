@@ -7,10 +7,12 @@ import Payment from '../src/models/Payment';
 import CashGame from '../src/models/CashGame';
 import CashParticipant from '../src/models/CashParticipant';
 import Season from '../src/models/Season';
+import HistoricalPoint from '../src/models/HistoricalPoint';
+import { Result } from '../src/models/Result';
 
 /**
  * Script para crear datos de demostración realistas en producción
- * Incluye: temporada demo, 20 usuarios con nombres reales, torneos, partidas de cash, pagos
+ * Incluye: temporada demo, 20 usuarios con nombres reales, torneos con sistema de ranking completo
  */
 
 async function run() {
@@ -69,7 +71,6 @@ async function run() {
       const { first, last, nick } = demoUsers[i];
       const username = `demo_${nick.toLowerCase()}`;
       const email = `${first.toLowerCase()}.${last.toLowerCase()}@demo.com`;
-      const points = Math.floor(Math.random() * 500) + 100; // Entre 100 y 600 puntos
 
       const [user] = await User.findOrCreate({
         where: { username },
@@ -82,7 +83,7 @@ async function run() {
           email,
           nickname: nick,
           phone_number: `+1 555-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-          current_points: points,
+          current_points: 0, // Se calculará desde HistoricalPoints
           role: 'user',
           is_player: true,
           suspended: false,
@@ -90,89 +91,305 @@ async function run() {
         } as any
       });
       users.push(user);
-      console.log(`  ✓ ${user.full_name} (@${username}) - ${points} puntos`);
+      console.log(`  ✓ ${user.full_name} (@${username})`);
     }
     console.log(`✅ ${users.length} usuarios creados\n`);
 
-    // ============= TORNEOS DE DEMO =============
-    console.log('🎰 Creando torneos de demostración...');
+    // ============= TORNEOS DE RANKING =============
+    console.log('🎰 Creando torneos con sistema de ranking...');
     
-    const tournamentDates = [
-      { days_ago: 30, status: 'completed' },
-      { days_ago: 23, status: 'completed' },
-      { days_ago: 16, status: 'completed' },
-      { days_ago: 9, status: 'completed' },
-      { days_ago: 2, status: 'completed' },
-      { days_ago: -5, status: 'scheduled' },
-      { days_ago: -12, status: 'scheduled' },
-      { days_ago: -19, status: 'scheduled' }
+    // Tabla de puntos por posición
+    const pointsTable = [100, 75, 60, 50, 45, 40, 36, 32, 29, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6];
+    
+    // Porcentajes para distribución de pozo de cajas (top 9)
+    const poolPercentages = [23, 17, 14, 11, 9, 8, 7, 6, 5];
+    
+    const tournamentConfigs = [
+      { weeks_ago: 2, day: 'Lunes', dayOfWeek: 1, count_to_ranking: true, double_points: false, buyIn: 50 },
+      { weeks_ago: 2, day: 'Miércoles', dayOfWeek: 3, count_to_ranking: true, double_points: false, buyIn: 50 },
+      { weeks_ago: 2, day: 'Viernes', dayOfWeek: 5, count_to_ranking: true, double_points: true, buyIn: 50 },
+      { weeks_ago: 1, day: 'Domingo', dayOfWeek: 0, count_to_ranking: false, double_points: false, buyIn: 50 },
+      { weeks_ago: 0, day: 'Lunes', dayOfWeek: 1, count_to_ranking: true, double_points: false, buyIn: 50 }
     ];
 
-    for (let i = 0; i < tournamentDates.length; i++) {
-      const { days_ago, status } = tournamentDates[i];
-      const date = new Date();
-      date.setDate(date.getDate() + days_ago);
+    for (const config of tournamentConfigs) {
+      // Calcular el lunes de referencia de la semana objetivo
+      const today = new Date();
+      const currentDay = today.getDay();
       
-      const buyIn = [20, 30, 50, 100][Math.floor(Math.random() * 4)];
-      const numPlayers = Math.floor(Math.random() * 8) + 8; // Entre 8 y 15 jugadores
+      // Encontrar el lunes más reciente
+      let daysBackToMonday = (currentDay - 1 + 7) % 7;
+      if (daysBackToMonday === 0 && currentDay !== 1) daysBackToMonday = 7;
+      
+      // Ir a la semana objetivo
+      daysBackToMonday += config.weeks_ago * 7;
+      
+      const monday = new Date();
+      monday.setDate(monday.getDate() - daysBackToMonday);
+      monday.setHours(20, 0, 0, 0);
+      
+      // Desde el lunes, calcular el día específico
+      const daysFromMonday = (config.dayOfWeek - 1 + 7) % 7;
+      const date = new Date(monday);
+      date.setDate(date.getDate() + daysFromMonday);
       
       const [tournament] = await Tournament.findOrCreate({
         where: { 
           start_date: date.toISOString().split('T')[0],
-          buy_in: buyIn 
+          tournament_name: `Torneo ${config.day} ${date.toLocaleDateString()}`
         } as any,
         defaults: {
-          tournament_name: `Torneo Demo ${date.toLocaleDateString()}`,
+          tournament_name: `Torneo ${config.day} ${date.toLocaleDateString()}`,
           start_date: date,
-          buy_in: buyIn,
+          buy_in: config.buyIn,
           season_id: season.id,
           gaming_date: date,
-          pinned: status === 'scheduled',
-          registration_open: status === 'scheduled'
+          count_to_ranking: config.count_to_ranking,
+          double_points: config.double_points,
+          registration_open: false
         } as any
       });
 
-      // Si el torneo está completado, agregar registros y pagos
-      if (status === 'completed') {
-        const selectedUsers = users.sort(() => 0.5 - Math.random()).slice(0, numPlayers);
+      // Grupo CORE: Primeros 7 jugadores asisten SIEMPRE a L+M+V de la semana hace 2 semanas
+      const coreGroup = users.slice(0, 7);
+      const isWeek2LMV = config.weeks_ago === 2; // Semana hace 2 semanas
+      
+      let selectedUsers: User[] = [];
+      
+      if (isWeek2LMV && [1, 3, 5].includes(config.dayOfWeek)) {
+        // Para L+M+V de la semana hace 2 semanas, garantizar que el core group asista
+        selectedUsers = [...coreGroup];
+        // Agregar 5-8 jugadores aleatorios adicionales
+        const randomCount = Math.floor(Math.random() * 4) + 5;
+        const additionalPlayers = [...users.slice(7)].sort(() => 0.5 - Math.random()).slice(0, randomCount);
+        selectedUsers = [...selectedUsers, ...additionalPlayers];
+      } else {
+        // Para otros torneos, selección aleatoria normal
+        const numPlayers = Math.floor(Math.random() * 4) + 12;
+        selectedUsers = [...users].sort(() => 0.5 - Math.random()).slice(0, numPlayers);
+      }
+      
+      let buyinCount = 0;
+      let reentryCount = 0;
+      
+      // Crear registraciones (buy-ins y algunos reentries)
+      for (const user of selectedUsers) {
+        const hasReentry = Math.random() < 0.25; // 25% hacen reentry
         
-        for (let j = 0; j < selectedUsers.length; j++) {
-          const user = selectedUsers[j];
-          const position = j < 3 ? j + 1 : null; // Solo top 3 tienen posición
-          const points = position ? [100, 75, 50][position - 1] : Math.floor(Math.random() * 30) + 10;
+        // Buy-in inicial (action_type = 1)
+        await Registration.findOrCreate({
+          where: { tournament_id: tournament.id, user_id: user.id },
+          defaults: {
+            tournament_id: tournament.id,
+            user_id: user.id,
+            action_type: 1,
+            punctuality: Math.random() > 0.3
+          } as any
+        });
+        buyinCount++;
+        
+        // Puntos por attendance (solo si cuenta para ranking)
+        if (config.count_to_ranking) {
+          const attendancePoints = config.double_points ? 200 : 100;
+          await HistoricalPoint.create({
+            record_date: date,
+            user_id: user.id,
+            season_id: season.id,
+            tournament_id: tournament.id,
+            result_id: null,
+            action_type: 'attendance',
+            description: `Asistencia - ${tournament.tournament_name}`,
+            points: attendancePoints
+          } as any);
+        }
+        
+        // Reentry si aplica (action_type = 2)
+        if (hasReentry) {
+          await Registration.create({
+            tournament_id: tournament.id,
+            user_id: user.id,
+            action_type: 2,
+            punctuality: false
+          } as any);
+          reentryCount++;
           
-          await Registration.findOrCreate({
-            where: { tournament_id: tournament.id, user_id: user.id },
-            defaults: {
+          // Puntos por reentry (solo si cuenta para ranking)
+          if (config.count_to_ranking) {
+            const reentryPoints = config.double_points ? 200 : 100;
+            await HistoricalPoint.create({
+              record_date: date,
+              user_id: user.id,
+              season_id: season.id,
               tournament_id: tournament.id,
+              result_id: null,
+              action_type: 'reentry',
+              description: `Re-entry - ${tournament.tournament_name}`,
+              points: reentryPoints
+            } as any);
+          }
+        }
+        
+        // Pagos (simplificado - sin tournament_id)
+        const totalAmount = hasReentry ? config.buyIn * 2 : config.buyIn;
+        await Payment.create({
+          user_id: user.id,
+          amount: totalAmount,
+          payment_date: date,
+          gaming_date: date,
+          paid: Math.random() > 0.15,
+          paid_amount: totalAmount,
+          method: Math.random() > 0.5 ? 'cash' : 'transfer'
+        } as any);
+      }
+      
+      // Crear resultados y distribuir puntos
+      for (let pos = 1; pos <= selectedUsers.length; pos++) {
+        const user = selectedUsers[pos - 1];
+        const isFinalTable = pos <= 9;
+        
+        const result = await Result.create({
+          tournament_id: tournament.id,
+          user_id: user.id,
+          position: pos,
+          final_table: isFinalTable
+        } as any);
+        
+        // Puntos por placement (solo si cuenta para ranking)
+        if (config.count_to_ranking) {
+          const basePoints = pointsTable[pos - 1] || 0;
+          const placementPoints = config.double_points ? basePoints * 2 : basePoints;
+          
+          if (placementPoints > 0) {
+            await HistoricalPoint.create({
+              record_date: date,
               user_id: user.id,
-              position,
-              punctuality: Math.random() > 0.3 ? 1 : 0 // 1 = on time, 0 = late
-            } as any
-          });
-
-          // Pago del buy-in
-          await Payment.findOrCreate({
-            where: { 
-              user_id: user.id,
-              amount: buyIn
-            } as any,
-            defaults: {
-              user_id: user.id,
+              season_id: season.id,
               tournament_id: tournament.id,
-              amount: buyIn,
-              payment_type: Math.random() > 0.5 ? 'cash' : 'transfer',
-              payment_date: date,
-              gaming_date: date,
-              paid: Math.random() > 0.2 // 80% pagado
-            } as any
-          });
+              result_id: result.id,
+              action_type: 'placement',
+              description: `Posición ${pos} - ${tournament.tournament_name}`,
+              points: placementPoints
+            } as any);
+          }
         }
       }
       
-      console.log(`  ✓ Torneo ${date.toLocaleDateString()} - Buy-in: $${buyIn} - Estado: ${status}`);
+      // Distribuir pozo de cajas entre top 9 (solo si cuenta para ranking)
+      if (config.count_to_ranking) {
+        const isFriday = config.dayOfWeek === 5;
+        const buyinPointsPerBox = isFriday ? 200 : 150;
+        const reentryPointsPerBox = 100;
+        
+        let totalPoolPoints = (buyinCount * buyinPointsPerBox) + (reentryCount * reentryPointsPerBox);
+        
+        // Si es doble ranking, el pozo también se duplica
+        if (config.double_points) {
+          totalPoolPoints *= 2;
+        }
+        
+        // Distribuir entre top 9
+        for (let i = 0; i < Math.min(9, selectedUsers.length); i++) {
+          const user = selectedUsers[i];
+          const percentage = poolPercentages[i];
+          const poolPoints = Math.round((percentage / 100) * totalPoolPoints);
+          
+          await HistoricalPoint.create({
+            record_date: date,
+            user_id: user.id,
+            season_id: season.id,
+            tournament_id: tournament.id,
+            result_id: null,
+            action_type: 'bonus',
+            description: `Puntos por cajas - Posición ${i + 1} (${percentage}%)`,
+            points: poolPoints
+          } as any);
+        }
+        
+        console.log(`  ✓ ${config.day} (${config.double_points ? 'DOBLE' : 'normal'}) - ${selectedUsers.length} jugadores - Pozo: ${totalPoolPoints} pts`);
+      } else {
+        console.log(`  ✓ ${config.day} (NO cuenta para ranking) - ${selectedUsers.length} jugadores`);
+      }
     }
-    console.log(`✅ Torneos creados\n`);
+    console.log(`✅ Torneos creados con sistema de puntos\n`);
+    
+    // ============= BONUS SEMANAL =============
+    console.log('🎁 Calculando bonus de asistencia semanal...');
+    
+    const { Op } = await import('sequelize');
+    
+    // Identificar la semana con lunes, miércoles y viernes (semana hace 2 semanas)
+    const today = new Date();
+    const currentDay = today.getDay();
+    
+    // Calcular lunes de hace 2 semanas
+    let daysBackToMonday = (currentDay - 1 + 7) % 7; // Días hasta el lunes más reciente
+    if (daysBackToMonday === 0 && currentDay !== 1) daysBackToMonday = 7;
+    daysBackToMonday += 14; // Ir a 2 semanas atrás
+    
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - daysBackToMonday);
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6); // Domingo
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    let bonusCount = 0;
+    
+    for (const user of users) {
+      // Contar asistencias en esa semana (días específicos)
+      const weekTournaments = await Registration.findAll({
+        include: [{
+          model: Tournament.unscoped(),
+          as: 'tournament',
+          where: {
+            start_date: { [Op.between]: [weekStart, weekEnd] },
+            count_to_ranking: true
+          } as any,
+          required: true
+        }],
+        where: { 
+          user_id: user.id,
+          action_type: 1 // Solo buy-ins iniciales
+        } as any
+      });
+      
+      // Verificar que asistió lunes (1), miércoles (3) y viernes (5)
+      const days = new Set<number>();
+      for (const reg of weekTournaments) {
+        const tournament = (reg as any).tournament;
+        const day = new Date(tournament.start_date).getDay();
+        days.add(day);
+      }
+      
+      if (days.has(1) && days.has(3) && days.has(5)) {
+        // Otorgar bonus bronce
+        const weekIdentifier = `${weekStart.toISOString().split('T')[0]}`;
+        const existing = await HistoricalPoint.findOne({
+          where: {
+            user_id: user.id,
+            action_type: 'bonus',
+            description: { [Op.like]: `%Bronce - Semana ${weekIdentifier}%` }
+          } as any
+        });
+        
+        if (!existing) {
+          await HistoricalPoint.create({
+            record_date: new Date(),
+            user_id: user.id,
+            season_id: season.id,
+            tournament_id: null,
+            result_id: null,
+            action_type: 'bonus',
+            description: `🥉 Bonus Bronce - Semana ${weekIdentifier} (L+M+V)`,
+            points: 500
+          } as any);
+          bonusCount++;
+        }
+      }
+    }
+    
+    console.log(`✅ ${bonusCount} jugadores recibieron Bonus Bronce\n`);
 
     // ============= PARTIDAS DE CASH GAME =============
     console.log('💰 Creando partidas de cash game...');
@@ -238,12 +455,38 @@ async function run() {
     }
     console.log(`✅ Partidas de cash creadas\n`);
 
+    // ============= ACTUALIZAR CURRENT_POINTS =============
+    console.log('📊 Calculando puntos totales desde HistoricalPoints...');
+    
+    for (const user of users) {
+      const totalPoints = await HistoricalPoint.sum('points', {
+        where: { user_id: user.id } as any
+      });
+      
+      await user.update({ current_points: totalPoints || 0 });
+    }
+    
+    // Top 5 para mostrar
+    const topUsers = await User.findAll({
+      where: { id: users.map(u => u.id) },
+      order: [['current_points', 'DESC']],
+      limit: 5
+    });
+    
+    console.log('✅ Puntos calculados\n');
+    console.log('🏆 TOP 5 RANKING:');
+    topUsers.forEach((u, idx) => {
+      console.log(`  ${idx + 1}. ${u.full_name} - ${u.current_points} puntos`);
+    });
+
     // ============= RESUMEN =============
-    console.log('📊 RESUMEN DE DATOS CREADOS:');
-    console.log(`   • 1 temporada activa`);
+    console.log('\n📊 RESUMEN DE DATOS CREADOS:');
+    console.log(`   • 1 temporada activa (Demo 2026)`);
     console.log(`   • ${users.length} usuarios con nombres reales`);
-    console.log(`   • ${tournamentDates.length} torneos (${tournamentDates.filter(t => t.status === 'completed').length} completados, ${tournamentDates.filter(t => t.status === 'scheduled').length} programados)`);
+    console.log(`   • 5 torneos (4 cuentan para ranking, 1 domingo no cuenta)`);
     console.log(`   • ${cashDates.length} partidas de cash game`);
+    console.log(`   • Sistema de ranking con HistoricalPoints completo`);
+    console.log(`   • Bonus semanal calculado (Bronce 500pts)`);
     console.log(`\n✅ ¡Datos de demostración creados exitosamente!`);
     console.log(`\n🔐 Credenciales para usuarios demo:`);
     console.log(`   Usuario: demo_[nickname] (ej: demo_alexg)`);
