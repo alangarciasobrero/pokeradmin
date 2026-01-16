@@ -6,7 +6,8 @@ function updateBulkPaymentInfo() {
   checkboxes.forEach(cb => {
     const amount = parseFloat(cb.dataset.amount || 0);
     const paid = parseFloat(cb.dataset.paid || 0);
-    const pending = Math.max(0, amount - paid);
+    // Para montos negativos (historical/adjustment), usar valor absoluto
+    const pending = amount < 0 ? Math.abs(amount) - paid : Math.max(0, amount - paid);
     total += pending;
     count++;
   });
@@ -59,6 +60,8 @@ function toggleAllCheckboxes(masterCheckbox) {
 function submitBulkPayment() {
   const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
   
+  console.log('submitBulkPayment - checkboxes encontrados:', checkboxes.length);
+  
   if (checkboxes.length === 0) {
     alert('⚠️ No seleccionaste ningún movimiento');
     return false;
@@ -78,16 +81,28 @@ function submitBulkPayment() {
     return false;
   }
   
-  // Todo validado, enviar el formulario
+  // Todo validado, enviar el formulario sin pasar por el event listener
   const form = document.getElementById('bulkPaymentForm');
   if (form) {
+    console.log('Form encontrado, action:', form.action);
+    console.log('Form method:', form.method);
+    console.log('Checkboxes dentro del form:', form.querySelectorAll('.payment-checkbox:checked').length);
+    // Remover temporalmente el listener para evitar doble validación
+    form.onsubmit = null;
+    console.log('Enviando formulario...');
     form.submit();
+    console.log('Form.submit() ejecutado');
+  } else {
+    console.log('ERROR: No se encontró el formulario');
   }
 }
 
-// Función para validar antes de enviar el formulario
+// Función para validar antes de enviar el formulario (solo se usa si se envía con Enter u otro método)
 function validateBulkPayment(event) {
+  console.log('validateBulkPayment ejecutado');
   const checkboxes = document.querySelectorAll('.payment-checkbox:checked');
+  
+  console.log('validateBulkPayment - checkboxes encontrados:', checkboxes.length);
   
   if (checkboxes.length === 0) {
     event.preventDefault();
@@ -99,10 +114,11 @@ function validateBulkPayment(event) {
   if (!amountInput || !amountInput.value || parseFloat(amountInput.value) <= 0) {
     event.preventDefault();
     alert('⚠️ Ingresa un monto válido');
-    amountInput.focus();
+    if (amountInput) amountInput.focus();
     return false;
   }
   
+  console.log('Validación exitosa, enviando formulario');
   return true;
 }
 
@@ -110,14 +126,7 @@ function validateBulkPayment(event) {
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('bulkPaymentForm');
   if (form) {
-    form.addEventListener('submit', function(e) {
-      // Validar formulario antes de enviar
-      const submitButton = e.submitter || document.activeElement;
-      if (submitButton && (submitButton.classList.contains('btn-pay-selected') || submitButton.getAttribute('data-action') === 'bulk-pay')) {
-        return validateBulkPayment(e);
-      }
-      return true;
-    });
+    form.addEventListener('submit', validateBulkPayment);
   }
   
   // Prevenir que los formularios individuales activen la validación del bulk form

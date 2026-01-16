@@ -37,21 +37,37 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
 			limit: 10
 		});
 
-		// Calcular balance
-		const totalPaid = await Payment.sum('paid_amount', {
-			where: { user_id: userId, paid: true }
-		}) || 0;
-
-		const totalOwed = await Payment.sum('amount', {
-			where: { user_id: userId, paid: false }
-		}) || 0;
+		// Calcular balance correctamente
+		const allPayments = await Payment.findAll({ where: { user_id: userId } });
+		
+		let totalPaid = 0;
+		let totalOwed = 0;
+		
+		for (const p of allPayments) {
+			const amount = Number(p.amount || 0);
+			const paidAmount = Number((p as any).paid_amount || 0);
+			const source = p.source;
+			
+			// Los tournament_payout NO afectan el balance personal (se pagan en efectivo inmediatamente)
+			if (source === 'tournament_payout') continue;
+			
+			// Para historical/adjustment con monto negativo: convertir a deuda positiva
+			if ((source === 'historical' || source === 'adjustment') && amount < 0) {
+				totalOwed += Math.abs(amount); // -3333 se convierte en +3333 de deuda
+			} else {
+				totalOwed += amount; // Montos positivos son deuda normal
+			}
+			
+			// Solo sumar lo realmente pagado por el jugador
+			totalPaid += paidAmount;
+		}
 
 		const stats = {
 			totalTournaments: registrations.length,
 			totalCashGames: cashGames.length,
 			totalPaid: Number(totalPaid),
 			totalOwed: Number(totalOwed),
-			balance: Number(totalPaid) - Number(totalOwed),
+			balance: Number(totalOwed) - Number(totalPaid), // Deuda - Pagado
 			currentPoints: user.current_points || 0
 		};
 

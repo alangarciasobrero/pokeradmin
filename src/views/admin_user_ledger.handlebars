@@ -24,12 +24,12 @@
       </div>
     </div>
 
-    <div class="balance-card {{#if (gt totals.balance 0)}}positive{{else}}negative{{/if}}">
-      <div class="card-icon">{{#if (gt totals.balance 0)}}✅{{else}}⚠️{{/if}}</div>
+    <div class="balance-card {{#if (lt totals.balance 0)}}positive{{else}}negative{{/if}}">
+      <div class="card-icon">{{#if (lt totals.balance 0)}}✅{{else}}⚠️{{/if}}</div>
       <div class="card-content">
         <span class="card-label">Balance</span>
-        <span class="card-value balance-value">${{currency totals.balance}}</span>
-        <span class="card-sublabel">{{#if (gt totals.balance 0)}}A favor{{else}}Deuda{{/if}}</span>
+        <span class="card-value balance-value">${{currency (abs totals.balance)}}</span>
+        <span class="card-sublabel">{{#if (lt totals.balance 0)}}A favor del jugador{{else}}Deuda{{/if}}</span>
       </div>
     </div>
   </div>
@@ -61,7 +61,7 @@
             </select>
           </div>
           <div>
-            <button type="button" class="btn-pay-selected" onclick="submitBulkPayment()" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap;">💰 Pagar seleccionados</button>
+            <button type="submit" class="btn-pay-selected" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap;">💰 Pagar seleccionados</button>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@
                   {{else}}
                     {{#unless (eq this.source 'settlement')}}
                       {{! Formulario individual fuera del bulk usando un form separado }}
-                      <input type="number" step="0.01" placeholder="monto" class="input-amount" value="{{subtract this.amount this.paid_amount}}" id="amount-{{this.id}}" />
+                      <input type="number" step="0.01" placeholder="monto" class="input-amount" value="{{pendingAmount this.amount this.paid_amount}}" id="amount-{{this.id}}" />
                       <select class="select-method" id="method-{{this.id}}">
                         <option value="cash">💵 Efectivo</option>
                         <option value="card">💳 Tarjeta</option>
@@ -601,4 +601,4 @@
 </style>
 
 <link rel='stylesheet' href='/css/bulk-payment.css'>
-<script src='/js/bulk-payment.js'></script>
+<script src='/js/bulk-payment.js?v={{timestamp}}'></script>

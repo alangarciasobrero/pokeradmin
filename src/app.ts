@@ -314,6 +314,20 @@ Handlebars.registerHelper('multiply', function(a: number, b: number) {
 	return Number(a) * Number(b);
 });
 
+Handlebars.registerHelper('abs', function(n: any) {
+	return Math.abs(Number(n) || 0);
+});
+
+Handlebars.registerHelper('pendingAmount', function(amount: any, paidAmount: any) {
+	const amt = Number(amount) || 0;
+	const paid = Number(paidAmount) || 0;
+	// Para montos negativos (historical/adjustment), usar valor absoluto
+	if (amt < 0) {
+		return Math.abs(amt) - paid;
+	}
+	return Math.max(0, amt - paid);
+});
+
 Handlebars.registerHelper('lte', function(a: any, b: any) {
 	try { return Number(a) <= Number(b); } catch (e) { return false; }
 });

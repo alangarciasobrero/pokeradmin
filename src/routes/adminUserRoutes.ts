@@ -271,12 +271,28 @@ router.get('/:id/ledger', requireAdmin, async (req: Request, res: Response) => {
     const registrations = await Registration.findAll({ where: { user_id: id }, include: [] });
     const cashParts = await CashParticipant.findAll({ where: { user_id: id } });
 
-    // Calcular totales:
-    // 1. Total pagado (lo que el usuario ya pagó)
-    const totalPaid = payments.reduce((s, p: any) => s + Number(p.paid_amount || 0), 0);
+    // Calcular totales correctamente:
+    let totalPaid = 0;
+    let totalOwed = 0;
     
-    // 2. Total adeudado (suma de todos los montos de pagos)
-    const totalOwed = payments.reduce((s, p: any) => s + Number(p.amount || 0), 0);
+    for (const p of payments) {
+      const amount = Number(p.amount || 0);
+      const paidAmount = Number((p as any).paid_amount || 0);
+      const source = p.source;
+      
+      // Los tournament_payout NO afectan el balance personal (se pagan en efectivo inmediatamente)
+      if (source === 'tournament_payout') continue;
+      
+      // Para historical/adjustment con monto negativo: convertir a deuda positiva
+      if ((source === 'historical' || source === 'adjustment') && amount < 0) {
+        totalOwed += Math.abs(amount); // -3333 se convierte en +3333 de deuda
+      } else {
+        totalOwed += amount; // Montos positivos son deuda normal
+      }
+      
+      // Solo sumar lo realmente pagado por el jugador
+      totalPaid += paidAmount;
+    }
     
     // 3. Sumar buy_in de torneos vinculados a las inscripciones (esto ya está incluido en payments si se registró correctamente)
     let totalRegistrationsCost = 0;
@@ -286,8 +302,8 @@ router.get('/:id/ledger', requireAdmin, async (req: Request, res: Response) => {
       if (t) totalRegistrationsCost += Number((t as any).buy_in || 0);
     }
 
-    // Balance = Lo que pagó - Lo que debe
-    const balance = totalPaid - totalOwed;
+    // Balance = Lo que debe - Lo que pagó (deuda positiva significa que debe, negativa que tiene a favor)
+    const balance = totalOwed - totalPaid;
 
     res.render('admin_user_ledger', { user, payments, registrations, cashParts, totals: { totalPaid, totalRegistrationsCost: totalOwed, balance } });
   } catch (e) {
