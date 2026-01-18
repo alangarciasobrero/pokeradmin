@@ -32,6 +32,11 @@
                     <option value="true" {{#if tournament.double_points}}selected{{/if}}>Sí</option>
                     <option value="false" {{#unless tournament.double_points}}selected{{/unless}}>No</option>
                 </select>
+                <label for="triple_points">🔥 Triple puntaje:</label>
+                <select id="triple_points" name="triple_points" required>
+                    <option value="true" {{#if tournament.triple_points}}selected{{/if}}>Sí</option>
+                    <option value="false" {{#unless tournament.triple_points}}selected{{/unless}}>No</option>
+                </select>
             </div>
             <div class="tournament-form-col">
                 <label for="blind_levels">🔄 Niveles de Re-entry:</label>

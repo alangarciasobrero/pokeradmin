@@ -43,6 +43,10 @@
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#00bcd4"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">CR</text></svg> Cuenta para Ranking:</span> <span class="badge badge-{{tournament.count_to_ranking}}">{{#if tournament.count_to_ranking}}Sí{{else}}No{{/if}}</span></p>
     {{!-- Doble puntaje --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff7043"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">DP</text></svg> Doble Puntaje:</span> <span class="badge badge-{{tournament.double_points}}">{{#if tournament.double_points}}Sí{{else}}No{{/if}}</span></p>
+    {{!-- Triple puntaje --}}
+    {{#if tournament.triple_points}}
+    <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#ff1744"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">TP</text></svg> Triple Puntaje:</span> <span class="badge badge-true">🔥 Sí</span></p>
+    {{/if}}
     {{!-- Niveles de re-entry --}}
     <p><span class="label"><svg class="icon" viewBox="0 0 24 24" fill="#3949ab"><rect x="4" y="4" width="16" height="16" rx="4"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fff" font-family="Arial" font-weight="bold">RE</text></svg> Niveles Re-entry:</span> <span>{{tournament.blind_levels}} niveles</span></p>
     {{!-- Duración de ciegas --}}
