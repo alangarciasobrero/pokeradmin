@@ -13,6 +13,7 @@ export class Tournament extends Model {
   public starting_stack!: number;
   public count_to_ranking!: boolean;
   public double_points!: boolean;
+  public triple_points!: boolean;
   public blind_levels!: number;
   public small_blind!: number;
   public punctuality_discount!: number;
@@ -76,6 +77,11 @@ Tournament.init(
       defaultValue: false,
     },
     double_points: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    triple_points: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,

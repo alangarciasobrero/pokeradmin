@@ -275,6 +275,7 @@ export function calculateTournamentPointsPool(
   buyinCount: number, 
   reentryCount: number,
   doublePoints: boolean,
+  triplePoints: boolean = false,
   config?: {
     weekdayBuyin?: number,
     weekdayReentry?: number,
@@ -290,8 +291,13 @@ export function calculateTournamentPointsPool(
     ? (config?.fridayBuyin || 200) 
     : (config?.weekdayBuyin || 150);
   
-  // Si es doble ranking, el buy-in vale el doble
-  const buyinPoints = doublePoints ? (buyinBasePoints * 2) : buyinBasePoints;
+  // Aplicar multiplicador según tipo de ranking
+  let buyinPoints = buyinBasePoints;
+  if (triplePoints) {
+    buyinPoints = buyinBasePoints * 3;
+  } else if (doublePoints) {
+    buyinPoints = buyinBasePoints * 2;
+  }
   
   // Re-entries según día (usar config o defaults)
   const reentryPoints = isFriday
