@@ -42,7 +42,9 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         'language',
         'personal_buyin_points', 'personal_reentry_points',
         'weekday_buyin_points', 'weekday_reentry_points',
-        'friday_buyin_points', 'friday_reentry_points'
+        'friday_buyin_points', 'friday_reentry_points',
+        'ranking_days_sunday', 'ranking_days_monday', 'ranking_days_tuesday', 'ranking_days_wednesday',
+        'ranking_days_thursday', 'ranking_days_friday', 'ranking_days_saturday'
       ]
     } as any
   });
@@ -61,13 +63,24 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     weekday_buyin_points: 150,
     weekday_reentry_points: 100,
     friday_buyin_points: 200,
-    friday_reentry_points: 100
+    friday_reentry_points: 100,
+    ranking_days_sunday: false,
+    ranking_days_monday: true,
+    ranking_days_tuesday: false,
+    ranking_days_wednesday: true,
+    ranking_days_thursday: false,
+    ranking_days_friday: true,
+    ranking_days_saturday: false
   };
 
   for (const s of settings) {
     const key = (s as any).key;
     const val = (s as any).value;
-    config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
+    if (key.startsWith('ranking_days_')) {
+      config[key] = val === '1' || val === 'true' || val === true;
+    } else {
+      config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
+    }
   }
 
   // Load prize distribution settings
@@ -198,17 +211,32 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
       weekday_buyin, 
       weekday_reentry, 
       friday_buyin, 
-      friday_reentry 
+      friday_reentry,
+      ranking_days
     } = req.body;
 
+    // Process ranking days checkboxes
+    const daysMap = { '0': 'sunday', '1': 'monday', '2': 'tuesday', '3': 'wednesday', '4': 'thursday', '5': 'friday', '6': 'saturday' };
+    const selectedDays = Array.isArray(ranking_days) ? ranking_days : (ranking_days ? [ranking_days] : []);
+    
     const updates = [
       { key: 'personal_buyin_points', value: String(personal_buyin || 100), description: 'Puntos personales por buy-in' },
       { key: 'personal_reentry_points', value: String(personal_reentry || 100), description: 'Puntos personales por re-entry' },
-      { key: 'weekday_buyin_points', value: String(weekday_buyin || 150), description: 'Puntos al pozo por buy-in (L/M)' },
-      { key: 'weekday_reentry_points', value: String(weekday_reentry || 100), description: 'Puntos al pozo por re-entry (L/M)' },
-      { key: 'friday_buyin_points', value: String(friday_buyin || 200), description: 'Puntos al pozo por buy-in (Viernes)' },
-      { key: 'friday_reentry_points', value: String(friday_reentry || 100), description: 'Puntos al pozo por re-entry (Viernes)' },
+      { key: 'weekday_buyin_points', value: String(weekday_buyin || 150), description: 'Puntos al pozo por buy-in' },
+      { key: 'weekday_reentry_points', value: String(weekday_reentry || 100), description: 'Puntos al pozo por re-entry' },
+      { key: 'friday_buyin_points', value: String(friday_buyin || 200), description: 'Puntos al pozo por buy-in (legacy)' },
+      { key: 'friday_reentry_points', value: String(friday_reentry || 100), description: 'Puntos al pozo por re-entry (legacy)' },
     ];
+
+    // Add ranking days settings
+    for (const [dayNum, dayName] of Object.entries(daysMap)) {
+      const isSelected = selectedDays.includes(dayNum);
+      updates.push({
+        key: `ranking_days_${dayName}`,
+        value: isSelected ? '1' : '0',
+        description: `Día ${dayName} cuenta para ranking`
+      });
+    }
 
     for (const u of updates) {
       const [setting, created] = await Setting.findOrCreate({
@@ -220,7 +248,7 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
       }
     }
 
-    if (req.session) req.session.flash = { type: 'success', message: '✅ Sistema de puntos actualizado correctamente' };
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Sistema de puntos y días de ranking actualizados' };
     return res.redirect('/admin/games/settings');
   } catch (err: any) {
     console.error('Error saving tournament points config:', err);

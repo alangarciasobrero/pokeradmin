@@ -232,31 +232,58 @@
 
 				<div class="form-grid" style="grid-template-columns: 1fr 1fr;">
 					<div class="form-field">
-						<label>📅 Lunes/Miércoles - Buy-in</label>
+						<label>📅 Buy-in al Pozo</label>
 						<input type="number" name="weekday_buyin" value="{{config.weekday_buyin_points}}" min="0" step="10" required />
 						<small>Puntos al pozo por buy-in</small>
 					</div>
 					<div class="form-field">
-						<label>📅 Lunes/Miércoles - Re-entry</label>
+						<label>🔄 Re-entry al Pozo</label>
 						<input type="number" name="weekday_reentry" value="{{config.weekday_reentry_points}}" min="0" step="10" required />
-						<small>Puntos al pozo por re-entry</small>
-					</div>
-					<div class="form-field">
-						<label>🎉 Viernes - Buy-in</label>
-						<input type="number" name="friday_buyin" value="{{config.friday_buyin_points}}" min="0" step="10" required />
-						<small>Puntos al pozo por buy-in</small>
-					</div>
-					<div class="form-field">
-						<label>🎉 Viernes - Re-entry</label>
-						<input type="number" name="friday_reentry" value="{{config.friday_reentry_points}}" min="0" step="10" required />
 						<small>Puntos al pozo por re-entry</small>
 					</div>
 				</div>
 
 				<div class="info-box" style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-top: 15px;">
-					<h4 style="margin: 0 0 10px 0; color: #ffd700;">ℹ️ Doble Ranking</h4>
+					<h4 style="margin: 0 0 10px 0; color: #4a9eff;">📅 Días para Ranking</h4>
+					<p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc;">
+						Selecciona qué días de la semana cuentan para el ranking. Los torneos en estos días sumarán puntos.
+					</p>
+					<div class="days-selector" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="0" {{#if config.ranking_days_sunday}}checked{{/if}} />
+							<span>Domingo</span>
+						</label>
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="1" {{#if config.ranking_days_monday}}checked{{/if}} />
+							<span>Lunes</span>
+						</label>
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="2" {{#if config.ranking_days_tuesday}}checked{{/if}} />
+							<span>Martes</span>
+						</label>
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="3" {{#if config.ranking_days_wednesday}}checked{{/if}} />
+							<span>Miércoles</span>
+						</label>
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="4" {{#if config.ranking_days_thursday}}checked{{/if}} />
+							<span>Jueves</span>
+						</label>
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="5" {{#if config.ranking_days_friday}}checked{{/if}} />
+							<span>Viernes</span>
+						</label>
+						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+							<input type="checkbox" name="ranking_days" value="6" {{#if config.ranking_days_saturday}}checked{{/if}} />
+							<span>Sábado</span>
+						</label>
+					</div>
+				</div>
+
+				<div class="info-box" style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-top: 15px;">
+					<h4 style="margin: 0 0 10px 0; color: #ffd700;">ℹ️ Ranking Especial</h4>
 					<p style="margin: 0; font-size: 0.9rem; color: #ccc;">
-						Cuando un torneo tiene <strong>doble ranking</strong> activado, solo se duplican los puntos de <strong>buy-in</strong> que van al pozo. Los puntos personales y de re-entry NO se duplican.
+						Los torneos pueden tener <strong>doble ranking</strong> (×2) o <strong>triple ranking</strong> (×3), lo que multiplica los puntos de <strong>buy-in</strong> que van al pozo. Los puntos personales y de re-entry NO se multiplican.
 					</p>
 				</div>
 
