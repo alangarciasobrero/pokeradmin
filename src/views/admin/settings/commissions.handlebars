@@ -27,14 +27,14 @@
   </div>
 
   <div class="summary-alert">
-    <strong>Distribución de la comisión ({{commissionRate}}%): {{totalPercentage}}% asignado</strong>
+    <strong>📊 Distribución de Comisiones: {{totalPercentage}}% de {{commissionRate}}% asignado</strong>
     {{#if (gt totalPercentage 100)}}
       ⚠️ El total excede 100%. Ajusta los porcentajes de destinos.
     {{else}}
       {{#if (lt totalPercentage 100)}}
-      ℹ️ Aún quedan {{subtract 100 totalPercentage}}% de la comisión sin asignar.
+      ℹ️ Aún quedan {{subtract 100 totalPercentage}}% de la comisión ({{commissionRate}}%) sin asignar.
       {{else}}
-      ✅ Distribución completa al 100% de la comisión
+      ✅ Distribución completa al 100%
       {{/if}}
     {{/if}}
   </div>
