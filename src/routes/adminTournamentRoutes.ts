@@ -436,12 +436,18 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
   const method = data.method || null;
   const personalAccount = data.personal_account === 'on' || data.personal_account === 'true' || data.personal_account === true;
 
-    // compute punctuality: registration at server time compared with tournament.start_date
+    // compute punctuality: registration time compared with tournament.start_date
+    // Use Argentina timezone for both dates to avoid timezone issues
     const now = new Date();
     const start = new Date(tournament.start_date as any);
-    const punctuality = now <= start;
+    
+    // Convert both to Argentina time for fair comparison
+    const nowArgentina = new Date(now.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+    const startArgentina = new Date(start.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+    const punctuality = nowArgentina <= startArgentina;
 
-  console.log('[Register] Tournament:', id, 'now:', now.toISOString(), 'start:', start.toISOString(), 'punctuality:', punctuality);
+  console.log('[Register] Tournament:', id, 'now (ARG):', nowArgentina.toISOString(), 'start (ARG):', startArgentina.toISOString(), 'punctuality:', punctuality);
+
 
   // determine action type (1=buyin,2=reentry,3=duplo)
   const at = Number(data.action_type || 1);
@@ -808,6 +814,7 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
       buyinCount,
       reentryCount,
       (t as any).double_points || false,
+      (t as any).triple_points || false,
       {
         weekdayBuyin: pointsConfig.weekdayBuyin,
         weekdayReentry: pointsConfig.weekdayReentry,
@@ -1187,6 +1194,7 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
         buyinCount,
         reentryCount,
         (t as any).double_points || false,
+        (t as any).triple_points || false,
         {
           weekdayBuyin: pointsConfig.weekdayBuyin,
           weekdayReentry: pointsConfig.weekdayReentry,
