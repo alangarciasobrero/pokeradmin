@@ -545,11 +545,14 @@ export async function distributeBoxPointsToFinalTable(
 }
 
 export default {
-  checkAndAwardBronzeBonus,
-  checkAndAwardSilverBonus,
-  checkAndAwardGoldBonus,
-  checkAndAwardDiamondBonus,
-  checkAndAwardBlackBonus,
+  awardAttendanceBonus,
+  awardReentryBonus,
+  checkAndAwardWeekly3DaysBonus,
+  checkAndAwardWeekly4DaysBonus,
+  checkAndAwardMonthly12DaysBonus,
+  checkAndAwardSeason30DaysBonus,
+  checkAndAwardSeason35DaysBonus,
+  checkAndAwardFinalTables20Bonus,
   calculateBoxPoints,
   calculateTournamentPointsPool,
   distributeBoxPointsToFinalTable,
