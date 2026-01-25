@@ -46,12 +46,17 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         'ranking_days_sunday', 'ranking_days_monday', 'ranking_days_tuesday', 'ranking_days_wednesday',
         'ranking_days_thursday', 'ranking_days_friday', 'ranking_days_saturday',
         'day_groups_config',
-        // Nuevos bonos de asistencia
+        // Bonos de asistencia - puntos
         'bonus_attendance', 'bonus_reentry',
         'bonus_weekly_4days', 'bonus_weekly_3days',
         'bonus_monthly_12days',
         'bonus_season_30days', 'bonus_season_35days',
-        'bonus_final_tables_20'
+        'bonus_final_tables_20',
+        // Bonos de asistencia - cantidades requeridas
+        'bonus_weekly_4days_required', 'bonus_weekly_3days_required',
+        'bonus_monthly_required',
+        'bonus_season_30days_required', 'bonus_season_35days_required',
+        'bonus_final_tables_required'
       ]
     } as any
   });
@@ -79,7 +84,7 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     ranking_days_friday: true,
     ranking_days_saturday: false,
     day_groups_config: '',
-    // Nuevos bonos de asistencia
+    // Bonos de asistencia - puntos
     bonus_attendance: 100,
     bonus_reentry: 100,
     bonus_weekly_4days: 1000,
@@ -87,7 +92,14 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     bonus_monthly_12days: 2000,
     bonus_season_30days: 5000,
     bonus_season_35days: 10000,
-    bonus_final_tables_20: 10000
+    bonus_final_tables_20: 10000,
+    // Bonos de asistencia - cantidades requeridas
+    bonus_weekly_4days_required: 4,
+    bonus_weekly_3days_required: 3,
+    bonus_monthly_required: 12,
+    bonus_season_30days_required: 30,
+    bonus_season_35days_required: 35,
+    bonus_final_tables_required: 20
   };
 
   for (const s of settings) {
@@ -397,7 +409,13 @@ router.post('/attendance-bonuses', requireAdmin, async (req: Request, res: Respo
       bonus_monthly_12days,
       bonus_season_30days,
       bonus_season_35days,
-      bonus_final_tables_20
+      bonus_final_tables_20,
+      bonus_weekly_4days_required,
+      bonus_weekly_3days_required,
+      bonus_monthly_required,
+      bonus_season_30days_required,
+      bonus_season_35days_required,
+      bonus_final_tables_required
     } = req.body;
 
     const updates = [
@@ -408,7 +426,13 @@ router.post('/attendance-bonuses', requireAdmin, async (req: Request, res: Respo
       { key: 'bonus_monthly_12days', value: String(bonus_monthly_12days || 2000), description: 'Bonus mensual - 12 jornadas (Plata)' },
       { key: 'bonus_season_30days', value: String(bonus_season_30days || 5000), description: 'Bonus temporada - 30 jornadas (Oro)' },
       { key: 'bonus_season_35days', value: String(bonus_season_35days || 10000), description: 'Bonus temporada - 35 jornadas (Diamante)' },
-      { key: 'bonus_final_tables_20', value: String(bonus_final_tables_20 || 10000), description: 'Bonus - 20+ mesas finales (Black)' }
+      { key: 'bonus_final_tables_20', value: String(bonus_final_tables_20 || 10000), description: 'Bonus - 20+ mesas finales (Black)' },
+      { key: 'bonus_weekly_4days_required', value: String(bonus_weekly_4days_required || 4), description: 'Jornadas requeridas - Semanal 4 días' },
+      { key: 'bonus_weekly_3days_required', value: String(bonus_weekly_3days_required || 3), description: 'Jornadas requeridas - Semanal 3 días' },
+      { key: 'bonus_monthly_required', value: String(bonus_monthly_required || 12), description: 'Jornadas requeridas - Mensual' },
+      { key: 'bonus_season_30days_required', value: String(bonus_season_30days_required || 30), description: 'Jornadas requeridas - Temporada Oro' },
+      { key: 'bonus_season_35days_required', value: String(bonus_season_35days_required || 35), description: 'Jornadas requeridas - Temporada Diamante' },
+      { key: 'bonus_final_tables_required', value: String(bonus_final_tables_required || 20), description: 'Mesas finales requeridas - Black' }
     ];
 
     for (const u of updates) {

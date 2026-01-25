@@ -13,11 +13,17 @@ interface BonusConfig {
   attendance: number;
   reentry: number;
   weekly_4days: number;
+  weekly_4days_required: number;
   weekly_3days: number;
+  weekly_3days_required: number;
   monthly_12days: number;
+  monthly_required: number;
   season_30days: number;
+  season_30days_required: number;
   season_35days: number;
+  season_35days_required: number;
   final_tables_20: number;
+  final_tables_required: number;
 }
 
 /**
@@ -34,7 +40,13 @@ async function loadBonusConfig(): Promise<BonusConfig> {
         'bonus_monthly_12days',
         'bonus_season_30days',
         'bonus_season_35days',
-        'bonus_final_tables_20'
+        'bonus_final_tables_20',
+        'bonus_weekly_4days_required',
+        'bonus_weekly_3days_required',
+        'bonus_monthly_required',
+        'bonus_season_30days_required',
+        'bonus_season_35days_required',
+        'bonus_final_tables_required'
       ]
     } as any
   });
@@ -43,11 +55,17 @@ async function loadBonusConfig(): Promise<BonusConfig> {
     attendance: 100,
     reentry: 100,
     weekly_4days: 1000,
+    weekly_4days_required: 4,
     weekly_3days: 500,
+    weekly_3days_required: 3,
     monthly_12days: 2000,
+    monthly_required: 12,
     season_30days: 5000,
+    season_30days_required: 30,
     season_35days: 10000,
-    final_tables_20: 10000
+    season_35days_required: 35,
+    final_tables_20: 10000,
+    final_tables_required: 20
   };
 
   for (const s of settings) {
@@ -151,7 +169,7 @@ export async function checkAndAwardWeekly3DaysBonus(userId: number, weekStart: D
     where: { user_id: userId } as any,
   });
 
-  if (count >= 3) {
+  if (count >= config.weekly_3days_required) {
     const weekIdentifier = `${weekStart.toISOString().split('T')[0]}`;
     const existing = await HistoricalPoint.findOne({
       where: {
@@ -169,10 +187,10 @@ export async function checkAndAwardWeekly3DaysBonus(userId: number, weekStart: D
         tournament_id: null,
         result_id: null,
         action_type: 'bonus_weekly_3',
-        description: `🥉 Bonus Bronce - Semana ${weekIdentifier} (3 jornadas)`,
+        description: `🥉 Bonus Bronce - Semana ${weekIdentifier} (${count} jornadas)`,
         points: config.weekly_3days,
       } as any);
-      console.log(`[bonusService] Awarded weekly 3-days bonus (${config.weekly_3days} pts) to user ${userId}`);
+      console.log(`[bonusService] Awarded weekly ${config.weekly_3days_required}-days bonus (${config.weekly_3days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -202,7 +220,7 @@ export async function checkAndAwardWeekly4DaysBonus(userId: number, weekStart: D
     where: { user_id: userId } as any,
   });
 
-  if (count >= 4) {
+  if (count >= config.weekly_4days_required) {
     const weekIdentifier = `${weekStart.toISOString().split('T')[0]}`;
     const existing = await HistoricalPoint.findOne({
       where: {
@@ -220,10 +238,10 @@ export async function checkAndAwardWeekly4DaysBonus(userId: number, weekStart: D
         tournament_id: null,
         result_id: null,
         action_type: 'bonus_weekly_4',
-        description: `🏵️ Bonus Semanal - Semana ${weekIdentifier} (4 jornadas)`,
+        description: `🏵️ Bonus Semanal - Semana ${weekIdentifier} (${count} jornadas)`,
         points: config.weekly_4days,
       } as any);
-      console.log(`[bonusService] Awarded weekly 4-days bonus (${config.weekly_4days} pts) to user ${userId}`);
+      console.log(`[bonusService] Awarded weekly ${config.weekly_4days_required}-days bonus (${config.weekly_4days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -251,7 +269,7 @@ export async function checkAndAwardMonthly12DaysBonus(userId: number, year: numb
     where: { user_id: userId } as any,
   });
 
-  if (count >= 12) {
+  if (count >= config.monthly_required) {
     const periodIdentifier = `${year}-${String(month).padStart(2, '0')}`;
     const existing = await HistoricalPoint.findOne({
       where: {
@@ -272,7 +290,7 @@ export async function checkAndAwardMonthly12DaysBonus(userId: number, year: numb
         description: `🥈 Bonus Plata - ${periodIdentifier} (${count} jornadas)`,
         points: config.monthly_12days,
       } as any);
-      console.log(`[bonusService] Awarded monthly 12-days bonus (${config.monthly_12days} pts) to user ${userId}`);
+      console.log(`[bonusService] Awarded monthly ${config.monthly_required}-days bonus (${config.monthly_12days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -299,7 +317,7 @@ export async function checkAndAwardSeason30DaysBonus(userId: number, seasonStart
     where: { user_id: userId } as any,
   });
 
-  if (count >= 30) {
+  if (count >= config.season_30days_required) {
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
@@ -320,7 +338,7 @@ export async function checkAndAwardSeason30DaysBonus(userId: number, seasonStart
         description: `🥇 Bonus Oro - Temporada ${seasonId} (${count} jornadas)`,
         points: config.season_30days,
       } as any);
-      console.log(`[bonusService] Awarded season 30-days bonus (${config.season_30days} pts) to user ${userId}`);
+      console.log(`[bonusService] Awarded season ${config.season_30days_required}-days bonus (${config.season_30days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -347,7 +365,7 @@ export async function checkAndAwardSeason35DaysBonus(userId: number, seasonStart
     where: { user_id: userId } as any,
   });
 
-  if (count >= 35) {
+  if (count >= config.season_35days_required) {
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
@@ -368,7 +386,7 @@ export async function checkAndAwardSeason35DaysBonus(userId: number, seasonStart
         description: `💎 Bonus Diamante - Temporada ${seasonId} (${count} jornadas)`,
         points: config.season_35days,
       } as any);
-      console.log(`[bonusService] Awarded season 35-days bonus (${config.season_35days} pts) to user ${userId}`);
+      console.log(`[bonusService] Awarded season ${config.season_35days_required}-days bonus (${config.season_35days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -398,7 +416,7 @@ export async function checkAndAwardFinalTables20Bonus(userId: number, seasonStar
     } as any,
   });
 
-  if (count >= 20) {
+  if (count >= config.final_tables_required) {
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
@@ -419,7 +437,7 @@ export async function checkAndAwardFinalTables20Bonus(userId: number, seasonStar
         description: `⚫ Bonus Black - Temporada ${seasonId} (${count} mesas finales)`,
         points: config.final_tables_20,
       } as any);
-      console.log(`[bonusService] Awarded final tables 20+ bonus (${config.final_tables_20} pts) to user ${userId}`);
+      console.log(`[bonusService] Awarded final tables ${config.final_tables_required}+ bonus (${config.final_tables_20} pts) to user ${userId}`);
       return true;
     }
   }

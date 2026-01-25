@@ -366,13 +366,20 @@
 			</form>
 		</div>
 
-		{{!-- Sección: Bonos de Asistencia --}}
 		<div class="settings-card">
 			<div class="card-icon">🎁</div>
 			<h2>Bonos de Asistencia</h2>
 			<p class="card-description">Configura los puntos extra por consistencia y asistencia</p>
 			
 			<form method="post" action="/admin/games/settings/attendance-bonuses" class="settings-form">
+				<div class="info-box" style="background: rgba(75,192,192,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(75,192,192,0.3);">
+					<p style="margin: 0; font-size: 0.9rem; color: #ddd;">
+						💡 <strong>Bonos automáticos y configurables</strong><br>
+						Define los puntos y las cantidades requeridas para cada tipo de bonus. Los bonos de asistencia y re-entry se otorgan automáticamente al registrar jugadores.
+					</p>
+				</div>
+
+				<h3 style="margin-top: 20px; margin-bottom: 15px; color: #4fc3f7;">Bonos Inmediatos</h3>
 				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
 					<div class="form-field">
 						<label>✅ Asistencia al Torneo</label>
@@ -384,37 +391,84 @@
 						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" required />
 						<small>Puntos por cada re-entry</small>
 					</div>
+				</div>
+
+				<h3 style="margin-top: 25px; margin-bottom: 15px; color: #4fc3f7;">Bonos Semanales</h3>
+				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
 					<div class="form-field">
-						<label>🏵️ Semanal - 4 Jornadas</label>
+						<label>🏵️ Semanal - Nivel 1</label>
 						<input type="number" name="bonus_weekly_4days" value="{{config.bonus_weekly_4days}}" min="0" step="1" required />
-						<small>Asistir 4 días/semana</small>
+						<small>Puntos otorgados</small>
 					</div>
 					<div class="form-field">
-						<label>🥉 Semanal - 3 Jornadas (Bronce)</label>
+						<label>🏵️ Jornadas Requeridas</label>
+						<input type="number" name="bonus_weekly_4days_required" value="{{config.bonus_weekly_4days_required}}" min="1" step="1" required />
+						<small>Días por semana</small>
+					</div>
+					<div class="form-field">
+						<label>🥉 Semanal - Nivel 2 (Bronce)</label>
 						<input type="number" name="bonus_weekly_3days" value="{{config.bonus_weekly_3days}}" min="0" step="1" required />
-						<small>Asistir 3 días/semana</small>
+						<small>Puntos otorgados</small>
 					</div>
 					<div class="form-field">
-						<label>🥈 Mensual - 12 Jornadas (Plata)</label>
-						<input type="number" name="bonus_monthly_12days" value="{{config.bonus_monthly_12days}}" min="0" step="1" required />
-						<small>Asistir 12 días/mes</small>
-					</div>
-					<div class="form-field">
-						<label>🥇 Temporada - 30 Jornadas (Oro)</label>
-						<input type="number" name="bonus_season_30days" value="{{config.bonus_season_30days}}" min="0" step="1" required />
-						<small>30 jornadas en temporada</small>
-					</div>
-					<div class="form-field">
-						<label>💎 Temporada - 35 Jornadas (Diamante)</label>
-						<input type="number" name="bonus_season_35days" value="{{config.bonus_season_35days}}" min="0" step="1" required />
-						<small>35 jornadas en temporada</small>
-					</div>
-					<div class="form-field">
-						<label>⚫ 20+ Mesas Finales (Black)</label>
-						<input type="number" name="bonus_final_tables_20" value="{{config.bonus_final_tables_20}}" min="0" step="1" required />
-						<small>20 o más mesas finales</small>
+						<label>🥉 Jornadas Requeridas</label>
+						<input type="number" name="bonus_weekly_3days_required" value="{{config.bonus_weekly_3days_required}}" min="1" step="1" required />
+						<small>Días por semana</small>
 					</div>
 				</div>
+
+				<h3 style="margin-top: 25px; margin-bottom: 15px; color: #4fc3f7;">Bonos Mensuales</h3>
+				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+					<div class="form-field">
+						<label>🥈 Mensual (Plata)</label>
+						<input type="number" name="bonus_monthly_12days" value="{{config.bonus_monthly_12days}}" min="0" step="1" required />
+						<small>Puntos otorgados</small>
+					</div>
+					<div class="form-field">
+						<label>🥈 Jornadas Requeridas</label>
+						<input type="number" name="bonus_monthly_required" value="{{config.bonus_monthly_required}}" min="1" step="1" required />
+						<small>Días por mes</small>
+					</div>
+				</div>
+
+				<h3 style="margin-top: 25px; margin-bottom: 15px; color: #4fc3f7;">Bonos de Temporada</h3>
+				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+					<div class="form-field">
+						<label>🥇 Temporada - Nivel 1 (Oro)</label>
+						<input type="number" name="bonus_season_30days" value="{{config.bonus_season_30days}}" min="0" step="1" required />
+						<small>Puntos otorgados</small>
+					</div>
+					<div class="form-field">
+						<label>🥇 Jornadas Requeridas</label>
+						<input type="number" name="bonus_season_30days_required" value="{{config.bonus_season_30days_required}}" min="1" step="1" required />
+						<small>Días en temporada</small>
+					</div>
+					<div class="form-field">
+						<label>💎 Temporada - Nivel 2 (Diamante)</label>
+						<input type="number" name="bonus_season_35days" value="{{config.bonus_season_35days}}" min="0" step="1" required />
+						<small>Puntos otorgados</small>
+					</div>
+					<div class="form-field">
+						<label>💎 Jornadas Requeridas</label>
+						<input type="number" name="bonus_season_35days_required" value="{{config.bonus_season_35days_required}}" min="1" step="1" required />
+						<small>Días en temporada</small>
+					</div>
+				</div>
+
+				<h3 style="margin-top: 25px; margin-bottom: 15px; color: #4fc3f7;">Bonos Especiales</h3>
+				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+					<div class="form-field">
+						<label>⚫ Mesas Finales (Black)</label>
+						<input type="number" name="bonus_final_tables_20" value="{{config.bonus_final_tables_20}}" min="0" step="1" required />
+						<small>Puntos otorgados</small>
+					</div>
+					<div class="form-field">
+						<label>⚫ Mesas Finales Requeridas</label>
+						<input type="number" name="bonus_final_tables_required" value="{{config.bonus_final_tables_required}}" min="1" step="1" required />
+						<small>Cantidad de mesas finales</small>
+					</div>
+				</div>
+
 				<div class="form-actions">
 					<button type="submit" class="btn btn-primary">💾 Guardar Bonos</button>
 				</div>
