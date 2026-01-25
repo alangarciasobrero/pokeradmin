@@ -45,7 +45,13 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         'friday_buyin_points', 'friday_reentry_points',
         'ranking_days_sunday', 'ranking_days_monday', 'ranking_days_tuesday', 'ranking_days_wednesday',
         'ranking_days_thursday', 'ranking_days_friday', 'ranking_days_saturday',
-        'day_groups_config'
+        'day_groups_config',
+        // Nuevos bonos de asistencia
+        'bonus_attendance', 'bonus_reentry',
+        'bonus_weekly_4days', 'bonus_weekly_3days',
+        'bonus_monthly_12days',
+        'bonus_season_30days', 'bonus_season_35days',
+        'bonus_final_tables_20'
       ]
     } as any
   });
@@ -72,7 +78,16 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     ranking_days_thursday: false,
     ranking_days_friday: true,
     ranking_days_saturday: false,
-    day_groups_config: ''
+    day_groups_config: '',
+    // Nuevos bonos de asistencia
+    bonus_attendance: 100,
+    bonus_reentry: 100,
+    bonus_weekly_4days: 1000,
+    bonus_weekly_3days: 500,
+    bonus_monthly_12days: 2000,
+    bonus_season_30days: 5000,
+    bonus_season_35days: 10000,
+    bonus_final_tables_20: 10000
   };
 
   for (const s of settings) {
@@ -82,6 +97,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       config[key] = val === '1' || val === 'true' || val === true;
     } else if (key === 'day_groups_config') {
       config[key] = val || '';
+    } else if (key.startsWith('bonus_')) {
+      config[key] = Number(val) || config[key];
     } else {
       config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
     }
@@ -361,6 +378,53 @@ router.post('/language', requireAdmin, async (req: Request, res: Response) => {
     return res.redirect('/admin/games/settings');
   } catch (err: any) {
     console.error('Error saving language:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
+    return res.redirect('/admin/games/settings');
+  }
+});
+
+/**
+ * POST /admin/games/settings/attendance-bonuses
+ * Actualizar configuración de bonos por asistencia
+ */
+router.post('/attendance-bonuses', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { 
+      bonus_attendance,
+      bonus_reentry,
+      bonus_weekly_4days,
+      bonus_weekly_3days,
+      bonus_monthly_12days,
+      bonus_season_30days,
+      bonus_season_35days,
+      bonus_final_tables_20
+    } = req.body;
+
+    const updates = [
+      { key: 'bonus_attendance', value: String(bonus_attendance || 100), description: 'Puntos por asistir al torneo' },
+      { key: 'bonus_reentry', value: String(bonus_reentry || 100), description: 'Puntos por cada re-entry' },
+      { key: 'bonus_weekly_4days', value: String(bonus_weekly_4days || 1000), description: 'Bonus semanal - 4 jornadas' },
+      { key: 'bonus_weekly_3days', value: String(bonus_weekly_3days || 500), description: 'Bonus semanal - 3 jornadas (Bronce)' },
+      { key: 'bonus_monthly_12days', value: String(bonus_monthly_12days || 2000), description: 'Bonus mensual - 12 jornadas (Plata)' },
+      { key: 'bonus_season_30days', value: String(bonus_season_30days || 5000), description: 'Bonus temporada - 30 jornadas (Oro)' },
+      { key: 'bonus_season_35days', value: String(bonus_season_35days || 10000), description: 'Bonus temporada - 35 jornadas (Diamante)' },
+      { key: 'bonus_final_tables_20', value: String(bonus_final_tables_20 || 10000), description: 'Bonus - 20+ mesas finales (Black)' }
+    ];
+
+    for (const u of updates) {
+      const [setting, created] = await Setting.findOrCreate({
+        where: { key: u.key } as any,
+        defaults: { key: u.key, value: u.value, description: u.description } as any,
+      });
+      if (!created) {
+        await Setting.update({ value: u.value }, { where: { key: u.key } as any });
+      }
+    }
+
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Bonos de asistencia actualizados' };
+    return res.redirect('/admin/games/settings');
+  } catch (err: any) {
+    console.error('Error saving attendance bonuses:', err);
     if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
     return res.redirect('/admin/games/settings');
   }

@@ -481,6 +481,25 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
   // create registration (persist action_type)
   const registration = await Registration.create({ user_id: userId, tournament_id: id, registration_date: now, punctuality, action_type });
 
+  // Otorgar bonos de asistencia automáticamente
+  const { awardAttendanceBonus, awardReentryBonus } = await import('../services/bonusService');
+  const seasonId = tournament.season_id || 1;
+  
+  if (action_type === 1) {
+    // Buy-in: otorgar bonus de asistencia
+    await awardAttendanceBonus(userId, id, seasonId);
+  } else if (action_type === 2) {
+    // Re-entry: otorgar bonus de re-entry
+    const reentryCount = await Registration.count({
+      where: {
+        user_id: userId,
+        tournament_id: id,
+        action_type: 2
+      }
+    });
+    await awardReentryBonus(userId, id, seasonId, reentryCount);
+  }
+
   // expected amount calculation depends on action_type
   const pct = Number(tournament.punctuality_discount || 0);
   const baseBuyIn = Number(tournament.buy_in || 0);

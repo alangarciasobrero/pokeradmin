@@ -157,39 +157,40 @@ router.post('/calculate', requireAdmin, async (req: Request, res: Response) => {
 
     const users = await User.findAll({ where: { role: 'user' } as any });
 
-    let bronzeCount = 0;
-    let silverCount = 0;
-    let goldCount = 0;
-    let diamondCount = 0;
-    let blackCount = 0;
+    let weekly3Count = 0;
+    let weekly4Count = 0;
+    let monthly12Count = 0;
+    let season30Count = 0;
+    let season35Count = 0;
+    let finalTables20Count = 0;
 
     for (const user of users) {
       const userId = (user as any).id;
 
-      // Bonus Oro (28+ jornadas de 35)
-      if (await bonusService.checkAndAwardGoldBonus(userId, seasonStart, seasonEnd, seasonId)) {
-        goldCount++;
+      // Bonus Temporada - 30 jornadas (Oro)
+      if (await bonusService.checkAndAwardSeason30DaysBonus(userId, seasonStart, seasonEnd, seasonId)) {
+        season30Count++;
       }
 
-      // Bonus Diamante (32+ jornadas de 35)
-      if (await bonusService.checkAndAwardDiamondBonus(userId, seasonStart, seasonEnd, seasonId)) {
-        diamondCount++;
+      // Bonus Temporada - 35 jornadas (Diamante)
+      if (await bonusService.checkAndAwardSeason35DaysBonus(userId, seasonStart, seasonEnd, seasonId)) {
+        season35Count++;
       }
 
-      // Bonus Black (16+ mesas finales)
-      if (await bonusService.checkAndAwardBlackBonus(userId, seasonStart, seasonEnd, seasonId)) {
-        blackCount++;
+      // Bonus 20+ mesas finales (Black)
+      if (await bonusService.checkAndAwardFinalTables20Bonus(userId, seasonStart, seasonEnd, seasonId)) {
+        finalTables20Count++;
       }
 
-      // Bonus Plata (10+ jornadas en el mes actual)
+      // Bonus Mensual - 12 jornadas (Plata)
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1;
-      if (await bonusService.checkAndAwardSilverBonus(userId, year, month)) {
-        silverCount++;
+      if (await bonusService.checkAndAwardMonthly12DaysBonus(userId, year, month, seasonId)) {
+        monthly12Count++;
       }
 
-      // Bonus Bronce (3 jornadas en última semana)
+      // Bonus Semanal - 3 jornadas (Bronce)
       const today = new Date();
       const dayOfWeek = today.getDay();
       const daysToLastMonday = (dayOfWeek + 6) % 7;
@@ -201,8 +202,13 @@ router.post('/calculate', requireAdmin, async (req: Request, res: Response) => {
       lastSunday.setDate(lastMonday.getDate() + 6);
       lastSunday.setHours(23, 59, 59, 999);
 
-      if (await bonusService.checkAndAwardBronzeBonus(userId, lastMonday, lastSunday)) {
-        bronzeCount++;
+      if (await bonusService.checkAndAwardWeekly3DaysBonus(userId, lastMonday, lastSunday, seasonId)) {
+        weekly3Count++;
+      }
+
+      // Bonus Semanal - 4 jornadas
+      if (await bonusService.checkAndAwardWeekly4DaysBonus(userId, lastMonday, lastSunday, seasonId)) {
+        weekly4Count++;
       }
     }
 
@@ -210,11 +216,12 @@ router.post('/calculate', requireAdmin, async (req: Request, res: Response) => {
       username: req.session.username,
       success: true,
       results: {
-        bronze: bronzeCount,
-        silver: silverCount,
-        gold: goldCount,
-        diamond: diamondCount,
-        black: blackCount,
+        weekly3: weekly3Count,
+        weekly4: weekly4Count,
+        monthly12: monthly12Count,
+        season30: season30Count,
+        season35: season35Count,
+        finalTables20: finalTables20Count,
         total: users.length,
       },
     });

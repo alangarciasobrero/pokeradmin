@@ -1,20 +1,145 @@
 /**
- * Servicio para calcular y otorgar bonus de asistencia
+ * Servicio para calcular y otorgar bonos de asistencia y consistencia
+ * Nuevo sistema: Todos los bonos son configurables desde settings
  */
 import { Op } from 'sequelize';
 import { Registration } from '../models/Registration';
 import { Result } from '../models/Result';
 import { Tournament } from '../models/Tournament';
 import HistoricalPoint from '../models/HistoricalPoint';
+import Setting from '../models/Setting';
+
+interface BonusConfig {
+  attendance: number;
+  reentry: number;
+  weekly_4days: number;
+  weekly_3days: number;
+  monthly_12days: number;
+  season_30days: number;
+  season_35days: number;
+  final_tables_20: number;
+}
 
 /**
- * Calcula y otorga bonus Bronce (500 pts) si asistió a 3 jornadas en una semana
- * @param userId - ID del usuario
- * @param weekStart - Inicio de la semana (Lunes)
- * @param weekEnd - Fin de la semana (Domingo)
+ * Carga la configuración de bonos desde la base de datos
  */
-export async function checkAndAwardBronzeBonus(userId: number, weekStart: Date, weekEnd: Date): Promise<boolean> {
-  const registrations = await Registration.findAll({
+async function loadBonusConfig(): Promise<BonusConfig> {
+  const settings = await Setting.findAll({
+    where: {
+      key: [
+        'bonus_attendance',
+        'bonus_reentry',
+        'bonus_weekly_4days',
+        'bonus_weekly_3days',
+        'bonus_monthly_12days',
+        'bonus_season_30days',
+        'bonus_season_35days',
+        'bonus_final_tables_20'
+      ]
+    } as any
+  });
+
+  const config: BonusConfig = {
+    attendance: 100,
+    reentry: 100,
+    weekly_4days: 1000,
+    weekly_3days: 500,
+    monthly_12days: 2000,
+    season_30days: 5000,
+    season_35days: 10000,
+    final_tables_20: 10000
+  };
+
+  for (const s of settings) {
+    const key = (s as any).key.replace('bonus_', '');
+    const value = Number((s as any).value);
+    if (!isNaN(value)) {
+      (config as any)[key] = value;
+    }
+  }
+
+  return config;
+}
+
+/**
+ * Otorga puntos de asistencia cuando un jugador se registra a un torneo
+ * @param userId - ID del usuario
+ * @param tournamentId - ID del torneo
+ * @param seasonId - ID de la temporada
+ */
+export async function awardAttendanceBonus(userId: number, tournamentId: number, seasonId: number): Promise<void> {
+  const config = await loadBonusConfig();
+
+  // Verificar si ya se otorgó el bonus
+  const existing = await HistoricalPoint.findOne({
+    where: {
+      user_id: userId,
+      tournament_id: tournamentId,
+      action_type: 'attendance',
+    } as any,
+  });
+
+  if (!existing) {
+    await HistoricalPoint.create({
+      record_date: new Date(),
+      user_id: userId,
+      season_id: seasonId,
+      tournament_id: tournamentId,
+      result_id: null,
+      action_type: 'attendance',
+      description: `✅ Asistencia al torneo`,
+      points: config.attendance,
+    } as any);
+    console.log(`[bonusService] Awarded attendance bonus (${config.attendance} pts) to user ${userId}`);
+  }
+}
+
+/**
+ * Otorga puntos por cada re-entry realizado
+ * @param userId - ID del usuario
+ * @param tournamentId - ID del torneo
+ * @param seasonId - ID de la temporada
+ * @param reentryNumber - Número de re-entry (para evitar duplicados)
+ */
+export async function awardReentryBonus(userId: number, tournamentId: number, seasonId: number, reentryNumber: number): Promise<void> {
+  const config = await loadBonusConfig();
+
+  // Verificar si ya se otorgó este re-entry específico
+  const existing = await HistoricalPoint.findOne({
+    where: {
+      user_id: userId,
+      tournament_id: tournamentId,
+      action_type: 'reentry',
+      description: { [Op.like]: `%Re-entry #${reentryNumber}%` } as any,
+    } as any,
+  });
+
+  if (!existing) {
+    await HistoricalPoint.create({
+      record_date: new Date(),
+      user_id: userId,
+      season_id: seasonId,
+      tournament_id: tournamentId,
+      result_id: null,
+      action_type: 'reentry',
+      description: `🔄 Re-entry #${reentryNumber}`,
+      points: config.reentry,
+    } as any);
+    console.log(`[bonusService] Awarded re-entry bonus (${config.reentry} pts) to user ${userId}`);
+  }
+}
+
+/**
+ * Calcula y otorga bonus semanal por asistir 3 jornadas (Bronce - 500 pts por defecto)
+ * @param userId - ID del usuario
+ * @param weekStart - Inicio de la semana
+ * @param weekEnd - Fin de la semana
+ * @param seasonId - ID de la temporada
+ */
+export async function checkAndAwardWeekly3DaysBonus(userId: number, weekStart: Date, weekEnd: Date, seasonId: number): Promise<boolean> {
+  const config = await loadBonusConfig();
+  
+  const count = await Registration.count({
     include: [{
       model: Tournament,
       as: 'tournament',
@@ -26,25 +151,13 @@ export async function checkAndAwardBronzeBonus(userId: number, weekStart: Date, 
     where: { user_id: userId } as any,
   });
 
-  // Verificar si asistió a 3 jornadas (Lunes, Miércoles, Viernes)
-  const days = new Set<number>();
-  for (const reg of registrations) {
-    const tournament = (reg as any).tournament;
-    if (tournament) {
-      const day = new Date(tournament.start_date).getDay();
-      days.add(day);
-    }
-  }
-
-  // 1=Lunes, 3=Miércoles, 5=Viernes
-  if (days.has(1) && days.has(3) && days.has(5)) {
-    // Verificar si ya tiene el bonus para esta semana
+  if (count >= 3) {
     const weekIdentifier = `${weekStart.toISOString().split('T')[0]}`;
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
-        action_type: 'bonus',
-        description: { [Op.like]: `%Bronce - Semana ${weekIdentifier}%` } as any,
+        action_type: 'bonus_weekly_3',
+        description: { [Op.like]: `%${weekIdentifier}%` } as any,
       } as any,
     });
 
@@ -52,14 +165,14 @@ export async function checkAndAwardBronzeBonus(userId: number, weekStart: Date, 
       await HistoricalPoint.create({
         record_date: new Date(),
         user_id: userId,
-        season_id: 1,
+        season_id: seasonId,
         tournament_id: null,
         result_id: null,
-        action_type: 'bonus',
+        action_type: 'bonus_weekly_3',
         description: `🥉 Bonus Bronce - Semana ${weekIdentifier} (3 jornadas)`,
-        points: 500,
+        points: config.weekly_3days,
       } as any);
-      console.log(`[bonusService] Awarded Bronze bonus (500 pts) to user ${userId} for week ${weekIdentifier}`);
+      console.log(`[bonusService] Awarded weekly 3-days bonus (${config.weekly_3days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -68,9 +181,61 @@ export async function checkAndAwardBronzeBonus(userId: number, weekStart: Date, 
 }
 
 /**
- * Calcula y otorga bonus Plata (2000 pts) si asistió a 10+ jornadas en el mes
+ * Calcula y otorga bonus semanal por asistir 4 jornadas (1000 pts por defecto)
+ * @param userId - ID del usuario
+ * @param weekStart - Inicio de la semana
+ * @param weekEnd - Fin de la semana
+ * @param seasonId - ID de la temporada
  */
-export async function checkAndAwardSilverBonus(userId: number, year: number, month: number): Promise<boolean> {
+export async function checkAndAwardWeekly4DaysBonus(userId: number, weekStart: Date, weekEnd: Date, seasonId: number): Promise<boolean> {
+  const config = await loadBonusConfig();
+  
+  const count = await Registration.count({
+    include: [{
+      model: Tournament,
+      as: 'tournament',
+      where: {
+        start_date: { [Op.between]: [weekStart, weekEnd] }
+      } as any,
+      required: true,
+    }],
+    where: { user_id: userId } as any,
+  });
+
+  if (count >= 4) {
+    const weekIdentifier = `${weekStart.toISOString().split('T')[0]}`;
+    const existing = await HistoricalPoint.findOne({
+      where: {
+        user_id: userId,
+        action_type: 'bonus_weekly_4',
+        description: { [Op.like]: `%${weekIdentifier}%` } as any,
+      } as any,
+    });
+
+    if (!existing) {
+      await HistoricalPoint.create({
+        record_date: new Date(),
+        user_id: userId,
+        season_id: seasonId,
+        tournament_id: null,
+        result_id: null,
+        action_type: 'bonus_weekly_4',
+        description: `🏵️ Bonus Semanal - Semana ${weekIdentifier} (4 jornadas)`,
+        points: config.weekly_4days,
+      } as any);
+      console.log(`[bonusService] Awarded weekly 4-days bonus (${config.weekly_4days} pts) to user ${userId}`);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Calcula y otorga bonus mensual por asistir 12+ jornadas (Plata - 2000 pts por defecto)
+ */
+export async function checkAndAwardMonthly12DaysBonus(userId: number, year: number, month: number, seasonId: number): Promise<boolean> {
+  const config = await loadBonusConfig();
   const monthStart = new Date(year, month - 1, 1);
   const monthEnd = new Date(year, month, 0, 23, 59, 59);
 
@@ -86,13 +251,13 @@ export async function checkAndAwardSilverBonus(userId: number, year: number, mon
     where: { user_id: userId } as any,
   });
 
-  if (count >= 10) {
+  if (count >= 12) {
     const periodIdentifier = `${year}-${String(month).padStart(2, '0')}`;
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
-        action_type: 'bonus',
-        description: { [Op.like]: `%Plata - ${periodIdentifier}%` } as any,
+        action_type: 'bonus_monthly_12',
+        description: { [Op.like]: `%${periodIdentifier}%` } as any,
       } as any,
     });
 
@@ -100,14 +265,14 @@ export async function checkAndAwardSilverBonus(userId: number, year: number, mon
       await HistoricalPoint.create({
         record_date: new Date(),
         user_id: userId,
-        season_id: 1,
+        season_id: seasonId,
         tournament_id: null,
         result_id: null,
-        action_type: 'bonus',
+        action_type: 'bonus_monthly_12',
         description: `🥈 Bonus Plata - ${periodIdentifier} (${count} jornadas)`,
-        points: 2000,
+        points: config.monthly_12days,
       } as any);
-      console.log(`[bonusService] Awarded Silver bonus (2000 pts) to user ${userId} for month ${periodIdentifier}`);
+      console.log(`[bonusService] Awarded monthly 12-days bonus (${config.monthly_12days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -116,9 +281,11 @@ export async function checkAndAwardSilverBonus(userId: number, year: number, mon
 }
 
 /**
- * Calcula y otorga bonus Oro (5000 pts) si asistió a 28+ de 35 jornadas
+ * Calcula y otorga bonus por asistir 30+ jornadas en la temporada (Oro - 5000 pts por defecto)
  */
-export async function checkAndAwardGoldBonus(userId: number, seasonStart: Date, seasonEnd: Date, seasonId: number): Promise<boolean> {
+export async function checkAndAwardSeason30DaysBonus(userId: number, seasonStart: Date, seasonEnd: Date, seasonId: number): Promise<boolean> {
+  const config = await loadBonusConfig();
+  
   const count = await Registration.count({
     include: [{
       model: Tournament,
@@ -132,12 +299,12 @@ export async function checkAndAwardGoldBonus(userId: number, seasonStart: Date, 
     where: { user_id: userId } as any,
   });
 
-  if (count >= 28) {
+  if (count >= 30) {
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
         season_id: seasonId,
-        action_type: 'bonus',
+        action_type: 'bonus_season_30',
         description: { [Op.like]: '%Oro%' } as any,
       } as any,
     });
@@ -149,11 +316,11 @@ export async function checkAndAwardGoldBonus(userId: number, seasonStart: Date, 
         season_id: seasonId,
         tournament_id: null,
         result_id: null,
-        action_type: 'bonus',
-        description: `🥇 Bonus Oro - Temporada ${seasonId} (${count}/35 jornadas)`,
-        points: 5000,
+        action_type: 'bonus_season_30',
+        description: `🥇 Bonus Oro - Temporada ${seasonId} (${count} jornadas)`,
+        points: config.season_30days,
       } as any);
-      console.log(`[bonusService] Awarded Gold bonus (5000 pts) to user ${userId} for season ${seasonId}`);
+      console.log(`[bonusService] Awarded season 30-days bonus (${config.season_30days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -162,9 +329,11 @@ export async function checkAndAwardGoldBonus(userId: number, seasonStart: Date, 
 }
 
 /**
- * Calcula y otorga bonus Diamante (10000 pts) si asistió a 32+ de 35 jornadas
+ * Calcula y otorga bonus por asistir 35+ jornadas en la temporada (Diamante - 10000 pts por defecto)
  */
-export async function checkAndAwardDiamondBonus(userId: number, seasonStart: Date, seasonEnd: Date, seasonId: number): Promise<boolean> {
+export async function checkAndAwardSeason35DaysBonus(userId: number, seasonStart: Date, seasonEnd: Date, seasonId: number): Promise<boolean> {
+  const config = await loadBonusConfig();
+  
   const count = await Registration.count({
     include: [{
       model: Tournament,
@@ -178,12 +347,12 @@ export async function checkAndAwardDiamondBonus(userId: number, seasonStart: Dat
     where: { user_id: userId } as any,
   });
 
-  if (count >= 32) {
+  if (count >= 35) {
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
         season_id: seasonId,
-        action_type: 'bonus',
+        action_type: 'bonus_season_35',
         description: { [Op.like]: '%Diamante%' } as any,
       } as any,
     });
@@ -195,11 +364,11 @@ export async function checkAndAwardDiamondBonus(userId: number, seasonStart: Dat
         season_id: seasonId,
         tournament_id: null,
         result_id: null,
-        action_type: 'bonus',
-        description: `💎 Bonus Diamante - Temporada ${seasonId} (${count}/35 jornadas)`,
-        points: 10000,
+        action_type: 'bonus_season_35',
+        description: `💎 Bonus Diamante - Temporada ${seasonId} (${count} jornadas)`,
+        points: config.season_35days,
       } as any);
-      console.log(`[bonusService] Awarded Diamond bonus (10000 pts) to user ${userId} for season ${seasonId}`);
+      console.log(`[bonusService] Awarded season 35-days bonus (${config.season_35days} pts) to user ${userId}`);
       return true;
     }
   }
@@ -208,9 +377,11 @@ export async function checkAndAwardDiamondBonus(userId: number, seasonStart: Dat
 }
 
 /**
- * Calcula y otorga bonus Black (10000 pts) si disputó 16+ mesas finales
+ * Calcula y otorga bonus por disputar 20+ mesas finales (Black - 10000 pts por defecto)
  */
-export async function checkAndAwardBlackBonus(userId: number, seasonStart: Date, seasonEnd: Date, seasonId: number): Promise<boolean> {
+export async function checkAndAwardFinalTables20Bonus(userId: number, seasonStart: Date, seasonEnd: Date, seasonId: number): Promise<boolean> {
+  const config = await loadBonusConfig();
+  
   const count = await Result.count({
     include: [{
       model: Tournament,
@@ -227,12 +398,12 @@ export async function checkAndAwardBlackBonus(userId: number, seasonStart: Date,
     } as any,
   });
 
-  if (count >= 16) {
+  if (count >= 20) {
     const existing = await HistoricalPoint.findOne({
       where: {
         user_id: userId,
         season_id: seasonId,
-        action_type: 'bonus',
+        action_type: 'bonus_final_tables_20',
         description: { [Op.like]: '%Black%' } as any,
       } as any,
     });
@@ -244,11 +415,11 @@ export async function checkAndAwardBlackBonus(userId: number, seasonStart: Date,
         season_id: seasonId,
         tournament_id: null,
         result_id: null,
-        action_type: 'bonus',
+        action_type: 'bonus_final_tables_20',
         description: `⚫ Bonus Black - Temporada ${seasonId} (${count} mesas finales)`,
-        points: 10000,
+        points: config.final_tables_20,
       } as any);
-      console.log(`[bonusService] Awarded Black bonus (10000 pts) to user ${userId} for season ${seasonId}`);
+      console.log(`[bonusService] Awarded final tables 20+ bonus (${config.final_tables_20} pts) to user ${userId}`);
       return true;
     }
   }
