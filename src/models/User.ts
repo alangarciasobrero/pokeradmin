@@ -16,6 +16,8 @@ export class User extends Model {
   public is_deleted?: boolean;
   // Nuevo campo para indicar que el usuario tiene perfil jugador
   public is_player!: boolean;
+  // Campo para privacidad del perfil
+  public is_private?: boolean;
   public role!: 'admin' | 'user';
   public avatar?: string; // URL o path del avatar
   public readonly createdAt!: Date;
@@ -97,6 +99,12 @@ User.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    is_private: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: 'Si es true, otros players no pueden ver sus estadísticas',
     },
     createdAt: {
       type: DataTypes.DATE,

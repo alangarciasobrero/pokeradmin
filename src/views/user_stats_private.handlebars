@@ -1,0 +1,121 @@
+<div class="private-profile-page">
+	<div class="page-header">
+		<a href="/stats/leaderboard" class="back-link">← Volver al Ranking</a>
+		<h1>🔒 Perfil Privado</h1>
+	</div>
+
+	<div class="private-notice">
+		<div class="lock-icon">🔒</div>
+		<h2>{{targetUser.username}}</h2>
+		{{#if targetUser.full_name}}
+			<p class="user-name">{{targetUser.full_name}}</p>
+		{{/if}}
+		<div class="privacy-message">
+			<p>Este jugador ha configurado su perfil como privado.</p>
+			<p>Solo puedes ver su posición en el ranking.</p>
+		</div>
+	</div>
+
+	<div class="ranking-card">
+		<div class="ranking-display">
+			<span class="ranking-label">Posición en Ranking</span>
+			<span class="ranking-position">#{{rankingPosition}}</span>
+		</div>
+	</div>
+</div>
+
+<style>
+.private-profile-page {
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.page-header {
+	margin-bottom: 30px;
+}
+
+.back-link {
+	display: inline-block;
+	margin-bottom: 15px;
+	color: #4fc3f7;
+	text-decoration: none;
+	font-size: 0.95rem;
+}
+
+.back-link:hover {
+	color: #81d4fa;
+}
+
+.page-header h1 {
+	font-size: 2rem;
+	color: #fff;
+	margin: 0;
+}
+
+.private-notice {
+	background: rgba(255, 152, 0, 0.1);
+	border: 2px solid rgba(255, 152, 0, 0.3);
+	border-radius: 12px;
+	padding: 40px;
+	text-align: center;
+	margin-bottom: 30px;
+}
+
+.lock-icon {
+	font-size: 4rem;
+	margin-bottom: 20px;
+}
+
+.private-notice h2 {
+	font-size: 1.8rem;
+	color: #fff;
+	margin: 0 0 10px 0;
+}
+
+.user-name {
+	font-size: 1.1rem;
+	color: #aaa;
+	margin: 0 0 20px 0;
+}
+
+.privacy-message {
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.privacy-message p {
+	margin: 8px 0;
+	color: #ddd;
+	font-size: 1rem;
+}
+
+.ranking-card {
+	background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+	border-radius: 12px;
+	padding: 30px;
+	box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.ranking-display {
+	text-align: center;
+}
+
+.ranking-label {
+	display: block;
+	font-size: 1rem;
+	color: #aaa;
+	margin-bottom: 15px;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.ranking-position {
+	display: block;
+	font-size: 4rem;
+	font-weight: bold;
+	color: #ffd700;
+	text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+</style>

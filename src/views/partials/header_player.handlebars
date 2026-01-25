@@ -15,7 +15,8 @@
     </nav>
     <div class="actions">
         {{#if username}}
-            <a href="/profile" class="btn-link">Mi perfil ({{username}})</a>
+            <a href="/player/profile/settings" class="btn-link" title="Configuración">⚙️</a>
+            <a href="/profile" class="btn-link">{{username}}</a>
             <form method="post" action="/logout" style="display:inline;">
                 <button type="submit" class="btn-logout">Salir</button>
             </form>

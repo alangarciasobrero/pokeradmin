@@ -62,6 +62,9 @@
 										{{/if}}
 										<div class="player-details">
 											<span class="player-name">@{{this.username}}</span>
+											{{#if this.is_private}}
+												<span class="privacy-badge" title="Perfil privado">🔒</span>
+											{{/if}}
 										</div>
 									</div>
 								</a>
@@ -260,6 +263,12 @@
 	font-weight: 700;
 	color: #fff;
 	font-size: 1.05rem;
+}
+
+.privacy-badge {
+	font-size: 0.8rem;
+	color: #FFA500;
+	margin-left: 0.5rem;
 }
 
 .points-col {

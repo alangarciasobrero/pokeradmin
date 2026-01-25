@@ -238,4 +238,48 @@ router.get('/my-activity', requireAuth, async (req: Request, res: Response) => {
 	}
 });
 
+// GET /profile/settings - Vista de configuración de perfil
+router.get('/profile/settings', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const userId = req.session!.userId!;
+		const user = await User.findByPk(userId);
+
+		if (!user) {
+			return res.status(404).send('Usuario no encontrado');
+		}
+
+		res.render('profile_settings', {
+			username: user.username,
+			is_private: user.is_private || false,
+			email: user.email || ''
+		});
+
+	} catch (err) {
+		console.error('Error loading profile settings', err);
+		res.status(500).send('Error al cargar configuración');
+	}
+});
+
+// POST /profile/settings - Actualizar configuración de perfil
+router.post('/profile/settings', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const userId = req.session!.userId!;
+		const { is_private, email } = req.body;
+
+		await User.update(
+			{
+				is_private: is_private === 'on' || is_private === 'true' || is_private === true,
+				email: email || null
+			},
+			{ where: { id: userId } }
+		);
+
+		res.redirect('/player/profile/settings?success=true');
+
+	} catch (err) {
+		console.error('Error updating profile settings', err);
+		res.status(500).send('Error al actualizar configuración');
+	}
+});
+
 export default router;

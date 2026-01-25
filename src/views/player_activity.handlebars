@@ -1,8 +1,8 @@
 <div class="player-activity-page">
 	<div class="page-header">
 		<a href="/" class="back-link">← Volver al Dashboard</a>
-		<h1>📋 Mi Actividad Completa</h1>
-		<p class="subtitle">Historial de inscripciones, pagos y participaciones</p>
+		<h1>📋 Mi Estado de Cuenta</h1>
+		<p class="subtitle">Resumen financiero y deudas pendientes</p>
 	</div>
 
 	<!-- Resumen financiero -->
@@ -19,96 +19,41 @@
 			<div class="summary-item">
 				<span class="summary-icon">⏳</span>
 				<div class="summary-content">
-					<span class="summary-label">Pendiente</span>
+					<span class="summary-label">Saldo Pendiente</span>
 					<span class="summary-value pending">${{currency financialSummary.total_pending}}</span>
 				</div>
 			</div>
 			<div class="summary-item">
 				<span class="summary-icon">📊</span>
 				<div class="summary-content">
-					<span class="summary-label">Total Transacciones</span>
+					<span class="summary-label">Total</span>
 					<span class="summary-value">${{currency financialSummary.total_transactions}}</span>
 				</div>
 			</div>
 		</div>
 	</div>
 
+	<!-- Deudas pendientes -->
+	{{#if financialSummary.total_pending}}
+	<div class="section-card">
+		<h2>⚠️ Pagos Pendientes</h2>
+		<p class="info-text">Para consultar sobre pagos, contacta al administrador</p>
+		<div class="debt-amount-display">
+			<span class="debt-label">Saldo a pagar:</span>
+			<span class="debt-value">${{currency financialSummary.total_pending}}</span>
+		</div>
+	</div>
+	{{else}}
+	<div class="section-card success-card">
+		<h2>✅ Sin Deudas Pendientes</h2>
+		<p class="success-text">¡Tu cuenta está al día! No tienes pagos pendientes.</p>
+	</div>
+	{{/if}}
+
 	<!-- Tabs para diferentes secciones -->
 	<div class="activity-tabs">
-		<button class="tab-btn active" data-tab="payments">💳 Pagos ({{payments.length}})</button>
-		<button class="tab-btn" data-tab="tournaments">🏆 Torneos ({{registrations.length}})</button>
+		<button class="tab-btn active" data-tab="tournaments">🏆 Mis Torneos ({{registrations.length}})</button>
 		<button class="tab-btn" data-tab="cash">🎲 Mesas Cash ({{cashSessions.length}})</button>
-	</div>
-
-	<!-- Tab: Pagos -->
-	<div class="tab-content active" id="payments-tab">
-		<div class="section-card">
-			<h2>💳 Historial de Pagos</h2>
-			{{#if payments.length}}
-				<div class="table-responsive">
-					<table class="activity-table">
-						<thead>
-							<tr>
-								<th>Fecha</th>
-								<th>Evento</th>
-								<th>Tipo</th>
-								<th>Monto</th>
-								<th>Pagado</th>
-								<th>Pendiente</th>
-								<th>Estado</th>
-								<th>Método</th>
-							</tr>
-						</thead>
-						<tbody>
-							{{#each payments}}
-								<tr class="{{#if this.paid}}payment-paid{{else}}payment-pending{{/if}}">
-									<td>{{formatDateTime this.created_at}}</td>
-									<td>
-										<strong>{{this.event_name}}</strong>
-										{{#if this.description}}
-											<br><small>{{this.description}}</small>
-										{{/if}}
-									</td>
-									<td>
-										{{#if (eq this.type "tournament")}}
-											<span class="badge-tournament">🏆 Torneo</span>
-										{{else if (eq this.type "cash")}}
-											<span class="badge-cash">🎲 Cash</span>
-										{{else if (eq this.type "reentry")}}
-											<span class="badge-reentry">🔄 Re-entry</span>
-										{{else}}
-											<span class="badge-other">📝 {{this.type}}</span>
-										{{/if}}
-									</td>
-									<td class="amount-cell">${{currency this.amount}}</td>
-									<td class="amount-cell paid">${{currency this.paid_amount}}</td>
-									<td class="amount-cell pending">${{currency (subtract this.amount this.paid_amount)}}</td>
-									<td>
-										{{#if this.paid}}
-											<span class="status-badge paid">✓ Pagado</span>
-										{{else}}
-											<span class="status-badge pending">⏳ Pendiente</span>
-										{{/if}}
-									</td>
-									<td>
-										{{#if this.payment_method}}
-											{{this.payment_method}}
-										{{else}}
-											<span class="text-muted">-</span>
-										{{/if}}
-									</td>
-								</tr>
-							{{/each}}
-						</tbody>
-					</table>
-				</div>
-			{{else}}
-				<div class="empty-state">
-					<span class="empty-icon">💳</span>
-					<p>No hay pagos registrados</p>
-				</div>
-			{{/if}}
-		</div>
 	</div>
 
 	<!-- Tab: Torneos -->

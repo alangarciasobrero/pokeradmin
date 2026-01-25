@@ -18,14 +18,41 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 		const currentUserId = req.session!.userId!;
 		const isAdmin = req.session!.role === 'admin';
 
-		// Verificar que sea admin o el mismo usuario
-		if (!isAdmin && userId !== currentUserId) {
-			return res.status(403).send('No tenés permiso para ver estas estadísticas');
-		}
-
 		const user = await User.findByPk(userId);
 		if (!user) {
 			return res.status(404).send('Usuario no encontrado');
+		}
+
+		const targetUser = user as any;
+		const isOwnProfile = userId === currentUserId;
+
+		// Si el perfil es privado y el usuario actual no es admin ni el dueño del perfil
+		if (targetUser.is_private && !isAdmin && !isOwnProfile) {
+			// Solo mostrar posición en ranking
+			const rankingPosition = await sequelize.query(`
+				SELECT COUNT(*) + 1 as position
+				FROM users u
+				WHERE u.current_points > (SELECT current_points FROM users WHERE id = :userId)
+			`, {
+				replacements: { userId },
+				type: (sequelize as any).QueryTypes.SELECT
+			});
+
+			return res.render('user_stats_private', {
+				username: req.session!.username,
+				targetUser: {
+					username: targetUser.username,
+					full_name: targetUser.full_name,
+					nickname: targetUser.nickname
+				},
+				rankingPosition: (rankingPosition as any)[0].position,
+				isPrivate: true
+			});
+		}
+
+		// Verificar que sea admin o el mismo usuario para ver estadísticas completas
+		if (!isAdmin && !isOwnProfile) {
+			return res.status(403).send('No tenés permiso para ver estas estadísticas');
 		}
 
 		// Filtro de temporada
@@ -189,6 +216,7 @@ router.get('/user/:id', requireAuth, async (req: Request, res: Response) => {
 				u.id,
 				u.username,
 				u.avatar,
+				u.is_private,
 				u.current_points,
 				COUNT(DISTINCT r.tournament_id) as tournament_count,
 				COUNT(CASE WHEN r.position = 1 THEN 1 END) as first_places,
