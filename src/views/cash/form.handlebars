@@ -34,34 +34,51 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="small_blind">🎯 Ciega Chica *</label>
+          <label for="blind_1">🎯 Ciega 1 *</label>
           <input 
             type="number" 
-            name="small_blind" 
-            id="small_blind" 
+            name="blind_1" 
+            id="blind_1" 
             min="1"
             required 
-            value="{{#if cash}}{{cash.small_blind}}{{/if}}"
+            value="{{#if cash}}{{cash.blind_1}}{{else if cash.small_blind}}{{cash.small_blind}}{{/if}}"
             class="form-input"
-            placeholder="Ej: 5"
+            placeholder="Ej: 1000"
           >
-          <small class="form-hint">Valor de la ciega chica</small>
+          <small class="form-hint">Primera ciega</small>
         </div>
 
         <div class="form-group">
-          <label for="big_blind">🎯 Ciega Grande *</label>
+          <label for="blind_2">🎯 Ciega 2</label>
           <input 
             type="number" 
-            name="big_blind"
-            id="big_blind" 
+            name="blind_2"
+            id="blind_2" 
             class="form-input" 
             min="1"
-            required
-            placeholder="Por defecto 2x ciega pequeña"
-            value="{{#if cash}}{{cash.big_blind}}{{/if}}"
+            placeholder="Ej: 1000"
+            value="{{#if cash}}{{cash.blind_2}}{{/if}}"
           >
-          <small class="form-hint">Se calcula automáticamente (2x ciega pequeña) pero puede modificarse</small>
+          <small class="form-hint">Segunda ciega (opcional)</small>
         </div>
+
+        <div class="form-group">
+          <label for="blind_3">🎯 Ciega 3</label>
+          <input 
+            type="number" 
+            name="blind_3"
+            id="blind_3" 
+            class="form-input" 
+            min="1"
+            placeholder="Ej: 2000"
+            value="{{#if cash}}{{cash.blind_3}}{{/if}}"
+          >
+          <small class="form-hint">Tercera ciega (opcional)</small>
+        </div>
+      </div>
+      
+      <div class="info-box" style="background: rgba(74, 158, 255, 0.1); border-left: 3px solid #4a9eff; padding: 10px; margin-top: 10px;">
+        <small>💡 <strong>Ejemplo común:</strong> 1000 - 1000 - 2000</small>
       </div>
     </div>
 
@@ -78,6 +95,7 @@
             value="{{#if cash}}{{cash.dealer}}{{/if}}"
             class="form-input"
             placeholder="Nombre del repartidor (opcional)"
+          >
           >
           <small class="form-hint">Quién reparte las cartas al inicio</small>
         </div>

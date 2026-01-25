@@ -242,21 +242,23 @@ router.post('/:id/register', requireAdmin, async (req: Request, res: Response) =
 // Create via admin form (POST to API already exists, but provide server-side forwarding)
 router.post('/new', requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { initial_pot, small_blind, dealer } = req.body;
+    const { initial_pot, blind_1, blind_2, blind_3, dealer } = req.body;
     
     // Validaciones
-    if (!small_blind || Number(small_blind) <= 0) {
+    if (!blind_1 || Number(blind_1) <= 0) {
       return res.render('cash/form', {
         formTitle: 'Nueva Mesa Cash',
         formAction: '/admin/games/cash/new',
-        error: 'La ciega pequeña es requerida y debe ser mayor a 0',
+        error: 'La primera ciega es requerida y debe ser mayor a 0',
         cash: req.body
       });
     }
     
     const startDate = new Date();
     const payload = {
-      small_blind: Number(small_blind),
+      blind_1: Number(blind_1),
+      blind_2: blind_2 ? Number(blind_2) : null,
+      blind_3: blind_3 ? Number(blind_3) : null,
       start_datetime: startDate,
       gaming_date: getGamingDate(startDate),
       end_datetime: null,
@@ -283,21 +285,23 @@ router.post('/new', requireAdmin, async (req: Request, res: Response) => {
 router.post('/:id/edit', requireAdmin, async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const { initial_pot, small_blind, dealer, start_datetime, end_datetime } = req.body;
+    const { initial_pot, blind_1, blind_2, blind_3, dealer, start_datetime, end_datetime } = req.body;
     
     // Validaciones
-    if (!small_blind || Number(small_blind) <= 0) {
+    if (!blind_1 || Number(blind_1) <= 0) {
       const cash = await CashGameRepository.findById(id);
       return res.render('cash/form', {
         formTitle: 'Editar Mesa Cash',
         formAction: `/admin/games/cash/${id}/edit`,
-        error: 'La ciega pequeña es requerida y debe ser mayor a 0',
+        error: 'La primera ciega es requerida y debe ser mayor a 0',
         cash: { ...cash?.toJSON(), ...req.body, id }
       });
     }
     
     const payload: any = {
-      small_blind: Number(small_blind),
+      blind_1: Number(blind_1),
+      blind_2: blind_2 ? Number(blind_2) : null,
+      blind_3: blind_3 ? Number(blind_3) : null,
       default_buyin: Number(initial_pot || 0),
       dealer: dealer || null
     };

@@ -1,7 +1,7 @@
  
 <div class="admin-cash-participants">
   <h1>Participantes — Mesa #{{cash.id}}</h1>
-  <p>Inicio: {{formatDate cash.start_datetime}} &nbsp; Small blind: {{currency cash.small_blind}}</p>
+  <p>Inicio: {{formatDate cash.start_datetime}} &nbsp; Ciegas: ${{currency cash.blind_1}}{{#if cash.blind_2}} - ${{currency cash.blind_2}}{{/if}}{{#if cash.blind_3}} - ${{currency cash.blind_3}}{{/if}}</p>
 
   <section>
     <h2>Añadir jugador</h2>

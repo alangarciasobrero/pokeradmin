@@ -4,7 +4,9 @@ import sequelize from '../services/database';
 // Definición de los atributos de CashGame según la tabla real
 export interface CashGameAttributes {
   id: number;
-  small_blind: number;
+  blind_1: number;
+  blind_2?: number | null;
+  blind_3?: number | null;
   start_datetime: Date;
   gaming_date?: Date | null;
   end_datetime?: Date | null;
@@ -14,11 +16,13 @@ export interface CashGameAttributes {
   total_tips?: number;
 }
 
-export interface CashGameCreationAttributes extends Optional<CashGameAttributes, 'id' | 'gaming_date' | 'end_datetime' | 'default_buyin' | 'total_commission' | 'dealer' | 'total_tips'> {}
+export interface CashGameCreationAttributes extends Optional<CashGameAttributes, 'id' | 'blind_2' | 'blind_3' | 'gaming_date' | 'end_datetime' | 'default_buyin' | 'total_commission' | 'dealer' | 'total_tips'> {}
 
 export class CashGame extends Model<CashGameAttributes, CashGameCreationAttributes> implements CashGameAttributes {
   public id!: number;
-  public small_blind!: number;
+  public blind_1!: number;
+  public blind_2?: number | null;
+  public blind_3?: number | null;
   public start_datetime!: Date;
   public gaming_date?: Date | null;
   public end_datetime?: Date | null;
@@ -37,9 +41,19 @@ CashGame.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    small_blind: {
+    blind_1: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false,
+    },
+    blind_2: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: true,
+      defaultValue: null,
+    },
+    blind_3: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: true,
+      defaultValue: null,
     },
     start_datetime: {
       type: DataTypes.DATE,

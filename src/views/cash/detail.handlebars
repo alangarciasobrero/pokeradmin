@@ -12,12 +12,10 @@
 
     <div class="cash-info-grid">
         <div class="info-card">
-            <span class="info-label">Ciega chica</span>
-            <span class="info-value">${{currency cash.small_blind}}</span>
-        </div>
-        <div class="info-card">
-            <span class="info-label">Ciega grande</span>
-            <span class="info-value">${{currency (add cash.small_blind cash.small_blind)}}</span>
+            <span class="info-label">Ciegas</span>
+            <span class="info-value">
+                ${{currency cash.blind_1}}{{#if cash.blind_2}} - ${{currency cash.blind_2}}{{/if}}{{#if cash.blind_3}} - ${{currency cash.blind_3}}{{/if}}
+            </span>
         </div>
         <div class="info-card">
             <span class="info-label">Inicio</span>

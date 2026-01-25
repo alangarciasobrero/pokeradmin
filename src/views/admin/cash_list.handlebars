@@ -49,8 +49,10 @@
               <div class="stat-box">
                 <span class="stat-icon">💵</span>
                 <div class="stat-details">
-                  <span class="stat-label">Small Blind</span>
-                  <span class="stat-value">${{currency small_blind}}</span>
+                  <span class="stat-label">Ciegas</span>
+                  <span class="stat-value">
+                    ${{currency blind_1}}{{#if blind_2}}-${{currency blind_2}}{{/if}}{{#if blind_3}}-${{currency blind_3}}{{/if}}
+                  </span>
                 </div>
               </div>
               <div class="stat-box">

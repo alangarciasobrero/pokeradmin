@@ -216,7 +216,7 @@
 						<div class="cash-item">
 							<div class="cash-icon">🎲</div>
 							<div class="cash-info">
-								<h4>Mesa Cash - SB ${{currency this.small_blind}}</h4>
+								<h4>Mesa Cash - Ciegas: ${{currency this.blind_1}}{{#if this.blind_2}}-${{currency this.blind_2}}{{/if}}{{#if this.blind_3}}-${{currency this.blind_3}}{{/if}}</h4>
 								<p class="cash-meta">Inicio: {{formatDateTime this.start_datetime}}</p>
 								{{#if this.dealer}}
 									<p class="cash-dealer">Dealer: {{this.dealer}}</p>
