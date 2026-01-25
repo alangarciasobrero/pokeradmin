@@ -23,31 +23,41 @@ const tournamentRepo = new TournamentRepository();
 async function loadPointsConfig() {
   const settings = await Setting.findAll({
     where: {
-      key: ['personal_buyin_points', 'personal_reentry_points', 'weekday_buyin_points', 'weekday_reentry_points', 'friday_buyin_points', 'friday_reentry_points']
+      key: ['personal_buyin_points', 'personal_reentry_points', 'weekday_buyin_points', 'weekday_reentry_points', 'friday_buyin_points', 'friday_reentry_points', 'day_groups_config']
     } as any
   });
   
-  const config = {
+  const config: any = {
     personalBuyin: 100,
     personalReentry: 100,
     weekdayBuyin: 150,
     weekdayReentry: 100,
     fridayBuyin: 200,
-    fridayReentry: 100
+    fridayReentry: 100,
+    dayGroups: []
   };
   
   for (const s of settings) {
     const key = (s as any).key;
-    const val = Number((s as any).value) || 0;
-    if (key === 'personal_buyin_points') config.personalBuyin = val;
-    if (key === 'personal_reentry_points') config.personalReentry = val;
-    if (key === 'weekday_buyin_points') config.weekdayBuyin = val;
-    if (key === 'weekday_reentry_points') config.weekdayReentry = val;
-    if (key === 'friday_buyin_points') config.fridayBuyin = val;
-    if (key === 'friday_reentry_points') config.fridayReentry = val;
+    const val = (s as any).value;
+    if (key === 'personal_buyin_points') config.personalBuyin = Number(val) || 0;
+    if (key === 'personal_reentry_points') config.personalReentry = Number(val) || 0;
+    if (key === 'weekday_buyin_points') config.weekdayBuyin = Number(val) || 0;
+    if (key === 'weekday_reentry_points') config.weekdayReentry = Number(val) || 0;
+    if (key === 'friday_buyin_points') config.fridayBuyin = Number(val) || 0;
+    if (key === 'friday_reentry_points') config.fridayReentry = Number(val) || 0;
+    if (key === 'day_groups_config' && val) {
+      try {
+        config.dayGroups = JSON.parse(val);
+      } catch (e) {
+        console.error('[loadPointsConfig] Error parsing day_groups_config:', e);
+        config.dayGroups = [];
+      }
+    }
   }
   
   return config;
+
 }
 
 // Helper to load prize distribution configuration from database
@@ -819,7 +829,8 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
         weekdayBuyin: pointsConfig.weekdayBuyin,
         weekdayReentry: pointsConfig.weekdayReentry,
         fridayBuyin: pointsConfig.fridayBuyin,
-        fridayReentry: pointsConfig.fridayReentry
+        fridayReentry: pointsConfig.fridayReentry,
+        dayGroups: pointsConfig.dayGroups || []
       }
     );
     
@@ -1199,7 +1210,8 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
           weekdayBuyin: pointsConfig.weekdayBuyin,
           weekdayReentry: pointsConfig.weekdayReentry,
           fridayBuyin: pointsConfig.fridayBuyin,
-          fridayReentry: pointsConfig.fridayReentry
+          fridayReentry: pointsConfig.fridayReentry,
+          dayGroups: pointsConfig.dayGroups || []
         }
       );
       

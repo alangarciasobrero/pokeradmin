@@ -44,7 +44,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         'weekday_buyin_points', 'weekday_reentry_points',
         'friday_buyin_points', 'friday_reentry_points',
         'ranking_days_sunday', 'ranking_days_monday', 'ranking_days_tuesday', 'ranking_days_wednesday',
-        'ranking_days_thursday', 'ranking_days_friday', 'ranking_days_saturday'
+        'ranking_days_thursday', 'ranking_days_friday', 'ranking_days_saturday',
+        'day_groups_config'
       ]
     } as any
   });
@@ -70,7 +71,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     ranking_days_wednesday: true,
     ranking_days_thursday: false,
     ranking_days_friday: true,
-    ranking_days_saturday: false
+    ranking_days_saturday: false,
+    day_groups_config: ''
   };
 
   for (const s of settings) {
@@ -78,6 +80,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     const val = (s as any).value;
     if (key.startsWith('ranking_days_')) {
       config[key] = val === '1' || val === 'true' || val === true;
+    } else if (key === 'day_groups_config') {
+      config[key] = val || '';
     } else {
       config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
     }
@@ -212,10 +216,13 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
       weekday_reentry, 
       friday_buyin, 
       friday_reentry,
-      ranking_days
+      ranking_days,
+      day_groups_config
     } = req.body;
 
-    // Process ranking days checkboxes
+    console.log('[Tournament Points] Received day_groups_config:', day_groups_config);
+
+    // Process ranking days checkboxes (legacy - mantener por compatibilidad)
     const daysMap = { '0': 'sunday', '1': 'monday', '2': 'tuesday', '3': 'wednesday', '4': 'thursday', '5': 'friday', '6': 'saturday' };
     const selectedDays = Array.isArray(ranking_days) ? ranking_days : (ranking_days ? [ranking_days] : []);
     
@@ -228,13 +235,22 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
       { key: 'friday_reentry_points', value: String(friday_reentry || 100), description: 'Puntos al pozo por re-entry (legacy)' },
     ];
 
-    // Add ranking days settings
+    // Add ranking days settings (legacy)
     for (const [dayNum, dayName] of Object.entries(daysMap)) {
       const isSelected = selectedDays.includes(dayNum);
       updates.push({
         key: `ranking_days_${dayName}`,
         value: isSelected ? '1' : '0',
         description: `Día ${dayName} cuenta para ranking`
+      });
+    }
+
+    // Add day groups configuration (NEW)
+    if (day_groups_config) {
+      updates.push({
+        key: 'day_groups_config',
+        value: day_groups_config,
+        description: 'Configuración de grupos de días con puntos personalizados'
       });
     }
 
@@ -248,7 +264,7 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
       }
     }
 
-    if (req.session) req.session.flash = { type: 'success', message: '✅ Sistema de puntos y días de ranking actualizados' };
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Sistema de puntos y grupos de días actualizados' };
     return res.redirect('/admin/games/settings');
   } catch (err: any) {
     console.error('Error saving tournament points config:', err);

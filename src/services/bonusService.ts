@@ -267,6 +267,7 @@ export async function checkAndAwardBlackBonus(userId: number, seasonStart: Date,
  * @param buyinCount - Cantidad de buy-ins (inscripciones iniciales)
  * @param reentryCount - Cantidad de re-entries
  * @param doublePoints - Si el torneo tiene doble ranking activado
+ * @param triplePoints - Si el torneo tiene triple ranking activado
  * @param config - Configuración opcional de puntos (si no se pasa, usa defaults)
  * @returns Total de puntos del pozo a distribuir
  */
@@ -280,16 +281,35 @@ export function calculateTournamentPointsPool(
     weekdayBuyin?: number,
     weekdayReentry?: number,
     fridayBuyin?: number,
-    fridayReentry?: number
+    fridayReentry?: number,
+    dayGroups?: Array<{ name: string, days: number[], buyinPoints: number, reentryPoints: number }>
   }
 ): number {
-  const dayOfWeek = tournamentDate.getDay();
-  const isFriday = dayOfWeek === 5;
+  const dayOfWeek = tournamentDate.getDay(); // 0=Domingo, 1=Lunes, etc.
   
-  // Puntos base por buy-in según día (usar config o defaults)
-  const buyinBasePoints = isFriday 
-    ? (config?.fridayBuyin || 200) 
-    : (config?.weekdayBuyin || 150);
+  let buyinBasePoints = 150;
+  let reentryPoints = 100;
+
+  // Si hay grupos de días configurados, usar esos valores
+  if (config?.dayGroups && config.dayGroups.length > 0) {
+    const matchingGroup = config.dayGroups.find(group => group.days.includes(dayOfWeek));
+    if (matchingGroup) {
+      buyinBasePoints = matchingGroup.buyinPoints;
+      reentryPoints = matchingGroup.reentryPoints;
+      console.log(`[Bonus] Day ${dayOfWeek} matched group "${matchingGroup.name}" - buyin: ${buyinBasePoints}, reentry: ${reentryPoints}`);
+    } else {
+      console.log(`[Bonus] Day ${dayOfWeek} not in any group, using defaults`);
+    }
+  } else {
+    // Legacy: usar lógica vieja de Viernes vs otros días
+    const isFriday = dayOfWeek === 5;
+    buyinBasePoints = isFriday 
+      ? (config?.fridayBuyin || 200) 
+      : (config?.weekdayBuyin || 150);
+    reentryPoints = isFriday
+      ? (config?.fridayReentry || 100)
+      : (config?.weekdayReentry || 100);
+  }
   
   // Aplicar multiplicador según tipo de ranking
   let buyinPoints = buyinBasePoints;
@@ -299,13 +319,10 @@ export function calculateTournamentPointsPool(
     buyinPoints = buyinBasePoints * 2;
   }
   
-  // Re-entries según día (usar config o defaults)
-  const reentryPoints = isFriday
-    ? (config?.fridayReentry || 100)
-    : (config?.weekdayReentry || 100);
-  
   // Calcular pozo total
   const totalPoolPoints = (buyinCount * buyinPoints) + (reentryCount * reentryPoints);
+  
+  console.log(`[Bonus] Pool calculation: ${buyinCount} buyins × ${buyinPoints} + ${reentryCount} reentries × ${reentryPoints} = ${totalPoolPoints} pts`);
   
   return totalPoolPoints;
 }

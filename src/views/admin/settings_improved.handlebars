@@ -225,60 +225,20 @@
 
 				<hr style="margin: 20px 0; border: 1px solid #333;">
 
-				<h3 style="color: #4a9eff;">🏆 Pozo del Torneo (Top 9)</h3>
+				<h3 style="color: #4a9eff;">🏆 Grupos de Días con Puntos</h3>
 				<p style="font-size: 0.9rem; color: #888; margin-bottom: 15px;">
-					Este pozo se distribuye entre los 9 finalistas según los porcentajes configurados arriba
+					Crea grupos de días con diferentes puntos. Por ejemplo: "Lunes-Martes" con 150 pts, "Viernes" con 200 pts.
 				</p>
 
-				<div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-					<div class="form-field">
-						<label>📅 Buy-in al Pozo</label>
-						<input type="number" name="weekday_buyin" value="{{config.weekday_buyin_points}}" min="0" step="10" required />
-						<small>Puntos al pozo por buy-in</small>
-					</div>
-					<div class="form-field">
-						<label>🔄 Re-entry al Pozo</label>
-						<input type="number" name="weekday_reentry" value="{{config.weekday_reentry_points}}" min="0" step="10" required />
-						<small>Puntos al pozo por re-entry</small>
-					</div>
+				<div id="dayGroupsContainer" style="display: flex; flex-direction: column; gap: 15px;">
+					<!-- Los grupos se cargarán aquí dinámicamente -->
 				</div>
 
-				<div class="info-box" style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-top: 15px;">
-					<h4 style="margin: 0 0 10px 0; color: #4a9eff;">📅 Días para Ranking</h4>
-					<p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #ccc;">
-						Selecciona qué días de la semana cuentan para el ranking. Los torneos en estos días sumarán puntos.
-					</p>
-					<div class="days-selector" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="0" {{#if config.ranking_days_sunday}}checked{{/if}} />
-							<span>Domingo</span>
-						</label>
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="1" {{#if config.ranking_days_monday}}checked{{/if}} />
-							<span>Lunes</span>
-						</label>
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="2" {{#if config.ranking_days_tuesday}}checked{{/if}} />
-							<span>Martes</span>
-						</label>
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="3" {{#if config.ranking_days_wednesday}}checked{{/if}} />
-							<span>Miércoles</span>
-						</label>
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="4" {{#if config.ranking_days_thursday}}checked{{/if}} />
-							<span>Jueves</span>
-						</label>
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="5" {{#if config.ranking_days_friday}}checked{{/if}} />
-							<span>Viernes</span>
-						</label>
-						<label class="day-checkbox" style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-							<input type="checkbox" name="ranking_days" value="6" {{#if config.ranking_days_saturday}}checked{{/if}} />
-							<span>Sábado</span>
-						</label>
-					</div>
-				</div>
+				<button type="button" onclick="addDayGroup()" style="background: #4a9eff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+					➕ Agregar Grupo de Días
+				</button>
+
+				<input type="hidden" id="dayGroupsData" name="day_groups_config" value="" />
 
 				<div class="info-box" style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-top: 15px;">
 					<h4 style="margin: 0 0 10px 0; color: #ffd700;">ℹ️ Ranking Especial</h4>
@@ -286,6 +246,119 @@
 						Los torneos pueden tener <strong>doble ranking</strong> (×2) o <strong>triple ranking</strong> (×3), lo que multiplica los puntos de <strong>buy-in</strong> que van al pozo. Los puntos personales y de re-entry NO se multiplican.
 					</p>
 				</div>
+
+				<script>
+					let dayGroups = [];
+					const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+					// Cargar configuración existente
+					try {
+						const configStr = '{{config.day_groups_config}}';
+						if (configStr && configStr !== 'undefined' && configStr !== '') {
+							dayGroups = JSON.parse(configStr.replace(/&quot;/g, '"'));
+						}
+					} catch (e) {
+						console.log('No hay configuración previa o error al parsear:', e);
+					}
+
+					// Si no hay grupos, crear uno por defecto
+					if (dayGroups.length === 0) {
+						dayGroups = [
+							{ name: 'Lunes/Miércoles/Viernes', days: [1, 3, 5], buyinPoints: 150, reentryPoints: 100 }
+						];
+					}
+
+					function addDayGroup() {
+						dayGroups.push({
+							name: 'Nuevo Grupo',
+							days: [],
+							buyinPoints: 150,
+							reentryPoints: 100
+						});
+						renderDayGroups();
+					}
+
+					function removeDayGroup(index) {
+						if (confirm('¿Eliminar este grupo de días?')) {
+							dayGroups.splice(index, 1);
+							renderDayGroups();
+						}
+					}
+
+					function updateDayGroup(index, field, value) {
+						if (field === 'days') {
+							const dayNum = parseInt(value);
+							const dayIndex = dayGroups[index].days.indexOf(dayNum);
+							if (dayIndex > -1) {
+								dayGroups[index].days.splice(dayIndex, 1);
+							} else {
+								dayGroups[index].days.push(dayNum);
+							}
+							dayGroups[index].days.sort((a, b) => a - b);
+						} else {
+							dayGroups[index][field] = field === 'name' ? value : parseInt(value);
+						}
+						updateHiddenInput();
+					}
+
+					function updateHiddenInput() {
+						document.getElementById('dayGroupsData').value = JSON.stringify(dayGroups);
+					}
+
+					function renderDayGroups() {
+						const container = document.getElementById('dayGroupsContainer');
+						container.innerHTML = dayGroups.map((group, index) => `
+							<div style="background: #2a2a3e; padding: 15px; border-radius: 8px; border: 1px solid #444;">
+								<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+									<input type="text" 
+										value="${group.name}" 
+										onchange="updateDayGroup(${index}, 'name', this.value)"
+										style="background: #1a1a2e; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; flex: 1; margin-right: 10px;" 
+										placeholder="Nombre del grupo" />
+									<button type="button" onclick="removeDayGroup(${index})" style="background: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
+										🗑️ Eliminar
+									</button>
+								</div>
+								
+								<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px;">
+									${dayNames.map((day, dayNum) => `
+										<label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${group.days.includes(dayNum) ? '#4a9eff' : '#ccc'};">
+											<input type="checkbox" 
+												${group.days.includes(dayNum) ? 'checked' : ''} 
+												onchange="updateDayGroup(${index}, 'days', ${dayNum}); renderDayGroups();"
+												style="cursor: pointer;" />
+											<span>${day}</span>
+										</label>
+									`).join('')}
+								</div>
+
+								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+									<div>
+										<label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 5px;">💰 Buy-in al Pozo</label>
+										<input type="number" 
+											value="${group.buyinPoints}" 
+											onchange="updateDayGroup(${index}, 'buyinPoints', this.value)"
+											min="0" step="10"
+											style="width: 100%; background: #1a1a2e; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px;" />
+									</div>
+									<div>
+										<label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 5px;">🔄 Re-entry al Pozo</label>
+										<input type="number" 
+											value="${group.reentryPoints}" 
+											onchange="updateDayGroup(${index}, 'reentryPoints', this.value)"
+											min="0" step="10"
+											style="width: 100%; background: #1a1a2e; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px;" />
+									</div>
+								</div>
+							</div>
+						`).join('');
+						
+						updateHiddenInput();
+					}
+
+					// Renderizar al cargar
+					renderDayGroups();
+				</script>
 
 				<div class="form-actions">
 					<button type="submit" class="btn btn-primary">💾 Guardar Puntos Torneo</button>
