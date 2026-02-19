@@ -15,6 +15,7 @@ import authRoutes from './routes/authRoutes';
 import { getAdminDashboard } from './controllers/adminDashboardController';
 import tournamentWebRoutes from './routes/tournamentWebRoutes';
 import adminUserRoutes from './routes/adminUserRoutes';
+import adminUserManagementRoutes from './routes/adminUserManagementRoutes';
 import userApiRoutes from './routes/userApiRoutes';
 import adminGamesRoutes from './routes/adminGamesRoutes';
 import adminTournamentRoutes from './routes/adminTournamentRoutes';
@@ -445,6 +446,8 @@ app.use(async (req: express.Request, res: express.Response, next: express.NextFu
 app.use('/tournaments', requireAuthMiddleware, tournamentWebRoutes);
 // Gestión de usuarios (admin)
 app.use('/admin/users', adminUserRoutes);
+// Gestión avanzada de usuarios (puntos, históricos)
+app.use('/admin/users', adminUserManagementRoutes);
 // API users
 app.use('/api/users', userApiRoutes);
 // Gestión de partidas (admin)

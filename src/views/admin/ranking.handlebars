@@ -74,6 +74,11 @@
                 </div>
               </div>
             </div>
+            <div class="ranking-actions">
+              <a href="/admin/users/{{this.user_id}}/edit-points" class="btn-edit-points" title="Editar puntos manualmente">
+                <i class="fas fa-edit"></i> Editar Puntos
+              </a>
+            </div>
           </div>
         </div>
       {{/each}}
@@ -244,6 +249,30 @@
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.6);
   margin-top: 0.25rem;
+}
+.ranking-actions {
+  margin-top: 0.75rem;
+}
+.btn-edit-points {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(57, 73, 171, 0.3);
+  border: 1px solid rgba(57, 73, 171, 0.5);
+  border-radius: 6px;
+  color: #7B93FF;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.btn-edit-points:hover {
+  background: rgba(57, 73, 171, 0.5);
+  border-color: #7B93FF;
+  color: #FFF;
+  transform: translateX(4px);
+}
+.btn-edit-points i {
+  margin-right: 0.5rem;
 }
 .empty-state {
   text-align: center;
