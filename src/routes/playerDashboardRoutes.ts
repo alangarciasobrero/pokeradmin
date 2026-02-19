@@ -204,7 +204,7 @@ router.get('/my-activity', requireAuth, async (req: Request, res: Response) => {
 				(cp.final_stack - cp.buy_in - COALESCE(cp.rebuys, 0)) as profit
 			FROM cash_participants cp
 			JOIN cash_games c ON cp.cash_game_id = c.id
-			WHERE cp.player_id = :userId
+			WHERE cp.user_id = :userId
 			ORDER BY c.start_datetime DESC
 		`, {
 			replacements: { userId },
