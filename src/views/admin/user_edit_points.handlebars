@@ -147,28 +147,62 @@
 					</h5>
 				</div>
 				<div class="card-body">
+					<p class="text-muted small mb-3">
+						<i class="fas fa-info-circle"></i>
+						Agrega inscripciones a torneos pasados. El sistema recalculará automáticamente:
+						bonos de asistencia, reentry, semanales, mensuales y temporada.
+					</p>
 					<form method="POST" action="/admin/users/{{targetUser.id}}/add-tournament-registration">
 						<div class="mb-3">
 							<label for="tournament_id_reg" class="form-label">Torneo *</label>
 							<select class="form-select" id="tournament_id_reg" name="tournament_id" required>
 								<option value="">-- Seleccionar torneo --</option>
 								{{#each tournaments}}
-									<option value="{{this.id}}">{{this.tournament_name}} - {{formatDate this.start_date}}</option>
+									<option value="{{this.id}}" {{#if this.isRegistered}}disabled{{/if}}>
+										{{#if this.isRegistered}}✅{{/if}}
+										{{this.tournament_name}} - {{formatDate this.start_date}}
+										{{#if this.ranking_multiplier}}
+											({{this.ranking_multiplier}}x ranking)
+										{{/if}}
+										{{#if this.isRegistered}}
+											- YA REGISTRADO ({{this.reentries}} reentries)
+										{{/if}}
+									</option>
 								{{/each}}
 							</select>
+							<div class="form-text">
+								Los torneos marcados con ✅ ya tienen inscripción de este jugador
+							</div>
 						</div>
 
 						<div class="mb-3">
-							<label for="action_type" class="form-label">Tipo *</label>
-							<select class="form-select" id="action_type" name="action_type" required>
-								<option value="1">Buy-in</option>
-								<option value="2">Reentry</option>
-								<option value="3">Duplo</option>
-							</select>
+							<label for="num_reentries" class="form-label">
+								Cantidad de Reentries
+								<span class="badge bg-secondary">Opcional</span>
+							</label>
+							<input 
+								type="number" 
+								class="form-control" 
+								id="num_reentries" 
+								name="num_reentries" 
+								min="0"
+								max="10"
+								value="0"
+								placeholder="0"
+							>
+							<div class="form-text">
+								Se agregará 1 buy-in + N reentries automáticamente
+							</div>
+						</div>
+
+						<div class="alert alert-warning small">
+							<i class="fas fa-exclamation-triangle"></i>
+							<strong>Importante:</strong> Después de agregar inscripciones, el sistema recalculará
+							todos los bonos automáticamente según las reglas configuradas.
 						</div>
 
 						<button type="submit" class="btn btn-info w-100">
-							<i class="fas fa-user-plus"></i> Registrar
+							<i class="fas fa-user-plus"></i> Registrar y Recalcular Bonos
 						</button>
 					</form>
 				</div>

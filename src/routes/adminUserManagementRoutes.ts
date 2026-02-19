@@ -31,18 +31,45 @@ router.get('/:id/edit-points', requireAdmin, async (req: Request, res: Response)
 			order: [['fecha_inicio', 'DESC']]
 		});
 
-		// Obtener torneos recientes
+		// Obtener TODOS los torneos (no solo recientes) ordenados del más nuevo al más antiguo
 		const tournaments = await Tournament.findAll({
-			order: [['start_date', 'DESC']],
-			limit: 20
+			order: [['start_date', 'DESC']]
 		});
+
+		// Obtener torneos donde el usuario ya está registrado
+		const userRegistrations = await Registration.findAll({
+			where: { user_id: userId },
+			attributes: ['tournament_id', 'action_type']
+		});
+
+		// Crear un mapa de torneos registrados
+		const registeredTournamentIds = new Set(
+			userRegistrations.map(r => (r as any).tournament_id)
+		);
+
+		// Contar reentries por torneo
+		const reentriesPerTournament: Record<number, number> = {};
+		for (const reg of userRegistrations) {
+			const tid = (reg as any).tournament_id;
+			const actionType = (reg as any).action_type;
+			if (actionType === 2) { // reentry
+				reentriesPerTournament[tid] = (reentriesPerTournament[tid] || 0) + 1;
+			}
+		}
+
+		// Marcar cada torneo si el usuario está o no registrado
+		const tournamentsWithStatus = tournaments.map(t => ({
+			...(t as any).toJSON(),
+			isRegistered: registeredTournamentIds.has((t as any).id),
+			reentries: reentriesPerTournament[(t as any).id] || 0
+		}));
 
 		res.render('admin/user_edit_points', {
 			username: req.session!.username,
 			targetUser: user,
 			historicalPoints,
 			seasons,
-			tournaments,
+			tournaments: tournamentsWithStatus,
 			flash: req.session!.flash
 		});
 
@@ -135,11 +162,12 @@ router.post('/:id/add-historical-point', requireAdmin, async (req: Request, res:
 	}
 });
 
-// POST /admin/users/:id/add-tournament-registration - Agregar inscripción manual a torneo
+// POST /admin/users/:id/add-tournament-registration - Agregar inscripción manual a torneo con recálculo automático
 router.post('/:id/add-tournament-registration', requireAdmin, async (req: Request, res: Response) => {
 	try {
 		const userId = Number(req.params.id);
-		const { tournament_id, action_type } = req.body;
+		const { tournament_id, num_reentries } = req.body;
+		const reentries = Number(num_reentries) || 0;
 
 		const user = await User.findByPk(userId);
 		if (!user) {
@@ -151,34 +179,83 @@ router.post('/:id/add-tournament-registration', requireAdmin, async (req: Reques
 			return res.status(404).send('Torneo no encontrado');
 		}
 
-		// Verificar si ya existe la inscripción
-		const existingReg = await Registration.findOne({
+		// Verificar si ya existe el buy-in
+		const existingBuyIn = await Registration.findOne({
 			where: {
 				user_id: userId,
 				tournament_id: Number(tournament_id),
-				action_type: Number(action_type) || 1
+				action_type: 1 // buy-in
 			}
 		});
 
-		if (existingReg) {
+		if (existingBuyIn) {
 			req.session!.flash = {
 				type: 'error',
-				message: '⚠️ Esta inscripción ya existe'
+				message: '⚠️ Este jugador ya tiene un buy-in en este torneo'
 			};
 			return res.redirect(`/admin/users/${userId}/edit-points`);
 		}
 
-		// Crear la inscripción
+		// Crear el buy-in
 		await Registration.create({
 			user_id: userId,
 			tournament_id: Number(tournament_id),
-			action_type: Number(action_type) || 1, // 1=buy-in, 2=reentry
+			action_type: 1, // buy-in
 			registered_at: new Date()
 		} as any);
 
+		// Crear los reentries si hay
+		for (let i = 0; i < reentries; i++) {
+			await Registration.create({
+				user_id: userId,
+				tournament_id: Number(tournament_id),
+				action_type: 2, // reentry
+				registered_at: new Date()
+			} as any);
+		}
+
+		// ============= OTORGAR BONOS BÁSICOS =============
+		// Nota: Los bonos semanales/mensuales/temporada se calcularán cuando se cierre el torneo
+		// o cuando el admin ejecute el recálculo de bonos desde /admin/bonus
+		
+		const seasonId = (tournament as any).season_id;
+		const tournamentId = (tournament as any).id;
+
+		// Solo otorgar bonos inmediatos si el torneo tiene temporada asociada
+		if (seasonId) {
+			const bonusService = await import('../services/bonusService');
+			
+			try {
+				// 1. Bonus de asistencia (presencia)
+				await bonusService.awardAttendanceBonus(userId, tournamentId, seasonId);
+
+				// 2. Bonus de reentry (si tiene)
+				for (let i = 0; i < reentries; i++) {
+					await bonusService.awardReentryBonus(userId, tournamentId, seasonId, i + 1);
+				}
+			} catch (bonusErr) {
+				console.error('Error awarding immediate bonuses:', bonusErr);
+				// Continuar aunque falle el bonus
+			}
+		}
+
+		// 3. Recalcular current_points desde historical_points
+		const totalHistoricalPoints = await HistoricalPoint.sum('points', {
+			where: { user_id: userId } as any
+		});
+		
+		await user.update({ 
+			current_points: Number(totalHistoricalPoints) || 0 
+		});
+
+		const registrationsCount = 1 + reentries;
+		const bonusNote = seasonId 
+			? 'Bonos de asistencia/reentry otorgados. Para bonos semanales/mensuales, usar /admin/bonus.'
+			: 'Torneo sin temporada - bonos no aplicados.';
+			
 		req.session!.flash = {
 			type: 'success',
-			message: `✅ Inscripción agregada al torneo: ${(tournament as any).tournament_name}`
+			message: `✅ ${registrationsCount} inscripción(es) agregada(s). ${bonusNote}`
 		};
 
 		res.redirect(`/admin/users/${userId}/edit-points`);
