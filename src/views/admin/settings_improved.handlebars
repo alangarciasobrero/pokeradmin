@@ -380,15 +380,16 @@
 				</div>
 
 				<h3 style="margin-top: 20px; margin-bottom: 15px; color: #4fc3f7;">Bonos Inmediatos</h3>
+				<p style="color:#aaa;margin-bottom:1rem;">Los bonos inmediatos se calculan con los mismos valores de <strong>Puntos Personales (Directos)</strong>.</p>
 				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
 					<div class="form-field">
 						<label>✅ Asistencia al Torneo</label>
-						<input type="number" name="bonus_attendance" value="{{config.bonus_attendance}}" min="0" step="1" required />
+						<input type="number" name="bonus_attendance" value="{{config.bonus_attendance}}" min="0" step="1" readonly />
 						<small>Puntos por registrarse</small>
 					</div>
 					<div class="form-field">
 						<label>🔄 Re-entry</label>
-						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" required />
+						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" readonly />
 						<small>Puntos por cada re-entry</small>
 					</div>
 				</div>
@@ -458,19 +459,27 @@
 				<h3 style="margin-top: 25px; margin-bottom: 15px; color: #4fc3f7;">Bonos Especiales</h3>
 				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
 					<div class="form-field">
-						<label>⚫ Mesas Finales (Black)</label>
-						<input type="number" name="bonus_final_tables_20" value="{{config.bonus_final_tables_20}}" min="0" step="1" required />
-						<small>Puntos otorgados</small>
+					<div class="form-field">
+						<label>✅ Asistencia al Torneo</label>
+						<input type="number" name="bonus_attendance" value="{{config.bonus_attendance}}" min="0" step="1" required />
 					</div>
 					<div class="form-field">
-						<label>⚫ Mesas Finales Requeridas</label>
-						<input type="number" name="bonus_final_tables_required" value="{{config.bonus_final_tables_required}}" min="1" step="1" required />
-						<small>Cantidad de mesas finales</small>
+						<label>🔄 Re-entry</label>
+						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" required />
+					</div>
+						<label>⚫ Mesas Finales (Black)</label>
+				<h3 style="margin-top: 20px; margin-bottom: 15px; color: #4fc3f7;">Bonos Inmediatos</h3>
+				<p style="color:#aaa;margin-bottom:1rem;">Los bonos inmediatos se calculan con los mismos valores de <strong>Puntos Personales (Directos)</strong>.</p>
+				<div class="form-grid">
+					<div class="form-field">
+						<label>✅ Asistencia al Torneo</label>
+						<input type="number" name="bonus_attendance" value="{{config.bonus_attendance}}" min="0" step="1" required />
+					</div>
+					<div class="form-field">
+						<label>🔄 Re-entry</label>
+						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" required />
 					</div>
 				</div>
-
-				<div class="form-actions">
-					<button type="submit" class="btn btn-primary">💾 Guardar Bonos</button>
 				</div>
 			</form>
 		</div>
@@ -478,6 +487,36 @@
 		{{!-- Sección: Configuración General --}}
 		<div class="settings-card">
 			<div class="card-icon">🎮</div>
+
+	<section class="settings-section" id="cash-defaults">
+		<h2><i class="fas fa-coins"></i> Configuración Cash (Defaults)</h2>
+		<p class="section-desc">Ciegas y caja inicial mínima predeterminadas para nuevas mesas cash</p>
+		<form action="/admin/games/settings/cash" method="POST">
+			<div class="form-grid">
+				<div class="form-field">
+					<label>🎯 Ciega 1</label>
+					<input type="number" name="cash_blind_1" value="{{config.cash_blind_1}}" min="0" step="1" required />
+				</div>
+				<div class="form-field">
+					<label>🎯 Ciega 2</label>
+					<input type="number" name="cash_blind_2" value="{{config.cash_blind_2}}" min="0" step="1" />
+				</div>
+				<div class="form-field">
+					<label>🎯 Ciega 3</label>
+					<input type="number" name="cash_blind_3" value="{{config.cash_blind_3}}" min="0" step="1" />
+				</div>
+				<div class="form-field">
+					<label>💵 Caja inicial mínima</label>
+					<input type="number" name="cash_initial_min" value="{{config.cash_initial_min}}" min="0" step="1" required />
+				</div>
+			</div>
+			<div class="actions">
+				<button type="submit" class="btn-primary">
+					<i class="fas fa-save"></i> Guardar Cash
+				</button>
+			</div>
+		</form>
+	</section>
 			<h2>Configuración General</h2>
 			<p class="card-description">Ajustes generales del sistema</p>
 			

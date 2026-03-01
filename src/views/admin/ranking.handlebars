@@ -24,6 +24,7 @@
         </option>
         {{/each}}
       </select>
+      <a class="btn-export" href="/admin/games/ranking/export{{#if selectedSeason}}?season={{selectedSeason}}{{/if}}">⬇️ Exportar Excel</a>
     </div>
   </div>
   {{#if leaderboard.length}}
@@ -156,6 +157,21 @@
 .ranking-filters select:hover {
   border-color: #FFD700;
   background: rgba(255, 215, 0, 0.1);
+}
+.btn-export {
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+  background: rgba(255, 215, 0, 0.25);
+  border-color: rgba(255, 215, 0, 0.6);
 }
 .ranking-modern-grid {
   display: grid;

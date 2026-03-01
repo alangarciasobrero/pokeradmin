@@ -4,10 +4,14 @@ import { User } from '../models/User';
 import Payment from '../models/Payment';
 import { Registration } from '../models/Registration';
 import CashParticipant from '../models/CashParticipant';
+import { Tournament } from '../models/Tournament';
+import { Season } from '../models/Season';
+import HistoricalPoint from '../models/HistoricalPoint';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import XLSX from 'xlsx';
+import { awardAttendanceBonus } from '../services/bonusService';
 
 const router = Router();
 
@@ -84,6 +88,16 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
 
     const results: { created: number; errors: Array<any> } = { created: 0, errors: [] };
 
+    const parseBoolean = (value: any): boolean => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'number') return value === 1;
+      if (typeof value === 'string') {
+        const v = value.trim().toLowerCase();
+        return v === '1' || v === 'true' || v === 'yes' || v === 'si' || v === 'sí';
+      }
+      return false;
+    };
+
     for (const [idx, row] of rows.entries()) {
       try {
         // Esperamos columnas: username, password, first_name, last_name, email, role
@@ -106,6 +120,20 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
   const finalFullName = fullNameRaw ? String(fullNameRaw).trim() : (String(first_name) + (last_name ? (' ' + last_name) : '')).trim();
         const email = row.email || row.Email || null;
         const role = (row.role || row.Role || 'user');
+        const isPlayerRaw = row.is_player || row.isPlayer || row.player || row.Player || null;
+        const isPlayer = isPlayerRaw !== null ? parseBoolean(isPlayerRaw) : (role === 'admin' ? false : true);
+
+        const attendanceCountRaw = row.attendance_count || row.attendance || row.attendances || row.asistencias || 0;
+        const attendanceCount = Number(attendanceCountRaw) || 0;
+
+        const attendanceBonusRaw = row.attendance_bonus_points || row.attendance_bonus || row.attendance_bonus_total || row.bonus_asistencia || row.bonus_attendance || 0;
+        const attendanceBonusPoints = Number(attendanceBonusRaw) || 0;
+
+        const pointsRaw = row.current_points || row.points || row.ranking_points || row.puntos || 0;
+        const importPoints = Number(pointsRaw) || 0;
+
+        const seasonIdRaw = row.season_id || row.seasonId || row.temporada_id || null;
+        let seasonId = seasonIdRaw ? Number(seasonIdRaw) : null;
 
         if (!username) {
           results.errors.push({ row: idx + 2, error: 'username faltante' });
@@ -115,7 +143,94 @@ router.post('/import', requireAdmin, upload.single('file'), async (req: Request,
         const bcrypt = await import('bcrypt');
         const hash = await bcrypt.hash(String(password), 10);
 
-  await User.create({ username, password_hash: hash, first_name, last_name, full_name: finalFullName || null, email, role: role === 'admin' ? 'admin' : 'user' });
+        const createdUser = await User.create({
+          username,
+          password_hash: hash,
+          first_name,
+          last_name,
+          full_name: finalFullName || null,
+          email,
+          role: role === 'admin' ? 'admin' : 'user',
+          is_player: isPlayer
+        });
+
+        // Determinar temporada por defecto si se necesita
+        if (!seasonId) {
+          const activeSeason = await Season.findOne({
+            where: { estado: 'activa' } as any,
+            order: [['fecha_inicio', 'DESC']]
+          });
+          if (activeSeason) seasonId = (activeSeason as any).id;
+        }
+
+        // Crear asistencias (registrations) si se pide
+        if (attendanceCount > 0) {
+          const tournaments = await Tournament.findAll({
+            where: seasonId ? { season_id: seasonId } as any : undefined,
+            order: [['start_date', 'DESC']],
+            limit: attendanceCount,
+            attributes: ['id', 'season_id']
+          });
+
+          if (!tournaments.length) {
+            results.errors.push({ row: idx + 2, error: 'No hay torneos disponibles para crear asistencias' });
+          } else {
+            for (const t of tournaments) {
+              await Registration.create({
+                user_id: (createdUser as any).id,
+                tournament_id: (t as any).id,
+                action_type: 1,
+                registration_date: new Date(),
+                punctuality: true
+              } as any);
+
+              const tSeasonId = (t as any).season_id;
+              if (tSeasonId && attendanceBonusPoints === 0) {
+                await awardAttendanceBonus((createdUser as any).id, (t as any).id, tSeasonId);
+              }
+            }
+          }
+        }
+
+        // Bonus de asistencia importado (si existe y hay temporada)
+        if (attendanceBonusPoints !== 0 && seasonId) {
+          await HistoricalPoint.create({
+            record_date: new Date(),
+            user_id: (createdUser as any).id,
+            season_id: seasonId,
+            tournament_id: null,
+            result_id: null,
+            action_type: 'bonus',
+            description: '📥 Importación bonus asistencia',
+            points: attendanceBonusPoints
+          } as any);
+        }
+
+        // Crear puntos base importados (si hay temporada)
+        if (importPoints !== 0 && seasonId) {
+          await HistoricalPoint.create({
+            record_date: new Date(),
+            user_id: (createdUser as any).id,
+            season_id: seasonId,
+            tournament_id: null,
+            result_id: null,
+            action_type: 'bonus',
+            description: '📥 Importación de puntos',
+            points: importPoints
+          } as any);
+        }
+
+        // Recalcular puntos desde históricos si existen, si no, usar puntos importados
+        const totalHistoricalPoints = await HistoricalPoint.sum('points', {
+          where: { user_id: (createdUser as any).id } as any
+        });
+
+        if (totalHistoricalPoints !== null && totalHistoricalPoints !== undefined) {
+          await createdUser.update({ current_points: Number(totalHistoricalPoints) || 0 });
+        } else if (importPoints !== 0) {
+          await createdUser.update({ current_points: importPoints });
+        }
+
         results.created += 1;
       } catch (e: any) {
         // Try to build a clearer error message (Sequelize may include .errors array)

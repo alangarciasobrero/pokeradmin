@@ -9,6 +9,7 @@ import HistoricalPoint from '../models/HistoricalPoint';
 import { Season } from '../models/Season';
 import fs from 'fs';
 import path from 'path';
+import XLSX from 'xlsx';
 
 const router = Router();
 const userRepo = new UserRepository();
@@ -48,42 +49,40 @@ function loadPrizeOverride() {
   return null;
 }
 
-// Ranking view: aggregate across tournaments that count to ranking
-router.get('/', requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const includeAll = req.query.includeAll === '1';
-    const seasonParam = req.query.season as string | undefined;
-    
-    // Actualizar estados de temporadas automáticamente
-    const seasonService = await import('../services/seasonService');
-    await seasonService.updateSeasonStates();
-    
-    // Cargar todas las temporadas para el selector
-    const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
-    
-    // Encontrar temporada activa
-    const activeSeason = seasons.find((s: any) => s.estado === 'activa');
-    
-    // Si no se especifica temporada, usar la activa por defecto
-    let seasonId: number | null = null;
-    if (seasonParam && seasonParam !== '') {
-      seasonId = Number(seasonParam);
-    } else if (activeSeason) {
-      seasonId = activeSeason.id;
-    }
+async function buildRankingData(req: Request) {
+  const includeAll = req.query.includeAll === '1';
+  const seasonParam = req.query.season as string | undefined;
 
-    const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll, seasonId);
+  // Actualizar estados de temporadas automáticamente
+  const seasonService = await import('../services/seasonService');
+  await seasonService.updateSeasonStates();
 
-    console.log('[adminRanking] tournaments loaded:', Array.isArray(tournaments) ? tournaments.length : typeof tournaments);
+  // Cargar todas las temporadas para el selector
+  const seasons = await Season.findAll({ order: [['fecha_inicio', 'DESC']] });
 
-    // fetch registrations grouped by tournament
-    const regsAll = await registrationRepo.getAll();
-    const registrationsByTournament: Record<number, any[]> = {};
-    for (const r of regsAll) {
-      const tid = Number((r as any).tournament_id);
-      if (!registrationsByTournament[tid]) registrationsByTournament[tid] = [];
-      registrationsByTournament[tid].push(r);
-    }
+  // Encontrar temporada activa
+  const activeSeason = seasons.find((s: any) => s.estado === 'activa');
+
+  // Si no se especifica temporada, usar la activa por defecto
+  let seasonId: number | null = null;
+  if (seasonParam && seasonParam !== '') {
+    seasonId = Number(seasonParam);
+  } else if (activeSeason) {
+    seasonId = activeSeason.id;
+  }
+
+  const tournaments = await tournamentRepo.getTournamentsForRanking(includeAll, seasonId);
+
+  console.log('[adminRanking] tournaments loaded:', Array.isArray(tournaments) ? tournaments.length : typeof tournaments);
+
+  // fetch registrations grouped by tournament
+  const regsAll = await registrationRepo.getAll();
+  const registrationsByTournament: Record<number, any[]> = {};
+  for (const r of regsAll) {
+    const tid = Number((r as any).tournament_id);
+    if (!registrationsByTournament[tid]) registrationsByTournament[tid] = [];
+    registrationsByTournament[tid].push(r);
+  }
 
   const resultsByTournament = await resultRepo.getByTournament();
 
@@ -100,17 +99,17 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   const historicalPoints = await HistoricalPoint.findAll();
   const historicalByUser: Record<number, number> = {};
   const bonusByUser: Record<number, number> = {};
-  
+
   for (const hp of historicalPoints) {
     const uid = Number((hp as any).user_id);
     const pts = Number((hp as any).points) || 0;
-    const reason = String((hp as any).reason || '');
-    
+    const actionType = String((hp as any).action_type || '');
+
     if (!historicalByUser[uid]) historicalByUser[uid] = 0;
     historicalByUser[uid] += pts;
-    
+
     // Track bonus points separately (attendance bonuses)
-    if (reason.toLowerCase().includes('asistencia') || reason.toLowerCase().includes('bonus')) {
+    if (actionType.toLowerCase().includes('attendance') || actionType.toLowerCase().includes('bonus')) {
       if (!bonusByUser[uid]) bonusByUser[uid] = 0;
       bonusByUser[uid] += pts;
     }
@@ -129,14 +128,14 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   const attendanceByUser: Record<number, number> = {};
   const finalTablesByUser: Record<number, number> = {};
   const winsByUser: Record<number, number> = {};
-  
+
   for (const entry of leaderboard) {
     // Count unique tournaments this user participated in
     attendanceByUser[entry.user_id] = (entry.breakdown || []).length;
-    
+
     // Count final tables (top 9 positions)
     finalTablesByUser[entry.user_id] = (entry.breakdown || []).filter((b: any) => b.position && b.position <= 9).length;
-    
+
     // Count wins (1st place)
     winsByUser[entry.user_id] = (entry.breakdown || []).filter((b: any) => b.position === 1).length;
   }
@@ -152,28 +151,35 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   const userMap: Record<number, any> = {};
   for (const u of users) userMap[Number((u as any).id)] = u;
 
-    const enriched = leaderboard.map((l, idx) => ({
-      position: idx + 1,
-      user_id: l.user_id,
-      username: userMap[l.user_id] ? userMap[l.user_id].username : `#${l.user_id}`,
-      total_points: l.total_points,
-      total_winnings: l.total_winnings,
-      historical_points: historicalByUser[l.user_id] || 0,
-      bonus_points: bonusByUser[l.user_id] || 0,
-      attendance_count: attendanceByUser[l.user_id] || 0,
-      final_tables: finalTablesByUser[l.user_id] || 0,
-      wins: winsByUser[l.user_id] || 0,
-      breakdown: l.breakdown,
-    }));
+  const enriched = leaderboard.map((l, idx) => ({
+    position: idx + 1,
+    user_id: l.user_id,
+    username: userMap[l.user_id] ? userMap[l.user_id].username : `#${l.user_id}`,
+    total_points: l.total_points,
+    total_winnings: l.total_winnings,
+    historical_points: historicalByUser[l.user_id] || 0,
+    bonus_points: bonusByUser[l.user_id] || 0,
+    attendance_count: attendanceByUser[l.user_id] || 0,
+    final_tables: finalTablesByUser[l.user_id] || 0,
+    wins: winsByUser[l.user_id] || 0,
+    breakdown: l.breakdown,
+  }));
 
-  res.render('admin/ranking', { 
-    leaderboard: enriched, 
-    username: req.session.username, 
-    rules: { pointsTable, prizeOverride },
-    seasons,
-    selectedSeason: seasonId,
-    activeSeason
-  });
+  return { enriched, seasons, selectedSeason: seasonId, activeSeason, rules: { pointsTable, prizeOverride } };
+}
+
+// Ranking view: aggregate across tournaments that count to ranking
+router.get('/', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const data = await buildRankingData(req);
+    res.render('admin/ranking', {
+      leaderboard: data.enriched,
+      username: req.session.username,
+      rules: data.rules,
+      seasons: data.seasons,
+      selectedSeason: data.selectedSeason,
+      activeSeason: data.activeSeason
+    });
   } catch (err) {
     const e: any = err;
     const stack = String(e && (e.stack || e));
@@ -186,6 +192,38 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     } catch (_) {}
     // Do not expose stack traces in HTTP responses. Return a generic message.
     return res.status(500).send('Error cargando ranking');
+  }
+});
+
+// Export ranking to Excel
+router.get('/export', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const data = await buildRankingData(req);
+    const rows = data.enriched.map(r => ({
+      Pos: r.position,
+      Usuario: r.username,
+      Puntos: r.total_points,
+      Bonus: r.bonus_points,
+      Asistencias: r.attendance_count,
+      MesasFinales: r.final_tables,
+      Victorias: r.wins,
+      Premios: r.total_winnings
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ranking');
+
+    const seasonLabel = data.selectedSeason ? `season-${data.selectedSeason}` : 'todas';
+    const fileName = `ranking-${seasonLabel}.xlsx`;
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return res.send(buffer);
+  } catch (err) {
+    console.error('[adminRanking] Error exporting ranking:', err);
+    return res.status(500).send('Error exportando ranking');
   }
 });
 

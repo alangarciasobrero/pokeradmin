@@ -192,6 +192,22 @@
                     const confirmFinalizeBtn = document.getElementById('confirmFinalizeBtn');
                     const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
 
+                        function renderCommissionLines(j) {
+                            const rate = j.commissionRate ?? j.commissionPct ?? 0;
+                            let lines = '';
+                            const list = j.commissionDestinations || [];
+                            list.forEach(d => {
+                                const pct = d.percentage ?? 0;
+                                const amount = d.amount ?? 0;
+                                lines += `<p style="margin:0.25rem 0;color:#ddd">${d.name} (${pct}%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(amount||0)}</span></p>`;
+                            });
+                            if (!list.length) {
+                                lines += '<p style="margin:0.25rem 0;color:#ddd">(Sin destinos configurados)</p>';
+                            }
+                            lines += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);font-weight:bold;color:#FFD700">Total comisión: $${Math.round(j.commissionAmount||0)}</p>`;
+                            return { rate, lines };
+                        }
+
                         // Render preview for CLOSE REGISTRATIONS (no positions)
                         function renderRegistrationsPreview(j) {
                             try {
@@ -202,13 +218,11 @@
                                 html += `<h4 style="margin-top:0;color:#FFD700">💰 Resumen Financiero</h4>`;
                                 html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo total:</strong> <span style="font-size:1.5rem;color:#4CAF50;font-weight:bold">$${Math.round(j.pot||0)}</span></p>`;
                                 html += `<p style="color:#ddd"><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
+                                const commissionInfo = renderCommissionLines(j);
                                 html += '<div style="background:rgba(255,215,0,0.1);padding:1rem;border-radius:4px;margin:1rem 0;border:1px solid rgba(255,215,0,0.2)">';
-                                html += '<p style="margin:0;font-weight:bold;color:#FFD700">💼 Comisiones (Total 20%):</p>';
+                                html += `<p style="margin:0;font-weight:bold;color:#FFD700">💼 Comisiones (Total ${commissionInfo.rate}%):</p>`;
                                 html += '<div style="margin-left:1rem;margin-top:0.5rem">';
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa (18%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionHouse||0)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada (1%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionSeason||0)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual (1%): <span style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionAnnual||0)}</span></p>`;
-                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);font-weight:bold;color:#FFD700">Total comisión: $${Math.round(j.commissionAmount||0)}</p>`;
+                                html += commissionInfo.lines;
                                 html += '</div></div>';
                                 html += `<p style="font-size:1.1rem;color:#fff"><strong>Pozo para premios:</strong> <span style="font-size:1.5rem;color:#64B5F6;font-weight:bold">$${Math.round(j.prizePool||0)}</span></p>`;
                                 html += '</div>';
@@ -349,13 +363,11 @@
                                 html += `<h4 style="margin-top:0;color:#FFD700">💰 Resumen Financiero</h4>`;
                                 html += `<p style="color:#fff"><strong>Pozo total:</strong> <span id="modalPot" style="font-size:1.2rem;color:#4CAF50;font-weight:bold">$${Math.round(j.pot||0)}</span></p>`;
                                 html += `<p style="color:#ddd"><strong>Total cajas:</strong> ${j.totalBoxes || 0}</p>`;
+                                const commissionInfo = renderCommissionLines(j);
                                 html += '<div style="background:rgba(255,215,0,0.1);padding:0.75rem;border-radius:4px;margin:0.5rem 0;border:1px solid rgba(255,215,0,0.2)">';
-                                html += '<p style="margin:0;color:#FFD700"><strong>💼 Comisiones (Total 20%):</strong></p>';
+                                html += `<p style="margin:0;color:#FFD700"><strong>💼 Comisiones (Total ${commissionInfo.rate}%):</strong></p>`;
                                 html += '<div style="margin-left:1rem;margin-top:0.5rem">';
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏢 Casa: ${j.commissionHousePct || 18}% = <span id="commissionHouse" style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionHouse||0)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">🏆 Ranking Temporada: ${j.commissionSeasonPct || 1}% = <span id="commissionSeason" style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionSeason||0)}</span></p>`;
-                                html += `<p style="margin:0.25rem 0;color:#ddd">⭐ Ranking Anual: ${j.commissionAnnualPct || 1}% = <span id="commissionAnnual" style="color:#4CAF50;font-weight:bold">$${Math.round(j.commissionAnnual||0)}</span></p>`;
-                                html += `<p style="margin:0.5rem 0;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.2);color:#FFD700"><strong>Total comisión:</strong> <span id="commissionAmount">$${Math.round(j.commissionAmount||0)}</span></p>`;
+                                html += commissionInfo.lines;
                                 html += '</div></div>';
                                 html += `<p style="color:#fff"><strong>Pozo para premios:</strong> <span id="modalPrizePool" style="font-size:1.2rem;color:#64B5F6;font-weight:bold">$${Math.round(j.prizePool||0)}</span></p>`;
                                 html += '</div>';
@@ -487,11 +499,12 @@
                                     const res = await fetch(`/admin/games/tournaments/${tid}/preview-close`);
                                     const j = await res.json();
                                     renderFinalizePreview(j);
+                                    if (finalizeBody) finalizeBody.dataset.commissionRate = (j.commissionRate ?? j.commissionPct ?? 0);
 
                                     // wire recalc and assign handlers after rendering
                                     const prizePoolSpan = finalizeBody.querySelector('#modalPrizePool');
                                     const pot = Number((j && j.pot) || 0);
-                                    const commissionPct = 20; // Fijo: 18% casa + 1% temporada + 1% anual
+                                    const commissionPct = Number(j.commissionRate ?? j.commissionPct ?? 0);
 
                                     function recalcTotals() {
                                         const commissionAmt = Math.round(pot * (commissionPct / 100) / 5) * 5; // Redondear a múltiplo de 5
@@ -591,8 +604,7 @@
                         // Confirm finalize tournament
                         if (confirmFinalizeBtn) confirmFinalizeBtn.addEventListener('click', async () => {
                             if (!finalizeBody) return;
-                            // Comisiones fijas: 18% casa + 1% temporada + 1% anual = 20% total
-                            const commissionPct = 20;
+                            const commissionPct = Number(finalizeBody.dataset.commissionRate || 0);
                             
                             // Función para redondear a múltiplo de 5
                             const roundTo5 = (n) => Math.round(n / 5) * 5;
@@ -731,13 +743,18 @@
                 html += '</div>';
                 
                 // Card: Comisión
-                html += '<div style="background:rgba(255,152,0,0.15);border:2px solid rgba(255,152,0,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';
-                html += '<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">💼 Comisión (20%)</div>';
-                html += `<div style="font-size:2rem;font-weight:700;color:#FF9800;">$${data.commissionAmount.toLocaleString()}</div>`;
-                html += '<div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">';
-                html += `Casa: $${data.commissionHouse.toLocaleString()}<br>`;
-                html += `Temp: $${data.commissionSeason.toLocaleString()} | Anual: $${data.commissionAnnual.toLocaleString()}`;
-                html += '</div></div>';
+                                const commissionRate = data.commissionRate || data.commissionPct || 0;
+                                const commissionDestinations = data.commissionDestinations || [];
+                                const commissionLines = commissionDestinations.length
+                                    ? commissionDestinations.map(d => `${d.name}: $${Math.round(d.amount || 0).toLocaleString()}`).join('<br>')
+                                    : '(Sin destinos configurados)';
+
+                                html += '<div style="background:rgba(255,152,0,0.15);border:2px solid rgba(255,152,0,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';
+                                html += `<div style="font-size:0.9rem;color:#aaa;margin-bottom:0.5rem;">💼 Comisión (${commissionRate}%)</div>`;
+                                html += `<div style="font-size:2rem;font-weight:700;color:#FF9800;">$${data.commissionAmount.toLocaleString()}</div>`;
+                                html += '<div style="font-size:0.75rem;color:#999;margin-top:0.5rem;">';
+                                html += commissionLines;
+                                html += '</div></div>';
                 
                 // Card: Premios
                 html += '<div style="background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.4);border-radius:8px;padding:1.25rem;text-align:center;">';

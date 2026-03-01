@@ -24,7 +24,7 @@
             id="initial_pot" 
             min="0"
             required 
-            value="{{#if cash}}{{cash.initial_pot}}{{/if}}"
+            value="{{#if cash}}{{cash.initial_pot}}{{else}}{{defaults.cash_initial_min}}{{/if}}"
             class="form-input"
             placeholder="Ej: 1000"
           >
@@ -41,7 +41,7 @@
             id="blind_1" 
             min="1"
             required 
-            value="{{#if cash}}{{cash.blind_1}}{{else if cash.small_blind}}{{cash.small_blind}}{{/if}}"
+            value="{{#if cash}}{{cash.blind_1}}{{else if cash.small_blind}}{{cash.small_blind}}{{else}}{{defaults.cash_blind_1}}{{/if}}"
             class="form-input"
             placeholder="Ej: 1000"
           >
@@ -57,7 +57,7 @@
             class="form-input" 
             min="1"
             placeholder="Ej: 1000"
-            value="{{#if cash}}{{cash.blind_2}}{{/if}}"
+            value="{{#if cash}}{{cash.blind_2}}{{else}}{{defaults.cash_blind_2}}{{/if}}"
           >
           <small class="form-hint">Segunda ciega (opcional)</small>
         </div>
@@ -71,7 +71,7 @@
             class="form-input" 
             min="1"
             placeholder="Ej: 2000"
-            value="{{#if cash}}{{cash.blind_3}}{{/if}}"
+            value="{{#if cash}}{{cash.blind_3}}{{else}}{{defaults.cash_blind_3}}{{/if}}"
           >
           <small class="form-hint">Tercera ciega (opcional)</small>
         </div>

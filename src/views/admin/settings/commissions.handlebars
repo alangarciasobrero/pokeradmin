@@ -28,13 +28,13 @@
 
   <div class="summary-alert">
     <strong>📊 Distribución de Comisiones: {{totalPercentage}}% de {{commissionRate}}% asignado</strong>
-    {{#if (gt totalPercentage 100)}}
-      ⚠️ El total excede 100%. Ajusta los porcentajes de destinos.
+    {{#if (gt totalPercentage commissionRate)}}
+      ⚠️ El total excede la comisión total. Ajusta los porcentajes de destinos.
     {{else}}
-      {{#if (lt totalPercentage 100)}}
-      ℹ️ Aún quedan {{subtract 100 totalPercentage}}% de la comisión ({{commissionRate}}%) sin asignar.
+      {{#if (lt totalPercentage commissionRate)}}
+      ℹ️ Aún quedan {{subtract commissionRate totalPercentage}}% de la comisión ({{commissionRate}}%) sin asignar.
       {{else}}
-      ✅ Distribución completa al 100%
+      ✅ Distribución completa
       {{/if}}
     {{/if}}
   </div>
@@ -82,6 +82,14 @@
             🗑️ Desactivar
           </button>
         </form>
+
+        {{#if (eq this.type 'special_tournament')}}
+        <form method="POST" action="/admin/games/settings/commissions/destination/{{this.id}}/reset" style="margin-top:0.5rem;">
+          <button type="submit" class="btn-secondary" onclick="return confirm('¿Resetear acumulado de este destino?')">
+            ♻️ Resetear acumulado
+          </button>
+        </form>
+        {{/if}}
       </div>
       {{else}}
       <p class="empty-state">No hay destinos configurados. Crea el primero abajo.</p>

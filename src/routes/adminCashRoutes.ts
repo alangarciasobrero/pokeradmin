@@ -5,6 +5,7 @@ import CashGameRepository from '../repositories/CashGameRepository';
 import CashParticipantRepository from '../repositories/CashParticipantRepository';
 import User from '../models/User';
 import { Payment } from '../models/Payment';
+import Setting from '../models/Setting';
 import { renderCloseForm, handleClosePost } from '../controllers/adminCashController';
 import { renderBulkClose, handleBulkClosePost } from '../controllers/adminCashController';
 import { renderTotals, exportTotalsCSV } from '../controllers/adminCashController';
@@ -30,9 +31,29 @@ router.get('/list', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.get('/new', requireAdmin, (req: Request, res: Response) => {
-  // Use admin form action so the admin POST handler is used
-  res.render('cash/form', { formTitle: 'Nueva Mesa Cash', formAction: '/admin/games/cash/new' });
+router.get('/new', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const settings = await Setting.findAll({
+      where: { key: ['cash_blind_1', 'cash_blind_2', 'cash_blind_3', 'cash_initial_min'] } as any
+    });
+    const defaults: any = {
+      cash_blind_1: 1000,
+      cash_blind_2: 1000,
+      cash_blind_3: 2000,
+      cash_initial_min: 1000
+    };
+    for (const s of settings) {
+      const key = (s as any).key;
+      const val = Number((s as any).value) || 0;
+      defaults[key] = val;
+    }
+
+    // Use admin form action so the admin POST handler is used
+    res.render('cash/form', { formTitle: 'Nueva Mesa Cash', formAction: '/admin/games/cash/new', defaults });
+  } catch (err) {
+    console.error('Error loading cash defaults:', err);
+    res.render('cash/form', { formTitle: 'Nueva Mesa Cash', formAction: '/admin/games/cash/new' });
+  }
 });
 
 // Alias for older links using '/create'

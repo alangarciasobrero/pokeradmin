@@ -35,6 +35,8 @@ async function loadBonusConfig(): Promise<BonusConfig> {
       key: [
         'bonus_attendance',
         'bonus_reentry',
+        'personal_buyin_points',
+        'personal_reentry_points',
         'bonus_weekly_4days',
         'bonus_weekly_3days',
         'bonus_monthly_12days',
@@ -68,13 +70,26 @@ async function loadBonusConfig(): Promise<BonusConfig> {
     final_tables_required: 20
   };
 
+  let personalBuyinPoints: number | null = null;
+  let personalReentryPoints: number | null = null;
+
   for (const s of settings) {
-    const key = (s as any).key.replace('bonus_', '');
+    const rawKey = (s as any).key;
     const value = Number((s as any).value);
-    if (!isNaN(value)) {
+    if (isNaN(value)) continue;
+
+    if (rawKey === 'personal_buyin_points') personalBuyinPoints = value;
+    if (rawKey === 'personal_reentry_points') personalReentryPoints = value;
+
+    if (rawKey.startsWith('bonus_')) {
+      const key = rawKey.replace('bonus_', '');
       (config as any)[key] = value;
     }
   }
+
+  // Alinear bonos inmediatos con puntos personales (directos)
+  if (personalBuyinPoints !== null) config.attendance = personalBuyinPoints;
+  if (personalReentryPoints !== null) config.reentry = personalReentryPoints;
 
   return config;
 }

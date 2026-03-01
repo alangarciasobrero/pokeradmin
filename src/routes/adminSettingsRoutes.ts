@@ -48,6 +48,8 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
         'day_groups_config',
         // Bonos de asistencia - puntos
         'bonus_attendance', 'bonus_reentry',
+        // Cash defaults
+        'cash_blind_1', 'cash_blind_2', 'cash_blind_3', 'cash_initial_min',
         'bonus_weekly_4days', 'bonus_weekly_3days',
         'bonus_monthly_12days',
         'bonus_season_30days', 'bonus_season_35days',
@@ -99,7 +101,11 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
     bonus_monthly_required: 12,
     bonus_season_30days_required: 30,
     bonus_season_35days_required: 35,
-    bonus_final_tables_required: 20
+    bonus_final_tables_required: 20,
+    cash_blind_1: 1000,
+    cash_blind_2: 1000,
+    cash_blind_3: 2000,
+    cash_initial_min: 1000
   };
 
   for (const s of settings) {
@@ -111,10 +117,16 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
       config[key] = val || '';
     } else if (key.startsWith('bonus_')) {
       config[key] = Number(val) || config[key];
+    } else if (key.startsWith('cash_')) {
+      config[key] = Number(val) || config[key];
     } else {
       config[key] = key.startsWith('commission') || key.startsWith('default') ? (Number(val) || config[key]) : val;
     }
   }
+
+  // Alinear bonos inmediatos con puntos personales
+  if (config.personal_buyin_points !== undefined) config.bonus_attendance = config.personal_buyin_points;
+  if (config.personal_reentry_points !== undefined) config.bonus_reentry = config.personal_reentry_points;
 
   // Load prize distribution settings
   const prizeSettings = await Setting.findAll({
@@ -258,6 +270,9 @@ router.post('/tournament-points', requireAdmin, async (req: Request, res: Respon
     const updates = [
       { key: 'personal_buyin_points', value: String(personal_buyin || 100), description: 'Puntos personales por buy-in' },
       { key: 'personal_reentry_points', value: String(personal_reentry || 100), description: 'Puntos personales por re-entry' },
+      // Mantener bonus inmediatos sincronizados con puntos personales
+      { key: 'bonus_attendance', value: String(personal_buyin || 100), description: 'Puntos por asistir al torneo' },
+      { key: 'bonus_reentry', value: String(personal_reentry || 100), description: 'Puntos por cada re-entry' },
       { key: 'weekday_buyin_points', value: String(weekday_buyin || 150), description: 'Puntos al pozo por buy-in' },
       { key: 'weekday_reentry_points', value: String(weekday_reentry || 100), description: 'Puntos al pozo por re-entry' },
       { key: 'friday_buyin_points', value: String(friday_buyin || 200), description: 'Puntos al pozo por buy-in (legacy)' },
@@ -402,8 +417,6 @@ router.post('/language', requireAdmin, async (req: Request, res: Response) => {
 router.post('/attendance-bonuses', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { 
-      bonus_attendance,
-      bonus_reentry,
       bonus_weekly_4days,
       bonus_weekly_3days,
       bonus_monthly_12days,
@@ -419,8 +432,6 @@ router.post('/attendance-bonuses', requireAdmin, async (req: Request, res: Respo
     } = req.body;
 
     const updates = [
-      { key: 'bonus_attendance', value: String(bonus_attendance || 100), description: 'Puntos por asistir al torneo' },
-      { key: 'bonus_reentry', value: String(bonus_reentry || 100), description: 'Puntos por cada re-entry' },
       { key: 'bonus_weekly_4days', value: String(bonus_weekly_4days || 1000), description: 'Bonus semanal - 4 jornadas' },
       { key: 'bonus_weekly_3days', value: String(bonus_weekly_3days || 500), description: 'Bonus semanal - 3 jornadas (Bronce)' },
       { key: 'bonus_monthly_12days', value: String(bonus_monthly_12days || 2000), description: 'Bonus mensual - 12 jornadas (Plata)' },
@@ -449,6 +460,40 @@ router.post('/attendance-bonuses', requireAdmin, async (req: Request, res: Respo
     return res.redirect('/admin/games/settings');
   } catch (err: any) {
     console.error('Error saving attendance bonuses:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
+    return res.redirect('/admin/games/settings');
+  }
+});
+
+/**
+ * POST /admin/games/settings/cash
+ * Actualizar configuración general de cash (ciegas y caja mínima)
+ */
+router.post('/cash', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { cash_blind_1, cash_blind_2, cash_blind_3, cash_initial_min } = req.body;
+
+    const updates = [
+      { key: 'cash_blind_1', value: String(cash_blind_1 || 1000), description: 'Ciega 1 predeterminada (cash)' },
+      { key: 'cash_blind_2', value: String(cash_blind_2 || 0), description: 'Ciega 2 predeterminada (cash)' },
+      { key: 'cash_blind_3', value: String(cash_blind_3 || 0), description: 'Ciega 3 predeterminada (cash)' },
+      { key: 'cash_initial_min', value: String(cash_initial_min || 1000), description: 'Caja inicial mínima (cash)' }
+    ];
+
+    for (const u of updates) {
+      const [setting, created] = await Setting.findOrCreate({
+        where: { key: u.key } as any,
+        defaults: { key: u.key, value: u.value, description: u.description } as any,
+      });
+      if (!created) {
+        await Setting.update({ value: u.value }, { where: { key: u.key } as any });
+      }
+    }
+
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Configuración de cash actualizada' };
+    return res.redirect('/admin/games/settings');
+  } catch (err: any) {
+    console.error('Error saving cash config:', err);
     if (req.session) req.session.flash = { type: 'error', message: 'Error al guardar: ' + (err?.message || String(err)) };
     return res.redirect('/admin/games/settings');
   }
@@ -528,10 +573,12 @@ router.get('/commissions', requireAdmin, async (req: Request, res: Response) => 
       limit: 30
     });
 
+    const totalPercentageValue = Number(totalPercentage.toFixed(2));
+
     res.render('admin/settings/commissions', {
       username: req.session.username,
       destinations: destinationsData,
-      totalPercentage: totalPercentage.toFixed(2),
+      totalPercentage: totalPercentageValue,
       commissionRate,
       seasons,
       tournaments
@@ -621,8 +668,12 @@ router.post('/commissions/config', requireAdmin, async (req: Request, res: Respo
       if (req.session) req.session.flash = { type: 'error', message: 'Porcentaje debe estar entre 0 y 100' };
       return res.redirect('/admin/games/settings/commissions');
     }
+
+    const { Setting } = await import('../models/Setting');
+    const commissionRateSetting = await Setting.findOne({ where: { key: 'commission_rate' } });
+    const commissionRate = commissionRateSetting ? Number((commissionRateSetting as any).value) : 20;
     
-    // Check total doesn't exceed 100%
+    // Check total doesn't exceed comisión total
     const allDestinations = await CommissionDestination.findAll({ where: { is_active: true } as any });
     let total = 0;
     for (const dest of allDestinations) {
@@ -635,8 +686,8 @@ router.post('/commissions/config', requireAdmin, async (req: Request, res: Respo
       }
     }
     
-    if (total > 100) {
-      if (req.session) req.session.flash = { type: 'error', message: `Total de porcentajes (${total}%) excede 100%` };
+    if (total > commissionRate) {
+      if (req.session) req.session.flash = { type: 'error', message: `Total de porcentajes (${total}%) excede la comisión total (${commissionRate}%)` };
       return res.redirect('/admin/games/settings/commissions');
     }
     
@@ -676,6 +727,26 @@ router.post('/commissions/destination/:id/delete', requireAdmin, async (req: Req
   } catch (err) {
     console.error('Error deleting destination:', err);
     if (req.session) req.session.flash = { type: 'error', message: 'Error desactivando destino' };
+    res.redirect('/admin/games/settings/commissions');
+  }
+});
+
+/**
+ * POST /admin/games/settings/commissions/destination/:id/reset
+ * Resetear acumulados de un destino (especial del mes)
+ */
+router.post('/commissions/destination/:id/reset', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { AccumulatedCommission } = await import('../models/AccumulatedCommission');
+    const destId = Number(req.params.id);
+
+    await AccumulatedCommission.destroy({ where: { destination_id: destId } as any });
+
+    if (req.session) req.session.flash = { type: 'success', message: '✅ Acumulado reseteado' };
+    res.redirect('/admin/games/settings/commissions');
+  } catch (err) {
+    console.error('Error resetting accumulated commissions:', err);
+    if (req.session) req.session.flash = { type: 'error', message: 'Error reseteando acumulado' };
     res.redirect('/admin/games/settings/commissions');
   }
 });

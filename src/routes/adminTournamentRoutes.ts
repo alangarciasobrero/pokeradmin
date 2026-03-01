@@ -9,7 +9,6 @@ import { Result } from '../models/Result';
 import { Season } from '../models/Season';
 import { RegistrationRepository } from '../repositories/RegistrationRepository';
 import sequelize from '../services/database';
-import commissionService from '../services/commissionService';
 import bonusService from '../services/bonusService';
 import { Op } from 'sequelize';
 import Setting from '../models/Setting';
@@ -58,6 +57,86 @@ async function loadPointsConfig() {
   
   return config;
 
+}
+
+function roundTo5(n: number) {
+  return Math.round(n / 5) * 5;
+}
+
+function roundTo2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
+async function loadCommissionSetup(tournament: Tournament) {
+  const { CommissionDestination } = await import('../models/CommissionDestination');
+  const { CommissionConfig } = await import('../models/CommissionConfig');
+
+  const commissionRateSetting = await Setting.findOne({ where: { key: 'commission_rate' } });
+  const commissionRate = commissionRateSetting ? Number((commissionRateSetting as any).value) : 20;
+
+  const destinations = await CommissionDestination.findAll({ where: { is_active: true } as any });
+  const destinationData: Array<{ id: number; name: string; type: string; percentage: number }> = [];
+
+  let totalPercentage = 0;
+  for (const dest of destinations) {
+    const destId = (dest as any).id;
+    const destSeasonId = (dest as any).season_id;
+    const destTournamentId = (dest as any).tournament_id;
+
+    if (destSeasonId && (tournament as any).season_id && destSeasonId !== (tournament as any).season_id) {
+      continue;
+    }
+    if (destTournamentId && destTournamentId !== (tournament as any).id) {
+      continue;
+    }
+
+    const config = await CommissionConfig.findOne({ where: { destination_id: destId } });
+    const percentage = config ? Number((config as any).percentage) : 0;
+    totalPercentage += percentage;
+
+    destinationData.push({
+      id: destId,
+      name: (dest as any).name,
+      type: (dest as any).type,
+      percentage
+    });
+  }
+
+  return { commissionRate, destinations: destinationData, totalPercentage };
+}
+
+async function computeCommissionBreakdown(tournament: Tournament, pot: number) {
+  const { commissionRate, destinations, totalPercentage } = await loadCommissionSetup(tournament);
+  const commissionAmount = roundTo5(pot * (commissionRate / 100));
+  const prizePool = pot - commissionAmount;
+
+  const commissionDestinations = destinations
+    .filter(d => d.percentage > 0)
+    .map(d => ({
+      ...d,
+      amount: roundTo2(pot * (d.percentage / 100))
+    }));
+
+  return { commissionRate, commissionAmount, prizePool, totalPercentage, commissionDestinations };
+}
+
+async function distributeCommissionToDestinations(tournament: Tournament, pot: number) {
+  const { AccumulatedCommission } = await import('../models/AccumulatedCommission');
+  const breakdown = await computeCommissionBreakdown(tournament, pot);
+
+  await AccumulatedCommission.destroy({ where: { tournament_id: (tournament as any).id } as any });
+
+  for (const dest of breakdown.commissionDestinations) {
+    if (dest.amount === 0) continue;
+    await AccumulatedCommission.create({
+      destination_id: dest.id,
+      tournament_id: (tournament as any).id,
+      amount: dest.amount,
+      percentage_applied: dest.percentage
+    } as any);
+  }
+
+  return breakdown;
 }
 
 // Helper to load prize distribution configuration from database
@@ -588,10 +667,7 @@ router.post('/:id/close-registrations', requireAdmin, async (req: Request, res: 
     }
     console.log('[close-registrations] Calculated pot:', pot);
     
-    // Comisión fija del 20%
-    const round = (n: number) => Math.round(n / 5) * 5;
-    const commissionPct = 20;
-    const commissionAmount = round(pot * (commissionPct / 100));
+    const { commissionAmount } = await computeCommissionBreakdown(t, pot);
     
     if (commissionAmount > 0) {
       // Determinar el usuario para asignar la comisión
@@ -632,11 +708,10 @@ router.post('/:id/close-registrations', requireAdmin, async (req: Request, res: 
             (existingCommission as any).recorded_by_name = req.session ? req.session.username : null;
             await existingCommission.save();
             
-            // Redistribuir la comisión a los pools
+            // Redistribuir la comisión a los destinos
             try {
-              const tournamentDate = new Date((t as any).start_date);
-              await commissionService.distributeCommission(pot, tournamentDate);
-              console.log('[close-registrations] Commission redistributed to pools successfully');
+              await distributeCommissionToDestinations(t, pot);
+              console.log('[close-registrations] Commission redistributed to destinations successfully');
             } catch (redistError) {
               console.error('[close-registrations] Error redistributing commission:', redistError);
             }
@@ -668,11 +743,10 @@ router.post('/:id/close-registrations', requireAdmin, async (req: Request, res: 
             recorded_by_name: req.session ? req.session.username : null 
           });
           
-          // Distribuir la comisión a los pools
+          // Distribuir la comisión a los destinos
           try {
-            const tournamentDate = new Date((t as any).start_date);
-            await commissionService.distributeCommission(pot, tournamentDate);
-            console.log('[close-registrations] Commission distributed to pools successfully');
+            await distributeCommissionToDestinations(t, pot);
+            console.log('[close-registrations] Commission distributed to destinations successfully');
           } catch (distError) {
             console.error('[close-registrations] Error distributing commission:', distError);
           }
@@ -766,22 +840,12 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
 
     // Función para redondear al múltiplo de 5 más cercano
     const round = (n: number) => Math.round(n / 5) * 5;
-    
-    // default commission 20% total: 18% casa + 1% temporada + 1% anual (editable)
-    const commissionPct = 20;
-    const commissionHousePct = 18;
-    const commissionSeasonPct = 1;
-    const commissionAnnualPct = 1;
-    
-    // Redondear todos los valores
-    const commissionAmount = round(pot * (commissionPct / 100));
-    let commissionSeason = round(pot * (commissionSeasonPct / 100));
-    let commissionAnnual = round(pot * (commissionAnnualPct / 100));
-    
-    // Calcular casa y ajustar con diferencia de redondeo
-    let commissionHouse = commissionAmount - commissionSeason - commissionAnnual;
-    
-    const prizePool = pot - commissionAmount;
+
+    const commissionBreakdown = await computeCommissionBreakdown(t, pot);
+    const commissionPct = commissionBreakdown.commissionRate;
+    const commissionAmount = commissionBreakdown.commissionAmount;
+    const prizePool = commissionBreakdown.prizePool;
+    const commissionDestinations = commissionBreakdown.commissionDestinations;
 
     // Load prize distribution percentages from database
     const prizePercentages = await loadPrizeDistributionConfig();
@@ -883,13 +947,9 @@ router.get('/:id/preview-close', requireAdmin, async (req: Request, res: Respons
     return res.json({ 
       pot, 
       commissionPct, 
-      commissionHousePct,
-      commissionSeasonPct,
-      commissionAnnualPct,
+      commissionRate: commissionPct,
       commissionAmount,
-      commissionHouse,
-      commissionSeason,
-      commissionAnnual,
+      commissionDestinations,
       prizePool, 
       defaultPrizes, 
       participants,
@@ -1006,8 +1066,8 @@ router.delete('/:tournamentId/registrations/:registrationId', requireAdmin, asyn
 router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   try {
-    const { commissionPct, prizes, positions } = req.body as any;
-    console.log('[confirm-close] Received data:', { id, commissionPct, prizesCount: (prizes || []).length, positionsCount: (positions || []).length });
+    const { prizes, positions } = req.body as any;
+    console.log('[confirm-close] Received data:', { id, prizesCount: (prizes || []).length, positionsCount: (positions || []).length });
     console.log('[confirm-close] Prizes:', prizes);
     console.log('[confirm-close] Positions:', positions);
     
@@ -1039,9 +1099,9 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
     // Función de redondeo a múltiplo de 5
     const round = (n: number) => Math.round(n / 5) * 5;
 
-    const cPct = Number(commissionPct) || 0;
-    const commissionAmount = round(pot * (cPct / 100));
-    const prizePool = pot - commissionAmount;
+    const commissionBreakdown = await computeCommissionBreakdown(t, pot);
+    const commissionAmount = commissionBreakdown.commissionAmount;
+    const prizePool = commissionBreakdown.prizePool;
 
     console.log('[confirm-close] Commission:', commissionAmount, 'Prize pool:', prizePool);
 
@@ -1082,13 +1142,13 @@ router.post('/:id/confirm-close', requireAdmin, async (req: Request, res: Respon
         recorded_by_name: req.session ? req.session.username : null 
       });
       
-      // Distribuir comisión a los pozos según configuración
+      // Distribuir comisión a destinos según configuración
       try {
-        await commissionService.distributeCommission(pot, new Date((t as any).start_date));
+        await distributeCommissionToDestinations(t, pot);
         console.log(`[confirm-close] Commission distributed successfully for tournament ${id}`);
       } catch (err) {
-        console.error('[confirm-close] Error distributing commission to pools:', err);
-        // Continuar aunque falle la distribución a pozos
+        console.error('[confirm-close] Error distributing commission to destinations:', err);
+        // Continuar aunque falle la distribución a destinos
       }
     }
 
