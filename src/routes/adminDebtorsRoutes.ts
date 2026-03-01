@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import paymentRepo from '../repositories/PaymentRepository';
 import { requireAdmin } from '../middleware/requireAuth';
 import User from '../models/User';
+import XLSX from 'xlsx';
 
 const router = Router();
 
@@ -68,6 +69,35 @@ router.get('/', requireAdmin, async (req: Request, res: Response) => {
   } catch (e) {
     console.error('Error loading debtors', e);
     res.status(500).send('Error');
+  }
+});
+
+// GET /admin/debtors/export - export all debtors to Excel
+router.get('/export', requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const debtors = await paymentRepo.getAllDebtors();
+    const rows = await Promise.all(debtors.map(async d => {
+      const u = await User.findByPk(d.userId);
+      const totalDebt = await paymentRepo.getTotalDebtByUserId(d.userId);
+      return {
+        username: u ? u.username : `#${d.userId}`,
+        full_name: u ? (u as any).full_name || '' : '',
+        amount_due: d.amountDue,
+        total_debt: totalDebt
+      };
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Deudores');
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="deudores.xlsx"');
+    return res.send(buffer);
+  } catch (e) {
+    console.error('Error exporting debtors', e);
+    return res.status(500).send('Error exportando deudores');
   }
 });
 

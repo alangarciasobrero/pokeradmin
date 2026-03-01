@@ -427,6 +427,40 @@ router.get('/:id/ledger', requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+// GET /admin/users/:id/ledger/export - export ledger to Excel
+router.get('/:id/ledger/export', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const user = await User.findByPk(id);
+    if (!user) return res.redirect('/admin/users');
+
+    const payments = await Payment.findAll({ where: { user_id: id }, order: [['payment_date','DESC']] });
+
+    const rows = payments.map(p => ({
+      date: (p as any).payment_date ? new Date((p as any).payment_date).toISOString() : '',
+      source: (p as any).source,
+      amount: Number((p as any).amount || 0),
+      paid_amount: Number((p as any).paid_amount || 0),
+      method: (p as any).method || '',
+      gaming_date: (p as any).gaming_date || '',
+      reference_id: (p as any).reference_id || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+
+    const fileName = `ledger-${(user as any).username}.xlsx`;
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return res.send(buffer);
+  } catch (e) {
+    console.error('Error exporting ledger', e);
+    return res.status(500).send('Error exportando ledger');
+  }
+});
+
 // POST /admin/users/:id/payments/:pid/mark-paid - marcar pago como pagado desde ledger
 router.post('/:id/payments/:pid/mark-paid', requireAdmin, async (req: Request, res: Response) => {
   try {

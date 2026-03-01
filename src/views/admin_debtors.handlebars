@@ -15,6 +15,7 @@
       </div>
       <button type="submit" class="btn-filter">🔍 Filtrar por fecha</button>
       <a href="/admin/debtors?all=true" class="btn-all">📊 Ver todos los deudores</a>
+      <a href="/admin/debtors/export" class="btn-export">⬇️ Exportar deudores</a>
       <a href="/admin/debtors" class="btn-clear">📅 Deudores de hoy</a>
     </form>
   </div>
@@ -59,6 +60,9 @@
               <td class="actions-cell">
                 <a class="btn-ledger" href="/admin/users/{{this.user.id}}/ledger">
                   📊 Libro mayor
+                </a>
+                <a class="btn-ledger" href="/admin/users/{{this.user.id}}/ledger/export">
+                  ⬇️ Exportar ledger
                 </a>
                 <button class="btn-pay" onclick="openQuickPayModal({{this.user.id}}, '{{this.user.full_name}}', {{this.totalDebt}})">
                   💰 Pagar rápido
@@ -203,6 +207,22 @@
   text-decoration: none;
   display: inline-block;
   transition: all 0.3s ease;
+}
+
+.btn-export {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+  border: 2px solid #4CAF50;
+  border-radius: 8px;
+  color: #4CAF50;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-export:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.15));
+  transform: translateY(-2px);
 }
 
 .btn-all:hover {

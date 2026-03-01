@@ -6,6 +6,16 @@
 		<p class="subtitle">Personaliza la experiencia de PokerAdmin</p>
 	</div>
 
+	<div class="settings-tabs" role="tablist">
+		<button class="tab-btn active" data-filter="all" type="button">Todo</button>
+		<button class="tab-btn" data-filter="ranking" type="button">Ranking</button>
+		<button class="tab-btn" data-filter="tournaments" type="button">Torneos</button>
+		<button class="tab-btn" data-filter="commissions" type="button">Comisiones</button>
+		<button class="tab-btn" data-filter="cash" type="button">Cash</button>
+		<button class="tab-btn" data-filter="general" type="button">General</button>
+		<button class="tab-btn" data-filter="info" type="button">Info</button>
+	</div>
+
 	{{#if flash}}
 		<div class="alert alert-{{flash.type}}">
 			{{#ifEquals flash.type 'success'}}✅{{else}}⚠️{{/ifEquals}} {{flash.message}}
@@ -15,7 +25,7 @@
 	<div class="settings-grid">
 		
 		{{!-- Sección: Distribución de Puntos --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="ranking">
 			<div class="card-icon">🏆</div>
 			<h2>Distribución de Puntos</h2>
 			<p class="card-description">Configura cómo se reparten los puntos de ranking por posición</p>
@@ -66,7 +76,7 @@
 		</div>
 
 		{{!-- Sección: Distribución de Premios en Dinero --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="ranking">
 			<div class="card-icon">💵</div>
 			<h2>Distribución de Premios ($)</h2>
 			<p class="card-description">Configura los porcentajes de distribución de premios en efectivo</p>
@@ -182,7 +192,7 @@
 		</div>
 
 		{{!-- Sección: Configuración de Comisiones --}}
-		<div class="settings-card quick-access-card">
+		<div class="settings-card quick-access-card" data-section="commissions">
 			<div class="card-icon">💰</div>
 			<h2>Comisiones</h2>
 			<p class="card-description">Gestiona destinos y porcentajes de distribución de comisiones</p>
@@ -203,7 +213,7 @@
 		</div>
 
 		{{!-- Sección: Sistema de Puntos por Torneo --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="tournaments">
 			<div class="card-icon">⭐</div>
 			<h2>Sistema de Puntos por Torneo</h2>
 			<p class="card-description">Configura los puntos del pozo del torneo y personales</p>
@@ -366,7 +376,7 @@
 			</form>
 		</div>
 
-		<div class="settings-card">
+		<div class="settings-card" data-section="tournaments">
 			<div class="card-icon">🎁</div>
 			<h2>Bonos de Asistencia</h2>
 			<p class="card-description">Configura los puntos extra por consistencia y asistencia</p>
@@ -459,64 +469,56 @@
 				<h3 style="margin-top: 25px; margin-bottom: 15px; color: #4fc3f7;">Bonos Especiales</h3>
 				<div class="form-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
 					<div class="form-field">
-					<div class="form-field">
-						<label>✅ Asistencia al Torneo</label>
-						<input type="number" name="bonus_attendance" value="{{config.bonus_attendance}}" min="0" step="1" required />
-					</div>
-					<div class="form-field">
-						<label>🔄 Re-entry</label>
-						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" required />
-					</div>
 						<label>⚫ Mesas Finales (Black)</label>
-				<h3 style="margin-top: 20px; margin-bottom: 15px; color: #4fc3f7;">Bonos Inmediatos</h3>
-				<p style="color:#aaa;margin-bottom:1rem;">Los bonos inmediatos se calculan con los mismos valores de <strong>Puntos Personales (Directos)</strong>.</p>
-				<div class="form-grid">
-					<div class="form-field">
-						<label>✅ Asistencia al Torneo</label>
-						<input type="number" name="bonus_attendance" value="{{config.bonus_attendance}}" min="0" step="1" required />
+						<input type="number" name="bonus_final_tables_20" value="{{config.bonus_final_tables_20}}" min="0" step="1" required />
+						<small>Puntos otorgados</small>
 					</div>
 					<div class="form-field">
-						<label>🔄 Re-entry</label>
-						<input type="number" name="bonus_reentry" value="{{config.bonus_reentry}}" min="0" step="1" required />
+						<label>⚫ Mesas Finales Requeridas</label>
+						<input type="number" name="bonus_final_tables_required" value="{{config.bonus_final_tables_required}}" min="1" step="1" required />
+						<small>Mesas finales en temporada</small>
 					</div>
 				</div>
+
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary">💾 Guardar Bonos</button>
+				</div>
+				</form>
+		</div>
+
+		{{!-- Sección: Configuración Cash --}}
+		<div class="settings-card" data-section="cash">
+			<div class="card-icon">🪙</div>
+			<h2>Configuración Cash (Defaults)</h2>
+			<p class="card-description">Ciegas y caja inicial mínima predeterminadas para nuevas mesas cash</p>
+			<form method="post" action="/admin/games/settings/cash" class="settings-form">
+				<div class="form-grid">
+					<div class="form-field">
+						<label>🎯 Ciega 1</label>
+						<input type="number" name="cash_blind_1" value="{{config.cash_blind_1}}" min="0" step="1" required />
+					</div>
+					<div class="form-field">
+						<label>🎯 Ciega 2</label>
+						<input type="number" name="cash_blind_2" value="{{config.cash_blind_2}}" min="0" step="1" />
+					</div>
+					<div class="form-field">
+						<label>🎯 Ciega 3</label>
+						<input type="number" name="cash_blind_3" value="{{config.cash_blind_3}}" min="0" step="1" />
+					</div>
+					<div class="form-field">
+						<label>💵 Caja inicial mínima</label>
+						<input type="number" name="cash_initial_min" value="{{config.cash_initial_min}}" min="0" step="1" required />
+					</div>
+				</div>
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary">💾 Guardar Cash</button>
 				</div>
 			</form>
 		</div>
 
 		{{!-- Sección: Configuración General --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="general">
 			<div class="card-icon">🎮</div>
-
-	<section class="settings-section" id="cash-defaults">
-		<h2><i class="fas fa-coins"></i> Configuración Cash (Defaults)</h2>
-		<p class="section-desc">Ciegas y caja inicial mínima predeterminadas para nuevas mesas cash</p>
-		<form action="/admin/games/settings/cash" method="POST">
-			<div class="form-grid">
-				<div class="form-field">
-					<label>🎯 Ciega 1</label>
-					<input type="number" name="cash_blind_1" value="{{config.cash_blind_1}}" min="0" step="1" required />
-				</div>
-				<div class="form-field">
-					<label>🎯 Ciega 2</label>
-					<input type="number" name="cash_blind_2" value="{{config.cash_blind_2}}" min="0" step="1" />
-				</div>
-				<div class="form-field">
-					<label>🎯 Ciega 3</label>
-					<input type="number" name="cash_blind_3" value="{{config.cash_blind_3}}" min="0" step="1" />
-				</div>
-				<div class="form-field">
-					<label>💵 Caja inicial mínima</label>
-					<input type="number" name="cash_initial_min" value="{{config.cash_initial_min}}" min="0" step="1" required />
-				</div>
-			</div>
-			<div class="actions">
-				<button type="submit" class="btn-primary">
-					<i class="fas fa-save"></i> Guardar Cash
-				</button>
-			</div>
-		</form>
-	</section>
 			<h2>Configuración General</h2>
 			<p class="card-description">Ajustes generales del sistema</p>
 			
@@ -545,7 +547,7 @@
 		</div>
 
 		{{!-- Sección: Idioma --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="general">
 			<div class="card-icon">🌍</div>
 			<h2>Idioma / Language</h2>
 			<p class="card-description">Selecciona el idioma de la interfaz</p>
@@ -581,7 +583,7 @@
 		</div>
 
 		{{!-- Sección: Accesos Rápidos --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="info">
 			<div class="card-icon">🚀</div>
 			<h2>Accesos Rápidos</h2>
 			<p class="card-description">Herramientas y utilidades del sistema</p>
@@ -626,7 +628,7 @@
 		</div>
 
 		{{!-- Sección: Sistema --}}
-		<div class="settings-card">
+		<div class="settings-card" data-section="info">
 			<div class="card-icon">💻</div>
 			<h2>Sistema</h2>
 			<p class="card-description">Información y mantenimiento</p>
@@ -669,6 +671,36 @@
 .settings-header {
 	text-align: center;
 	margin-bottom: 3rem;
+}
+
+.settings-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.75rem;
+	margin-bottom: 2rem;
+}
+
+.tab-btn {
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	color: #ddd;
+	padding: 0.5rem 1rem;
+	border-radius: 999px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+	border-color: rgba(255, 215, 0, 0.6);
+	color: #FFD700;
+}
+
+.tab-btn.active {
+	background: rgba(255, 215, 0, 0.15);
+	border-color: rgba(255, 215, 0, 0.8);
+	color: #FFD700;
 }
 
 .settings-header h1 {
@@ -714,6 +746,28 @@
 	border-radius: 16px;
 	padding: 2rem;
 	transition: all 0.3s ease;
+	position: relative;
+}
+
+.settings-card.is-hidden {
+	display: none;
+}
+
+.settings-card.collapsed > *:not(.card-icon):not(h2):not(.card-description):not(.card-toggle) {
+	display: none;
+}
+
+.card-toggle {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	color: #ddd;
+	border-radius: 999px;
+	padding: 0.35rem 0.75rem;
+	font-weight: 600;
+	cursor: pointer;
 }
 
 .settings-card:hover {
@@ -1035,3 +1089,40 @@
 	}
 }
 </style>
+
+<script>
+(function() {
+	const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+	const cards = Array.from(document.querySelectorAll('.settings-card'));
+	const applyFilter = (filter) => {
+		cards.forEach(card => {
+			const section = card.getAttribute('data-section');
+			const show = filter === 'all' || section === filter;
+			card.classList.toggle('is-hidden', !show);
+		});
+	};
+
+	tabs.forEach(btn => {
+		btn.addEventListener('click', () => {
+			tabs.forEach(b => b.classList.remove('active'));
+			btn.classList.add('active');
+			applyFilter(btn.getAttribute('data-filter'));
+		});
+	});
+
+	applyFilter('all');
+
+	// add collapse buttons
+	cards.forEach(card => {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'card-toggle';
+		btn.textContent = 'Contraer';
+		btn.addEventListener('click', () => {
+			card.classList.toggle('collapsed');
+			btn.textContent = card.classList.contains('collapsed') ? 'Expandir' : 'Contraer';
+		});
+		card.appendChild(btn);
+	});
+})();
+</script>
